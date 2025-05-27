@@ -113,8 +113,8 @@
         "seq1_mod": {
           "type": "string",
           "description": "Sequence 1 modifications",
-          "pattern": "^(\\[\\d+,[A-Z]{3}\\])(,\\[\\d+,[A-Z]{3}\\])*$",
-          "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas. Examples: [33,SEP], [10,PTR],[25,TPO], [1,ACE],[50,NH2]",
+          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
+          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]' ",
           "default": "[33,SEP][42,SEP]"
         },
         "seq1_cyclic": {
