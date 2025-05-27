@@ -762,7 +762,6 @@
         "lig1_chem": {
           "type": "string",
           "description": "Ligand 1 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
         }
       }
@@ -792,7 +791,6 @@
         "lig2_chem": {
           "type": "string",
           "description": "Ligand 2 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
         }
       }
@@ -822,7 +820,6 @@
         "lig3_chem": {
           "type": "string",
           "description": "Ligand 3 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
         }
       }
@@ -854,7 +851,6 @@
         "lig4_chem": {
           "type": "string",
           "description": "Ligand 4 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -888,7 +884,6 @@
         "lig5_chem": {
           "type": "string",
           "description": "Ligand 5 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -922,7 +917,6 @@
         "lig6_chem": {
           "type": "string",
           "description": "Ligand 6 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -956,7 +950,6 @@
         "lig7_chem": {
           "type": "string",
           "description": "Ligand 7 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -990,7 +983,6 @@
         "lig8_chem": {
           "type": "string",
           "description": "Ligand 8 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -1024,7 +1016,6 @@
         "lig9_chem": {
           "type": "string",
           "description": "Ligand 9 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -1058,7 +1049,6 @@
         "lig10_chem": {
           "type": "string",
           "description": "Ligand 10 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -1092,7 +1082,6 @@
         "lig11_chem": {
           "type": "string",
           "description": "Ligand 11 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }
@@ -1126,7 +1115,6 @@
         "lig12_chem": {
           "type": "string",
           "description": "Ligand 12 chemical identifier",
-          "default": null,
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
         }

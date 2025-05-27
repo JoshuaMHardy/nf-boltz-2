@@ -92,7 +92,6 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
         f"lig{num}_chem": {
             "type": "string", 
             "description": f"Ligand {num} chemical identifier",
-            "default": None,
             "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
         }
     }
