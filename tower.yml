@@ -1,9 +1,7 @@
 reports:
   "${params.pred_name}/${params.pred_name}.yaml"
     display: "Input yaml"
-
   "${params.pred_name}/*.pdb"
     display: "Predicted Structure (PDB)"
-    
   "${params.pred_name}.log"
     display: "Boltz Execution Log"
