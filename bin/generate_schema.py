@@ -41,8 +41,8 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
         f"seq{num}_mod": {
             "type": "string",
             "description": f"Sequence {num} modifications",
-            "pattern": "^(\\[\\d+,[A-Z]{3}\\])(,\\[\\d+,[A-Z]{3}\\])*$",
-            "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas. Examples: [33,SEP], [10,PTR],[25,TPO], [1,ACE],[50,NH2]"
+            "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
+            "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
         },
         f"seq{num}_cyclic": {
             "type": "boolean",
