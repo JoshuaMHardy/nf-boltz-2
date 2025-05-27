@@ -1,7 +1,7 @@
 reports:
-  "**/*.yaml"
+  "**/*.yaml":
     display: "Input yaml"
-  "**/*.pdb"
+  "**/*.pdb":
     display: "Predicted Structure (PDB)"
-  "*.log"
+  "*.log":
     display: "Boltz Execution Log"
