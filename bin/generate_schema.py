@@ -62,7 +62,7 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
         properties[f"seq{num}_type"]["default"] = "protein"
         properties[f"seq{num}_id"]["default"] = "A"
         properties[f"seq{num}_seq"]["default"] = "ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
-        properties[f"seq{num}_mod"]["default"] = "[33,SEP],[42,SEP]"
+        properties[f"seq{num}_mod"]["default"] = "[33,SEP][42,SEP]"
         properties[f"seq{num}_genmsa"]["default"] = True
     
     # Hide individual parameters for sequences 3-12

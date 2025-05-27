@@ -59,7 +59,7 @@
             "type": "string",
             "description": "Sequence {num} modifications",
             "pattern": "^(\\[\\d+,[A-Z]{3}\\])(,\\[\\d+,[A-Z]{3}\\])*$",
-            "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas. e.g. '[33,SEP]', '[10,PTR],[25,TPO]', '[1,ACE],[50,NH2]' "
+            "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]' "
         },
         "sequence_cyclic_template": {
             "type": "boolean",
