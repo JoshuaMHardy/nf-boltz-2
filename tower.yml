@@ -1,37 +1,9 @@
 reports:
-  # Input Configuration YAML
-  input_config:
-    title: "Input Configuration"
-    description: "YAML configuration file used for Boltz-1 prediction"
-    file: "${params.pred_name}/${params.pred_name}.yaml"
-    display: "yaml"
+  "${params.pred_name}/${params.pred_name}.yaml"
+    display: "Input yaml"
+
+  "${params.pred_name}/*.pdb"
+    display: "Predicted Structure (PDB)"
     
-  # Boltz Manifest JSON  
-  boltz_manifest:
-    title: "Boltz Processing Manifest"
-    description: "JSON manifest showing processed sequences, ligands, and constraints"
-    file: "${params.pred_name}/boltz_results_*/processed/manifest.json"
-    display: "json"
-    
-  # PDB Structure File for Download
-  pdb_file:
-    title: "Predicted Structure (PDB)"
-    description: "Download the predicted protein structure in PDB format"
-    file: "${params.pred_name}/*.pdb"
-    display: "file"
-    priority: 1
-    
-  # Multiple PDB files (if there are multiple samples)
-  all_pdb_files:
-    title: "All Predicted Structures"
-    description: "Download all PDB files from diffusion sampling"
-    file: "${params.pred_name}/**/*.pdb"
-    display: "file"
-    optional: true
-    
-  # Process Logs
-  process_logs:
-    title: "Boltz Execution Log"
-    description: "Complete log output from Boltz-1 prediction process"
-    file: "${params.pred_name}.log"
-    display: "txt"
+  "${params.pred_name}.log"
+    display: "Boltz Execution Log"
