@@ -29,7 +29,6 @@
                 "input_yaml": {
                     "type": "string",
                     "format": "file-path",
-                    "pattern": "\\.(ya?ml)$",
                     "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints parameters below.",
                     "help_text": "e.g. '/path/to/input.yml'. The name of each yaml file will be used for the prediction name."
                 }
