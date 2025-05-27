@@ -65,8 +65,8 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
         properties[f"seq{num}_mod"]["default"] = "[33,SEP],[42,SEP]"
         properties[f"seq{num}_genmsa"]["default"] = True
     
-    # Hide individual parameters for sequences 4-12
-    if num > 3:
+    # Hide individual parameters for sequences 3-12
+    if num > 2:
         for key in properties:
             properties[key]["hidden"] = True
             
@@ -96,8 +96,8 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
         }
     }
     
-    # Hide individual parameters for ligands 4-12
-    if num > 3:
+    # Hide individual parameters for ligands 3-12
+    if num > 2:
         for key in properties:
             properties[key]["hidden"] = True
             
@@ -131,8 +131,8 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         if i == 1:
             group_definition["required"] = ["seq1_type", "seq1_id", "seq1_seq"]
         
-        # Hide sequences 4-12
-        if i > 3:
+        # Hide sequences 3-12
+        if i > 2:
             group_definition["hidden"] = True
             
         new_definitions[f"sequence_{i}_options"] = group_definition
@@ -151,8 +151,8 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
             "properties": lig_props
         }
         
-        # Hide ligands 4-12
-        if i > 3:
+        # Hide ligands 3-12
+        if i > 2:
             group_definition["hidden"] = True
             
         new_definitions[f"ligand_{i}_options"] = group_definition
@@ -207,8 +207,8 @@ def main():
     print("   - 12 individual sequence groups (Sequence 1-12 options)")
     print("   - 12 individual ligand groups (Ligand 1-12 options)")
     print("   - seq1 is required with defaults")
-    print("   - Sequences 4-12 groups AND individual parameters are hidden")
-    print("   - Ligands 4-12 groups AND individual parameters are hidden")
+    print("   - Sequences 3-12 groups AND individual parameters are hidden")
+    print("   - Ligands 3-12 groups AND individual parameters are hidden")
     print("   - Constraint options are hidden")
     print("   - Only boltz_diffusion_samples is visible in Boltz options")
     print("   - All compute options are hidden")

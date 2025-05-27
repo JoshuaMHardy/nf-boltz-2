@@ -198,13 +198,15 @@
             "dna",
             "rna"
           ],
-          "help_text": "Choose the biomolecule type for sequence 3. Examples: protein, dna, rna"
+          "help_text": "Choose the biomolecule type for sequence 3. Examples: protein, dna, rna",
+          "hidden": true
         },
         "seq3_id": {
           "type": "string",
           "description": "Sequence 3 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L"
+          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
+          "hidden": true
         },
         "seq3_seq": {
           "type": "string",
@@ -212,26 +214,31 @@
           "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
         },
         "seq3_mod": {
           "type": "string",
           "description": "Sequence 3 modifications",
           "pattern": "^(\\[\\d+,[A-Z]{3}\\])(,\\[\\d+,[A-Z]{3}\\])*$",
-          "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas. Examples: [33,SEP], [10,PTR],[25,TPO], [1,ACE],[50,NH2]"
+          "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas. Examples: [33,SEP], [10,PTR],[25,TPO], [1,ACE],[50,NH2]",
+          "hidden": true
         },
         "seq3_cyclic": {
           "type": "boolean",
           "description": "Is sequence 3 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
+          "hidden": true
         },
         "seq3_genmsa": {
           "type": "boolean",
           "description": "Generate MSA for sequence 3",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
+          "hidden": true
         }
-      }
+      },
+      "hidden": true
     },
     "sequence_4_options": {
       "title": "Sequence 4 options",
@@ -806,7 +813,8 @@
           "description": "Ligand 3 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2"
+          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
+          "hidden": true
         },
         "lig3_type": {
           "type": "string",
@@ -815,14 +823,17 @@
             "CCD",
             "SMILES"
           ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES"
+          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
+          "hidden": true
         },
         "lig3_chem": {
           "type": "string",
           "description": "Ligand 3 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
+          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
+          "hidden": true
         }
-      }
+      },
+      "hidden": true
     },
     "ligand_4_options": {
       "title": "Ligand 4 options",
