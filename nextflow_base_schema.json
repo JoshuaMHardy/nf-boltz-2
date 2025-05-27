@@ -1,0 +1,217 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/your-org/nf-boltz/master/nextflow_schema.json",
+    "title": "nf-boltz pipeline parameters",
+    "description": "Nextflow pipeline for protein structure prediction using Boltz-1",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/Output options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Define where the pipeline should find input data and save output data",
+            "required": ["pred_name"],
+            "properties": {
+                "pred_name": {
+                    "type": "string",
+                    "description": "Prediction run name",
+                    "help_text": "Only letters, numbers, underscores, and dashes allowed. Used as prefix for output files.",
+                    "pattern": "^[a-zA-Z0-9_-]+$",
+                    "default": "test",
+                    "examples": ["protein_complex", "antibody_design", "my_prediction"]
+                },
+                "out_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Output directory path",
+                    "help_text": "The output directory where the results will be saved. Existing results will be overwritten.",
+                    "default": "/vast/scratch/users/hardy.j/boltztest",
+                    "examples": ["/data/results", "/scratch/user/boltz_output"]
+                },
+                "input_yaml": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "\\.(ya?ml)$",
+                    "description": "Input YAML file path (optional)",
+                    "help_text": "If provided, this YAML file will override all sequence, ligand, and constraint parameters below.",
+                    "examples": ["input.yaml", "/path/to/config.yml"]
+                }
+            }
+        },
+        "sequence_template": {
+            "type": "string",
+            "description": "Sequence {num} type",
+            "enum": ["protein", "dna", "rna"],
+            "help_text": "Choose the biomolecule type for sequence {num}"
+        },
+        "sequence_id_template": {
+            "type": "string",
+            "description": "Sequence {num} chain ID(s)",
+            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+            "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C')",
+            "examples": ["A", "B,C", "H,L"]
+        },
+        "sequence_seq_template": {
+            "type": "string",
+            "description": "Sequence {num} amino acid/nucleotide sequence",
+            "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+            "minLength": 1,
+            "maxLength": 10000,
+            "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA"
+        },
+        "sequence_mod_template": {
+            "type": "string",
+            "description": "Sequence {num} modifications",
+            "pattern": "^(\\[\\d+,[A-Z]{3}\\])(,\\[\\d+,[A-Z]{3}\\])*$",
+            "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas.",
+            "examples": ["[33,SEP]", "[10,PTR],[25,TPO]", "[1,ACE],[50,NH2]"]
+        },
+        "sequence_cyclic_template": {
+            "type": "boolean",
+            "description": "Is sequence {num} cyclic?",
+            "default": false,
+            "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
+        },
+        "sequence_genmsa_template": {
+            "type": "boolean",
+            "description": "Generate MSA for sequence {num}",
+            "default": false,
+            "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+        },
+        "ligand_id_template": {
+            "type": "string",
+            "description": "Ligand {num} chain ID(s)",
+            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+            "help_text": "Chain identifier(s) for the ligand",
+            "examples": ["D", "L1,L2"]
+        },
+        "ligand_type_template": {
+            "type": "string",
+            "description": "Ligand {num} format",
+            "enum": ["CCD", "SMILES"],
+            "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system"
+        },
+        "ligand_chem_template": {
+            "type": "string",
+            "description": "Ligand {num} chemical identifier",
+            "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]')",
+            "examples": ["ZN", "ATP", "CCO", "[Ca+2]", "CC(=O)Nc1ccc(O)cc1"]
+        },
+        "constraint_options": {
+            "title": "Constraint options",
+            "type": "object", 
+            "fa_icon": "fas fa-link",
+            "description": "Define structural constraints and binding pockets",
+            "properties": {
+                "constraints_bond": {
+                    "type": "string",
+                    "description": "Bond constraints between atoms",
+                    "pattern": "^(\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])(\\s+\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])*$",
+                    "help_text": "Format: [chain,residue,atom][chain,residue,atom]. Separate multiple bonds with spaces.",
+                    "examples": [
+                        "[A,10,O][B,5,N]",
+                        "[A,33,O][B,1,N] [B,1,CA][C,5,CA]",
+                        "[H,95,SG][L,23,SG]"
+                    ]
+                },
+                "pocket_binder_id": {
+                    "type": "string",
+                    "description": "Pocket binder chain ID",
+                    "pattern": "^[A-Za-z0-9]+$",
+                    "help_text": "Chain ID of the molecule that should bind to the specified pocket",
+                    "examples": ["E", "L1", "D"]
+                },
+                "pocket_contacts": {
+                    "type": "string",
+                    "description": "Pocket contact residues",
+                    "pattern": "^(\\[[A-Za-z0-9]+,\\d+\\])(\\[[A-Za-z0-9]+,\\d+\\])*$",
+                    "help_text": "Format: [chain,residue]. Define residues that form the binding pocket.",
+                    "examples": [
+                        "[A,33][A,34]",
+                        "[A,10][A,15][B,20][B,25]",
+                        "[H,50][H,52][L,90]"
+                    ]
+                }
+            }
+        },
+        "boltz_options": {
+            "title": "Boltz-1 prediction options",
+            "type": "object",
+            "fa_icon": "fas fa-cogs",
+            "description": "Configure Boltz-1 prediction parameters",
+            "properties": {
+                "boltz_diffusion_samples": {
+                    "type": "integer", 
+                    "description": "Number of diffusion samples",
+                    "minimum": 1,
+                    "maximum": 25,
+                    "default": 1,
+                    "help_text": "Number of independent diffusion samples to generate. More samples improve quality but increase computation time."
+                },
+                "boltz_recycling_steps": {
+                    "type": "integer",
+                    "description": "Number of recycling steps",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "default": 5,
+                    "hidden": true,
+                    "help_text": "More steps generally improve accuracy but increase computation time"
+                },
+                "boltz_sampling_steps": {
+                    "type": "integer",
+                    "description": "Number of sampling steps",
+                    "minimum": 50,
+                    "maximum": 1000,
+                    "default": 200,
+                    "hidden": true,
+                    "help_text": "Number of denoising steps in the diffusion process"
+                },
+                "boltz_extra_config": {
+                    "type": "string",
+                    "description": "Additional Boltz-1 configuration",
+                    "hidden": true,
+                    "help_text": "Extra command-line arguments for Boltz-1 (e.g., '--msa_pairing_strategy complete')",
+                    "examples": [
+                        "--msa_pairing_strategy complete",
+                        "--confidence_threshold 0.7",
+                        "--seed 42"
+                    ]
+                }
+            }
+        },
+        "compute_options": {
+            "title": "Compute options",
+            "type": "object",
+            "fa_icon": "fas fa-server",
+            "description": "Configure computational resources",
+            "properties": {
+                "gpu_model": {
+                    "type": "string",
+                    "description": "GPU model requested",
+                    "enum": ["A30", "A100"],
+                    "default": "A30",
+                    "hidden": true,
+                    "help_text": "Choose GPU model based on availability and computational requirements"
+                },
+                "n_cpus": {
+                    "type": "integer",
+                    "description": "Number of CPUs",
+                    "minimum": 1,
+                    "maximum": 128,
+                    "default": 24,
+                    "hidden": true,
+                    "help_text": "Number of CPU cores to allocate"
+                },
+                "memory": {
+                    "type": "string",
+                    "description": "Memory allocation",
+                    "pattern": "^\\d+(G|M)$",
+                    "default": "48G",
+                    "hidden": true,
+                    "help_text": "Memory allocation (e.g., '48G')",
+                    "examples": ["16G", "32G", "48G", "64G", "128G"]
+                }
+            }
+        }
+    }
+}
