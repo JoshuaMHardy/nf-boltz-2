@@ -49,13 +49,12 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
         f"seq{num}_cyclic": {
             "type": "boolean",
             "description": f"Is sequence {num} cyclic?",
-            "default": False,
             "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         f"seq{num}_genmsa": {
             "type": "boolean", 
             "description": f"Generate MSA for sequence {num}",
-            "default": False,
+            "default": True,
             "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
     }
@@ -121,7 +120,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         seq_props = generate_sequence_properties(i, is_first=(i==1))
         seq_properties.update(seq_props)
     
-    schema["definitions"]["sequence_options"] = {
+    sequence_options = {
         "title": "Sequence options",
         "type": "object",
         "fa_icon": "fas fa-dna", 
@@ -136,7 +135,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         lig_props = generate_ligand_properties(i)
         lig_properties.update(lig_props)
         
-    schema["definitions"]["ligand_options"] = {
+    ligand_options = {
         "title": "Ligand options",
         "type": "object", 
         "fa_icon": "fas fa-prescription-bottle",
@@ -144,26 +143,32 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         "properties": lig_properties
     }
     
-    # Add constraint defaults
-    schema["definitions"]["constraint_options"]["properties"]["constraints_bond"]["default"] = "[A,33,O][B,1,N] [B,1,CA][C,5,CA]"
-    schema["definitions"]["constraint_options"]["properties"]["pocket_binder_id"]["default"] = "E" 
-    schema["definitions"]["constraint_options"]["properties"]["pocket_contacts"]["default"] = "[A,33][A,34]"
-    schema["definitions"]["constraint_options"]["hidden"] = True
+    # Add constraint defaults and hide section
+    constraint_options = copy.deepcopy(schema["definitions"]["constraint_options"])
+    constraint_options["properties"]["constraints_bond"]["default"] = "[A,33,O][B,1,N] [B,1,CA][C,5,CA]"
+    constraint_options["properties"]["pocket_binder_id"]["default"] = "E" 
+    constraint_options["properties"]["pocket_contacts"]["default"] = "[A,33][A,34]"
+    constraint_options["hidden"] = True
+    
+    # REBUILD DEFINITIONS IN CORRECT ORDER
+    schema["definitions"] = {
+        "input_output_options": schema["definitions"]["input_output_options"],
+        "sequence_options": sequence_options,
+        "ligand_options": ligand_options, 
+        "constraint_options": constraint_options,
+        "boltz_options": schema["definitions"]["boltz_options"],
+        "compute_options": schema["definitions"]["compute_options"]
+    }
     
     # Set up allOf references in the desired order
     schema["allOf"] = [
         {"$ref": "#/definitions/input_output_options"},    # 1. Input/Output options
         {"$ref": "#/definitions/sequence_options"},        # 2. Sequence options  
         {"$ref": "#/definitions/ligand_options"},          # 3. Ligand options
-        {"$ref": "#/definitions/constraint_options"},      # 4. Constraint options
+        {"$ref": "#/definitions/constraint_options"},      # 4. Constraint options (hidden)
         {"$ref": "#/definitions/boltz_options"},           # 5. Boltz-1 prediction options
         {"$ref": "#/definitions/compute_options"}          # 6. Compute options
     ]
-    
-    # Clean up templates
-    templates_to_remove = [k for k in schema["definitions"].keys() if k.endswith("_template")]
-    for template in templates_to_remove:
-        del schema["definitions"][template]
     
     return schema
 
@@ -185,8 +190,10 @@ def main():
     print("   - 12 ligands (lig1-lig12) - ALL DEFAULT TO NULL")
     print("   - seq1 is required with defaults")
     print("   - seq4-seq12 and lig4-lig12 are hidden")
+    print("   - Constraint options are hidden")
     print("   - Only boltz_diffusion_samples is visible in Boltz options")
     print("   - All compute options are hidden")
+    print("   - Section order: Input/Output → Sequences → Ligands → Constraints → Boltz → Compute")
 
 if __name__ == "__main__":
     main()
