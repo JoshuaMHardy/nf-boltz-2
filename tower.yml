@@ -1,0 +1,5 @@
+reports:
+  "*/*.yml":
+    display: Input YAML
+  "*/*.json":
+    display: Confidence metrics 
