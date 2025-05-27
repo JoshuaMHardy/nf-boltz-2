@@ -32,8 +32,8 @@
           "type": "string",
           "format": "file-path",
           "pattern": "\\.(ya?ml)$",
-          "description": "Input YAML file path (optional)",
-          "help_text": "If provided, this YAML file will override all parameters except out_dir. e.g. '/path/to/input.yml'. The name of the yaml file will be the prediction name."
+          "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints parameters below.",
+          "help_text": "e.g. '/path/to/input.yml'. The name of each yaml file will be used for the prediction name."
         }
       }
     },
@@ -115,7 +115,7 @@
           "description": "Sequence 1 modifications",
           "pattern": "^(\\[\\d+,[A-Z]{3}\\])(,\\[\\d+,[A-Z]{3}\\])*$",
           "help_text": "Format: [position,CCD_code]. Multiple modifications separated by commas. Examples: [33,SEP], [10,PTR],[25,TPO], [1,ACE],[50,NH2]",
-          "default": "[33,SEP],[42,SEP]"
+          "default": "[33,SEP][42,SEP]"
         },
         "seq1_cyclic": {
           "type": "boolean",
