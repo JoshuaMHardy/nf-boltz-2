@@ -1,5 +1,68 @@
 reports:
-  "*/*.yml":
-    display: Input YAML
-  "*/*.json":
-    display: Confidence metrics 
+  # Input Configuration YAML
+  input_config:
+    title: "Input Configuration"
+    description: "YAML configuration file used for Boltz-1 prediction"
+    file: "${params.pred_name}/${params.pred_name}.yaml"
+    display: "yaml"
+    
+  # Boltz Manifest JSON  
+  boltz_manifest:
+    title: "Boltz Processing Manifest"
+    description: "JSON manifest showing processed sequences, ligands, and constraints"
+    file: "${params.pred_name}/boltz_results_*/processed/manifest.json"
+    display: "json"
+    
+  # PDB Structure File for Download
+  pdb_file:
+    title: "Predicted Structure (PDB)"
+    description: "Download the predicted protein structure in PDB format"
+    file: "${params.pred_name}/*.pdb"
+    display: "file"
+    priority: 1
+    
+  # Multiple PDB files (if there are multiple samples)
+  all_pdb_files:
+    title: "All Predicted Structures"
+    description: "Download all PDB files from diffusion sampling"
+    file: "${params.pred_name}/**/*.pdb"
+    display: "file"
+    optional: true
+    
+  # Process Logs
+  process_logs:
+    title: "Boltz Execution Log"
+    description: "Complete log output from Boltz-1 prediction process"
+    file: "${params.pred_name}.log"
+    display: "txt"
+
+# Enhanced layout with PDB files prominently displayed
+layout:
+  title: "Boltz-1 Protein Structure Prediction Report"
+  description: "Structure predictions and configuration details"
+  
+  sections:
+    - name: "📁 Download Results"
+      description: "Predicted protein structures ready for download"
+      reports:
+        - pdb_file
+        - all_pdb_files
+        
+    - name: "📋 Configuration Files"
+      description: "Input parameters and processing details"
+      reports:
+        - input_config
+        - boltz_manifest
+        
+    - name: "🔍 Execution Details"
+      description: "Process logs and execution information"
+      reports:
+        - process_logs
+
+# Display settings optimized for file downloads
+display:
+  syntax_highlighting: true
+  line_numbers: true
+  collapsible_sections: true
+  max_file_size: "100MB"  # Allow larger PDB files
+  download_enabled: true   # Enable direct downloads
