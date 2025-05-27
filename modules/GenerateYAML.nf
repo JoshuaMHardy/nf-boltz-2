@@ -3,10 +3,10 @@ process GenerateYAML {
     val params
     
     output:
-    path 'input.yaml', emit: yaml
+    path "*.yaml", emit: yaml
     
     script:
     """
-    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > input.yaml
+    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
     """
 }

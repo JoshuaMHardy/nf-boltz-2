@@ -23,7 +23,7 @@
                     "type": "string",
                     "format": "directory-path",
                     "description": "Output directory path",
-                    "help_text": "The output directory where the results will be saved. Existing results will be overwritten.",
+                    "help_text": "The output directory where the results will be saved. Existing results with the same prediction name will be overwritten.",
                     "default": "/vast/scratch/users/hardy.j/boltztest"
                 },
                 "input_yaml": {
@@ -31,7 +31,7 @@
                     "format": "file-path",
                     "pattern": "\\.(ya?ml)$",
                     "description": "Input YAML file path (optional)",
-                    "help_text": "If provided, this YAML file will override all sequence, ligand, and constraint parameters below. e.g. '/path/to/input.yml'"
+                    "help_text": "If provided, this YAML file will override all parameters except out_dir. e.g. '/path/to/input.yml'. The name of the yaml file will be the prediction name."
                 }
             }
         },

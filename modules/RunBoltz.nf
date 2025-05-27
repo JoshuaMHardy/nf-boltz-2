@@ -12,9 +12,10 @@ process RunBoltz {
 
     input:
     path yaml
+    val pred_name
 
     output:
-    path "${params.pred_name}"
+    path "${pred_name}"
     path ("*.log"), emit: logs
 
     script:
@@ -25,11 +26,8 @@ process RunBoltz {
         export XDG_CONFIG_HOME=tmp
         export TRITON_CACHE_DIR=tmp
 
-        # Rename input yaml to prediction name
-        mv input.yaml ${params.pred_name}.yaml
-
         boltz predict \
-            ${params.pred_name}.yaml \
+            *.yaml \
             --output_format pdb \
             --diffusion_samples ${params.boltz_diffusion_samples} \
             --recycling_steps ${params.boltz_recycling_steps} \
@@ -37,11 +35,12 @@ process RunBoltz {
             --cache /boltz/cache \
             --use_msa_server \
             ${params.boltz_extra_config ? params.boltz_extra_config : ''} \
-            2>&1 | tee ${params.pred_name}.log
+            2>&1 | tee boltz_${pred_name}.log
 
         # Move prediction directory
-        mv boltz_results_*/predictions/${params.pred_name} .
-        # Copy YAML to prediction directory
-        cp ${params.pred_name}.yaml ${params.pred_name}/.
+        mv boltz_results_*/predictions/${pred_name} .
+        # Copy input yaml to prediction directory
+        cp ${pred_name}.yaml ${pred_name}/.
+
         """
 }
