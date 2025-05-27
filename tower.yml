@@ -35,34 +35,3 @@ reports:
     description: "Complete log output from Boltz-1 prediction process"
     file: "${params.pred_name}.log"
     display: "txt"
-
-# Enhanced layout with PDB files prominently displayed
-layout:
-  title: "Boltz-1 Protein Structure Prediction Report"
-  description: "Structure predictions and configuration details"
-  
-  sections:
-    - name: "📁 Download Results"
-      description: "Predicted protein structures ready for download"
-      reports:
-        - pdb_file
-        - all_pdb_files
-        
-    - name: "📋 Configuration Files"
-      description: "Input parameters and processing details"
-      reports:
-        - input_config
-        - boltz_manifest
-        
-    - name: "🔍 Execution Details"
-      description: "Process logs and execution information"
-      reports:
-        - process_logs
-
-# Display settings optimized for file downloads
-display:
-  syntax_highlighting: true
-  line_numbers: true
-  collapsible_sections: true
-  max_file_size: "100MB"  # Allow larger PDB files
-  download_enabled: true   # Enable direct downloads
