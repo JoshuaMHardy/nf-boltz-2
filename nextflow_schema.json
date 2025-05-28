@@ -21,7 +21,7 @@
           "pattern": "^[a-zA-Z0-9_-]+$",
           "default": "test"
         },
-        "out_dir": {
+        "outdir": {
           "type": "string",
           "format": "directory-path",
           "description": "Output directory path",

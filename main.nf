@@ -74,7 +74,7 @@ process RunBoltz {
     memory params.memory
     executor 'slurm'
 
-    publishDir "${params.out_dir}", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
 
     input:
     tuple path(yaml), val(pred_name)

@@ -10,7 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-file-import",
             "description": "Define where the pipeline should find input data and save output data",
-            "required": ["pred_name"],
+            "required": ["pred_name","outdir"],
             "properties": {
                 "pred_name": {
                     "type": "string",
@@ -19,7 +19,7 @@
                     "pattern": "^[a-zA-Z0-9_-]+$",
                     "default": "test"
                 },
-                "out_dir": {
+                "outdir": {
                     "type": "string",
                     "format": "directory-path",
                     "description": "Output directory path",
