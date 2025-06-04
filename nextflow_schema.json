@@ -68,6 +68,18 @@
           "hidden": true,
           "help_text": "Number of denoising steps in the diffusion process"
         },
+        "boltz_write_full_pae": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to save the full PAE matrix as a file",
+          "hidden": true
+        },
+        "boltz_write_full_pde": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to save the full PDE matrix as a file",
+            "hidden": true
+        },
         "boltz_extra_config": {
           "type": "string",
           "description": "Additional Boltz-1 configuration",
