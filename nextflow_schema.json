@@ -115,7 +115,7 @@
         "seq1_seq": {
           "type": "string",
           "description": "Sequence 1 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -173,7 +173,7 @@
         "seq2_seq": {
           "type": "string",
           "description": "Sequence 2 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
@@ -226,7 +226,7 @@
         "seq3_seq": {
           "type": "string",
           "description": "Sequence 3 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -282,7 +282,7 @@
         "seq4_seq": {
           "type": "string",
           "description": "Sequence 4 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -338,7 +338,7 @@
         "seq5_seq": {
           "type": "string",
           "description": "Sequence 5 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -394,7 +394,7 @@
         "seq6_seq": {
           "type": "string",
           "description": "Sequence 6 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -450,7 +450,7 @@
         "seq7_seq": {
           "type": "string",
           "description": "Sequence 7 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -506,7 +506,7 @@
         "seq8_seq": {
           "type": "string",
           "description": "Sequence 8 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -562,7 +562,7 @@
         "seq9_seq": {
           "type": "string",
           "description": "Sequence 9 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -618,7 +618,7 @@
         "seq10_seq": {
           "type": "string",
           "description": "Sequence 10 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -674,7 +674,7 @@
         "seq11_seq": {
           "type": "string",
           "description": "Sequence 11 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
@@ -730,7 +730,7 @@
         "seq12_seq": {
           "type": "string",
           "description": "Sequence 12 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",

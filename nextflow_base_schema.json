@@ -49,7 +49,7 @@
         "sequence_seq_template": {
             "type": "string",
             "description": "Sequence {num} amino acid/nucleotide sequence",
-            "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+            "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
             "minLength": 1,
             "maxLength": 10000,
             "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA"
