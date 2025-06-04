@@ -118,11 +118,13 @@
         },
         "seq1_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 1 cyclic?",
           "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq1_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 1",
           "default": true,
           "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
@@ -172,11 +174,13 @@
         },
         "seq2_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 2 cyclic?",
           "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq2_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 2",
           "default": true,
           "help_text": "Generate multiple sequence alignment to improve prediction accuracy"

@@ -46,11 +46,13 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
         },
         f"seq{num}_cyclic": {
             "type": "boolean",
+            "hidden": True,
             "description": f"Is sequence {num} cyclic?",
             "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         f"seq{num}_genmsa": {
-            "type": "boolean", 
+            "type": "boolean",
+            "hidden": True, 
             "description": f"Generate MSA for sequence {num}",
             "default": True,
             "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
