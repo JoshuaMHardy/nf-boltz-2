@@ -99,6 +99,8 @@ process RunBoltz {
         --sampling_steps ${params.boltz_sampling_steps} \
         --cache /boltz/cache \
         --use_msa_server \
+        ${params.boltz_write_full_pae ? '--write_full_pae ' : ''} \
+        ${params.boltz_write_full_pde ? '--write_full_pde ' : ''} \
         ${params.boltz_extra_config ? params.boltz_extra_config : ''} \
         2>&1 | tee boltz_${pred_name}.log
 
