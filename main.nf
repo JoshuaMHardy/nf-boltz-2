@@ -93,7 +93,7 @@ process RunBoltz {
 
     boltz predict \
         ${yaml} \
-        --output_format pdb \
+        --output_format mmcif \
         --diffusion_samples ${params.boltz_diffusion_samples} \
         --recycling_steps ${params.boltz_recycling_steps} \
         --sampling_steps ${params.boltz_sampling_steps} \
