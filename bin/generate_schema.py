@@ -24,19 +24,19 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
             "enum": ["protein", "dna", "rna"],
             "help_text": f"Choose the biomolecule type for sequence {num}. Examples: protein, dna, rna"
         },
-        f"seq{num}_id": {
-            "type": "string", 
-            "description": f"Sequence {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-            "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L"
-        },
         f"seq{num}_seq": {
             "type": "string",
             "description": f"Sequence {num} amino acid/nucleotide sequence", 
-            "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+            "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
             "minLength": 1,
             "maxLength": 10000,
             "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+        },
+        f"seq{num}_chain_id": {
+            "type": "string", 
+            "description": f"Unique sequence {num} chain ID(s)",
+            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+            "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L"
         },
         f"seq{num}_mod": {
             "type": "string",
@@ -62,7 +62,7 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
     # First sequence specific settings
     if is_first:
         properties[f"seq{num}_type"]["default"] = "protein"
-        properties[f"seq{num}_id"]["default"] = "A"
+        properties[f"seq{num}_chain_id"]["default"] = "A"
         properties[f"seq{num}_seq"]["default"] = "ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
         properties[f"seq{num}_mod"]["default"] = "[33,SEP][42,SEP]"
         properties[f"seq{num}_genmsa"]["default"] = True
@@ -78,13 +78,6 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
     """Generate properties for a ligand (lig1, lig2, etc.)"""
     
     properties = {
-        f"lig{num}_id": {
-            "type": "string",
-            "description": f"Ligand {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$", 
-            "default": None,
-            "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2"
-        },
         f"lig{num}_type": {
             "type": "string",
             "description": f"Ligand {num} format",
@@ -95,7 +88,14 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
             "type": "string", 
             "description": f"Ligand {num} chemical identifier",
             "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
-        }
+        },
+        f"lig{num}_chain_id": {
+            "type": "string",
+            "description": f"Unique ligand {num} chain ID(s)",
+            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$", 
+            "default": None,
+            "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
+        },
     }
     
     # Hide individual parameters for ligands 3-12
@@ -131,7 +131,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         
         # Add required fields for sequence 1
         if i == 1:
-            group_definition["required"] = ["seq1_type", "seq1_id", "seq1_seq"]
+            group_definition["required"] = ["seq1_type", "seq1_chain_id", "seq1_seq"]
         
         # Hide sequences 3-12
         if i > 2:

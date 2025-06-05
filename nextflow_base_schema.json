@@ -40,9 +40,9 @@
             "enum": ["protein", "dna", "rna"],
             "help_text": "Choose the biomolecule type for sequence {num}"
         },
-        "sequence_id_template": {
+        "sequence_chain_id_template": {
             "type": "string",
-            "description": "Sequence {num} chain ID(s)",
+            "description": "Unique sequence {num} chain ID(s)",
             "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
             "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C')"
         },
@@ -72,7 +72,7 @@
             "default": false,
             "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         },
-        "ligand_id_template": {
+        "ligand_chain_id_template": {
             "type": "string",
             "description": "Ligand {num} chain ID(s)",
             "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -101,7 +101,7 @@
                     "pattern": "^(\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])(\\s+\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])*$",
                     "help_text": "Format: [chain,residue,atom][chain,residue,atom]. Separate multiple bonds with spaces. e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' "
                 },
-                "pocket_binder_id": {
+                "pocket_binder_chain_id": {
                     "type": "string",
                     "description": "Pocket binder chain ID",
                     "pattern": "^[A-Za-z0-9]+$",

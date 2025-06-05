@@ -50,7 +50,7 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
                     }
                 })
     
-    if params.get('pocket_binder_id') and params.get('pocket_contacts'):
+    if params.get('pocket_binder_chain_id') and params.get('pocket_contacts'):
         contact_pairs = []
         for contact in parse_constraint_atoms(params['pocket_contacts']):
             if len(contact) >= 2:
@@ -59,7 +59,7 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
             # Wrap the entire contacts list in FlowList for single-line formatting
             constraints.append({
                 'pocket': {
-                    'binder': params['pocket_binder_id'].strip(),
+                    'binder': params['pocket_binder_chain_id'].strip(),
                     'contacts': FlowList(contact_pairs)
                 }
             })
@@ -75,7 +75,7 @@ def build_yaml_structure(params: Dict) -> Dict:
             continue
             
         seq_type = params[f'{seq_key}_type']
-        ids = [x.strip() for x in params[f'{seq_key}_id'].split(',')] if params[f'{seq_key}_id'] else []
+        ids = [x.strip() for x in params[f'{seq_key}_chain_id'].split(',')] if params[f'{seq_key}_chain_id'] else []
         
         # Use FlowList for multiple IDs, single string for single ID
         id_value = ids[0] if len(ids) == 1 else FlowList(ids)
@@ -100,7 +100,7 @@ def build_yaml_structure(params: Dict) -> Dict:
         if not params.get(f'{lig_key}_type'):
             continue
             
-        ids = [x.strip() for x in params[f'{lig_key}_id'].split(',')] if params[f'{lig_key}_id'] else []
+        ids = [x.strip() for x in params[f'{lig_key}_chain_id'].split(',')] if params[f'{lig_key}_chain_id'] else []
         
         # Use FlowList for multiple IDs, single string for single ID
         id_value = ids[0] if len(ids) == 1 else FlowList(ids)

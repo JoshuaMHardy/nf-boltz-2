@@ -11,7 +11,8 @@
       "fa_icon": "fas fa-file-import",
       "description": "Define where the pipeline should find input data and save output data",
       "required": [
-        "pred_name"
+        "pred_name",
+        "outdir"
       ],
       "properties": {
         "pred_name": {
@@ -55,7 +56,7 @@
           "description": "Number of recycling steps",
           "minimum": 1,
           "maximum": 20,
-          "default":10,
+          "default": 10,
           "hidden": true,
           "help_text": "More steps generally improve accuracy but increase computation time. Default = 10, same as AlphaFold3."
         },
@@ -75,10 +76,10 @@
           "hidden": true
         },
         "boltz_write_full_pde": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to save the full PDE matrix as a file",
-            "hidden": true
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to save the full PDE matrix as a file",
+          "hidden": true
         },
         "boltz_extra_config": {
           "type": "string",
@@ -105,13 +106,6 @@
           "help_text": "Choose the biomolecule type for sequence 1. Examples: protein, dna, rna",
           "default": "protein"
         },
-        "seq1_id": {
-          "type": "string",
-          "description": "Sequence 1 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "default": "A"
-        },
         "seq1_seq": {
           "type": "string",
           "description": "Sequence 1 amino acid/nucleotide sequence",
@@ -120,6 +114,13 @@
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
           "default": "ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+        },
+        "seq1_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 1 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
+          "default": "A"
         },
         "seq1_mod": {
           "type": "string",
@@ -144,7 +145,7 @@
       },
       "required": [
         "seq1_type",
-        "seq1_id",
+        "seq1_chain_id",
         "seq1_seq"
       ]
     },
@@ -164,12 +165,6 @@
           ],
           "help_text": "Choose the biomolecule type for sequence 2. Examples: protein, dna, rna"
         },
-        "seq2_id": {
-          "type": "string",
-          "description": "Sequence 2 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L"
-        },
         "seq2_seq": {
           "type": "string",
           "description": "Sequence 2 amino acid/nucleotide sequence",
@@ -177,6 +172,12 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+        },
+        "seq2_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 2 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L"
         },
         "seq2_mod": {
           "type": "string",
@@ -216,13 +217,6 @@
           "help_text": "Choose the biomolecule type for sequence 3. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq3_id": {
-          "type": "string",
-          "description": "Sequence 3 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq3_seq": {
           "type": "string",
           "description": "Sequence 3 amino acid/nucleotide sequence",
@@ -230,6 +224,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq3_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 3 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq3_mod": {
@@ -241,16 +242,16 @@
         },
         "seq3_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 3 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq3_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 3",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -272,13 +273,6 @@
           "help_text": "Choose the biomolecule type for sequence 4. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq4_id": {
-          "type": "string",
-          "description": "Sequence 4 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq4_seq": {
           "type": "string",
           "description": "Sequence 4 amino acid/nucleotide sequence",
@@ -286,6 +280,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq4_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 4 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq4_mod": {
@@ -297,16 +298,16 @@
         },
         "seq4_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 4 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq4_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 4",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -328,13 +329,6 @@
           "help_text": "Choose the biomolecule type for sequence 5. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq5_id": {
-          "type": "string",
-          "description": "Sequence 5 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq5_seq": {
           "type": "string",
           "description": "Sequence 5 amino acid/nucleotide sequence",
@@ -342,6 +336,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq5_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 5 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq5_mod": {
@@ -353,16 +354,16 @@
         },
         "seq5_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 5 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq5_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 5",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -384,13 +385,6 @@
           "help_text": "Choose the biomolecule type for sequence 6. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq6_id": {
-          "type": "string",
-          "description": "Sequence 6 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq6_seq": {
           "type": "string",
           "description": "Sequence 6 amino acid/nucleotide sequence",
@@ -398,6 +392,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq6_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 6 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq6_mod": {
@@ -409,16 +410,16 @@
         },
         "seq6_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 6 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq6_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 6",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -440,13 +441,6 @@
           "help_text": "Choose the biomolecule type for sequence 7. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq7_id": {
-          "type": "string",
-          "description": "Sequence 7 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq7_seq": {
           "type": "string",
           "description": "Sequence 7 amino acid/nucleotide sequence",
@@ -454,6 +448,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq7_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 7 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq7_mod": {
@@ -465,16 +466,16 @@
         },
         "seq7_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 7 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq7_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 7",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -496,13 +497,6 @@
           "help_text": "Choose the biomolecule type for sequence 8. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq8_id": {
-          "type": "string",
-          "description": "Sequence 8 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq8_seq": {
           "type": "string",
           "description": "Sequence 8 amino acid/nucleotide sequence",
@@ -510,6 +504,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq8_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 8 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq8_mod": {
@@ -521,16 +522,16 @@
         },
         "seq8_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 8 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq8_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 8",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -552,13 +553,6 @@
           "help_text": "Choose the biomolecule type for sequence 9. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq9_id": {
-          "type": "string",
-          "description": "Sequence 9 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq9_seq": {
           "type": "string",
           "description": "Sequence 9 amino acid/nucleotide sequence",
@@ -566,6 +560,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq9_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 9 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq9_mod": {
@@ -577,16 +578,16 @@
         },
         "seq9_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 9 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq9_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 9",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -608,13 +609,6 @@
           "help_text": "Choose the biomolecule type for sequence 10. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq10_id": {
-          "type": "string",
-          "description": "Sequence 10 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq10_seq": {
           "type": "string",
           "description": "Sequence 10 amino acid/nucleotide sequence",
@@ -622,6 +616,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq10_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 10 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq10_mod": {
@@ -633,16 +634,16 @@
         },
         "seq10_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 10 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq10_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 10",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -664,13 +665,6 @@
           "help_text": "Choose the biomolecule type for sequence 11. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq11_id": {
-          "type": "string",
-          "description": "Sequence 11 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq11_seq": {
           "type": "string",
           "description": "Sequence 11 amino acid/nucleotide sequence",
@@ -678,6 +672,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq11_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 11 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq11_mod": {
@@ -689,16 +690,16 @@
         },
         "seq11_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 11 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq11_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 11",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -720,13 +721,6 @@
           "help_text": "Choose the biomolecule type for sequence 12. Examples: protein, dna, rna",
           "hidden": true
         },
-        "seq12_id": {
-          "type": "string",
-          "description": "Sequence 12 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
         "seq12_seq": {
           "type": "string",
           "description": "Sequence 12 amino acid/nucleotide sequence",
@@ -734,6 +728,13 @@
           "minLength": 1,
           "maxLength": 10000,
           "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
+          "hidden": true
+        },
+        "seq12_chain_id": {
+          "type": "string",
+          "description": "Unique sequence 12 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
           "hidden": true
         },
         "seq12_mod": {
@@ -745,16 +746,16 @@
         },
         "seq12_cyclic": {
           "type": "boolean",
+          "hidden": true,
           "description": "Is sequence 12 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA",
-          "hidden": true
+          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
         },
         "seq12_genmsa": {
           "type": "boolean",
+          "hidden": true,
           "description": "Generate MSA for sequence 12",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy",
-          "hidden": true
+          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
       },
       "hidden": true
@@ -765,7 +766,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 1 (small molecules, ions, etc.)",
       "properties": {
-        "lig1_id": {
+        "lig1_chain_id": {
           "type": "string",
           "description": "Ligand 1 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -794,7 +795,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 2 (small molecules, ions, etc.)",
       "properties": {
-        "lig2_id": {
+        "lig2_chain_id": {
           "type": "string",
           "description": "Ligand 2 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -823,7 +824,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 3 (small molecules, ions, etc.)",
       "properties": {
-        "lig3_id": {
+        "lig3_chain_id": {
           "type": "string",
           "description": "Ligand 3 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -856,7 +857,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 4 (small molecules, ions, etc.)",
       "properties": {
-        "lig4_id": {
+        "lig4_chain_id": {
           "type": "string",
           "description": "Ligand 4 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -889,7 +890,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 5 (small molecules, ions, etc.)",
       "properties": {
-        "lig5_id": {
+        "lig5_chain_id": {
           "type": "string",
           "description": "Ligand 5 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -922,7 +923,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 6 (small molecules, ions, etc.)",
       "properties": {
-        "lig6_id": {
+        "lig6_chain_id": {
           "type": "string",
           "description": "Ligand 6 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -955,7 +956,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 7 (small molecules, ions, etc.)",
       "properties": {
-        "lig7_id": {
+        "lig7_chain_id": {
           "type": "string",
           "description": "Ligand 7 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -988,7 +989,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 8 (small molecules, ions, etc.)",
       "properties": {
-        "lig8_id": {
+        "lig8_chain_id": {
           "type": "string",
           "description": "Ligand 8 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -1021,7 +1022,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 9 (small molecules, ions, etc.)",
       "properties": {
-        "lig9_id": {
+        "lig9_chain_id": {
           "type": "string",
           "description": "Ligand 9 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -1054,7 +1055,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 10 (small molecules, ions, etc.)",
       "properties": {
-        "lig10_id": {
+        "lig10_chain_id": {
           "type": "string",
           "description": "Ligand 10 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -1087,7 +1088,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 11 (small molecules, ions, etc.)",
       "properties": {
-        "lig11_id": {
+        "lig11_chain_id": {
           "type": "string",
           "description": "Ligand 11 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -1120,7 +1121,7 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 12 (small molecules, ions, etc.)",
       "properties": {
-        "lig12_id": {
+        "lig12_chain_id": {
           "type": "string",
           "description": "Ligand 12 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
@@ -1159,7 +1160,7 @@
           "pattern": "^(\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])(\\s+\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])*$",
           "help_text": "Format: [chain,residue,atom][chain,residue,atom]. Separate multiple bonds with spaces. e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' "
         },
-        "pocket_binder_id": {
+        "pocket_binder_chain_id": {
           "type": "string",
           "description": "Pocket binder chain ID",
           "pattern": "^[A-Za-z0-9]+$",
