@@ -124,7 +124,7 @@
         },
         "seq1_mod": {
           "type": "string",
-          "description": "Sequence 1 modifications",
+          "description": "Sequence 1 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "default": "[33,SEP][42,SEP]"
@@ -181,7 +181,7 @@
         },
         "seq2_mod": {
           "type": "string",
-          "description": "Sequence 2 modifications",
+          "description": "Sequence 2 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
         },
@@ -235,7 +235,7 @@
         },
         "seq3_mod": {
           "type": "string",
-          "description": "Sequence 3 modifications",
+          "description": "Sequence 3 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -291,7 +291,7 @@
         },
         "seq4_mod": {
           "type": "string",
-          "description": "Sequence 4 modifications",
+          "description": "Sequence 4 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -347,7 +347,7 @@
         },
         "seq5_mod": {
           "type": "string",
-          "description": "Sequence 5 modifications",
+          "description": "Sequence 5 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -403,7 +403,7 @@
         },
         "seq6_mod": {
           "type": "string",
-          "description": "Sequence 6 modifications",
+          "description": "Sequence 6 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -459,7 +459,7 @@
         },
         "seq7_mod": {
           "type": "string",
-          "description": "Sequence 7 modifications",
+          "description": "Sequence 7 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -515,7 +515,7 @@
         },
         "seq8_mod": {
           "type": "string",
-          "description": "Sequence 8 modifications",
+          "description": "Sequence 8 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -571,7 +571,7 @@
         },
         "seq9_mod": {
           "type": "string",
-          "description": "Sequence 9 modifications",
+          "description": "Sequence 9 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -627,7 +627,7 @@
         },
         "seq10_mod": {
           "type": "string",
-          "description": "Sequence 10 modifications",
+          "description": "Sequence 10 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -683,7 +683,7 @@
         },
         "seq11_mod": {
           "type": "string",
-          "description": "Sequence 11 modifications",
+          "description": "Sequence 11 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -739,7 +739,7 @@
         },
         "seq12_mod": {
           "type": "string",
-          "description": "Sequence 12 modifications",
+          "description": "Sequence 12 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
           "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
           "hidden": true
@@ -766,13 +766,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 1 (small molecules, ions, etc.)",
       "properties": {
-        "lig1_chain_id": {
-          "type": "string",
-          "description": "Ligand 1 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2"
-        },
         "lig1_type": {
           "type": "string",
           "description": "Ligand 1 format",
@@ -786,6 +779,13 @@
           "type": "string",
           "description": "Ligand 1 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
+        },
+        "lig1_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 1 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
         }
       }
     },
@@ -795,13 +795,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 2 (small molecules, ions, etc.)",
       "properties": {
-        "lig2_chain_id": {
-          "type": "string",
-          "description": "Ligand 2 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2"
-        },
         "lig2_type": {
           "type": "string",
           "description": "Ligand 2 format",
@@ -815,6 +808,13 @@
           "type": "string",
           "description": "Ligand 2 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
+        },
+        "lig2_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 2 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
         }
       }
     },
@@ -824,14 +824,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 3 (small molecules, ions, etc.)",
       "properties": {
-        "lig3_chain_id": {
-          "type": "string",
-          "description": "Ligand 3 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig3_type": {
           "type": "string",
           "description": "Ligand 3 format",
@@ -847,6 +839,14 @@
           "description": "Ligand 3 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig3_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 3 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -857,14 +857,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 4 (small molecules, ions, etc.)",
       "properties": {
-        "lig4_chain_id": {
-          "type": "string",
-          "description": "Ligand 4 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig4_type": {
           "type": "string",
           "description": "Ligand 4 format",
@@ -880,6 +872,14 @@
           "description": "Ligand 4 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig4_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 4 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -890,14 +890,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 5 (small molecules, ions, etc.)",
       "properties": {
-        "lig5_chain_id": {
-          "type": "string",
-          "description": "Ligand 5 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig5_type": {
           "type": "string",
           "description": "Ligand 5 format",
@@ -913,6 +905,14 @@
           "description": "Ligand 5 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig5_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 5 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -923,14 +923,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 6 (small molecules, ions, etc.)",
       "properties": {
-        "lig6_chain_id": {
-          "type": "string",
-          "description": "Ligand 6 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig6_type": {
           "type": "string",
           "description": "Ligand 6 format",
@@ -946,6 +938,14 @@
           "description": "Ligand 6 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig6_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 6 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -956,14 +956,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 7 (small molecules, ions, etc.)",
       "properties": {
-        "lig7_chain_id": {
-          "type": "string",
-          "description": "Ligand 7 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig7_type": {
           "type": "string",
           "description": "Ligand 7 format",
@@ -979,6 +971,14 @@
           "description": "Ligand 7 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig7_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 7 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -989,14 +989,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 8 (small molecules, ions, etc.)",
       "properties": {
-        "lig8_chain_id": {
-          "type": "string",
-          "description": "Ligand 8 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig8_type": {
           "type": "string",
           "description": "Ligand 8 format",
@@ -1012,6 +1004,14 @@
           "description": "Ligand 8 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig8_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 8 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -1022,14 +1022,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 9 (small molecules, ions, etc.)",
       "properties": {
-        "lig9_chain_id": {
-          "type": "string",
-          "description": "Ligand 9 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig9_type": {
           "type": "string",
           "description": "Ligand 9 format",
@@ -1045,6 +1037,14 @@
           "description": "Ligand 9 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig9_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 9 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -1055,14 +1055,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 10 (small molecules, ions, etc.)",
       "properties": {
-        "lig10_chain_id": {
-          "type": "string",
-          "description": "Ligand 10 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig10_type": {
           "type": "string",
           "description": "Ligand 10 format",
@@ -1078,6 +1070,14 @@
           "description": "Ligand 10 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig10_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 10 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -1088,14 +1088,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 11 (small molecules, ions, etc.)",
       "properties": {
-        "lig11_chain_id": {
-          "type": "string",
-          "description": "Ligand 11 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig11_type": {
           "type": "string",
           "description": "Ligand 11 format",
@@ -1111,6 +1103,14 @@
           "description": "Ligand 11 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
           "hidden": true
+        },
+        "lig11_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 11 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
         }
       },
       "hidden": true
@@ -1121,14 +1121,6 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 12 (small molecules, ions, etc.)",
       "properties": {
-        "lig12_chain_id": {
-          "type": "string",
-          "description": "Ligand 12 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2",
-          "hidden": true
-        },
         "lig12_type": {
           "type": "string",
           "description": "Ligand 12 format",
@@ -1143,6 +1135,14 @@
           "type": "string",
           "description": "Ligand 12 chemical identifier",
           "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
+          "hidden": true
+        },
+        "lig12_chain_id": {
+          "type": "string",
+          "description": "Unique ligand 12 chain ID(s)",
+          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+          "default": null,
+          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
           "hidden": true
         }
       },

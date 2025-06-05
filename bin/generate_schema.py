@@ -40,7 +40,7 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
         },
         f"seq{num}_mod": {
             "type": "string",
-            "description": f"Sequence {num} modifications",
+            "description": f"Sequence {num} modifications e.g. non-canonical amino acids",
             "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
             "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
         },
