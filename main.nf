@@ -56,6 +56,9 @@ workflow {
     
     // Run Boltz for each YAML file
     RunBoltz(yaml_files)
+
+    // Generate metadata and plots
+    AnalyseBoltz(RunBoltz.out.boltz_results)
 }
 
 /*
@@ -74,14 +77,16 @@ process RunBoltz {
     memory params.memory
     executor 'slurm'
 
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy', pattern: "${pred_name}"
+    publishDir "${params.outdir}", mode: 'copy', pattern: "*.log"
 
     input:
     tuple path(yaml), val(pred_name)
 
     output:
     path "${pred_name}"
-    path ("*.log"), emit: logs
+    tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), val(pred_name), emit: boltz_results
+    path ("*.log")
 
     script:
     """
@@ -93,7 +98,7 @@ process RunBoltz {
 
     boltz predict \
         ${yaml} \
-        --output_format mmcif \
+        --output_format ${params.boltz_output_format} \
         --diffusion_samples ${params.boltz_diffusion_samples} \
         --recycling_steps ${params.boltz_recycling_steps} \
         --sampling_steps ${params.boltz_sampling_steps} \
@@ -104,10 +109,40 @@ process RunBoltz {
         ${params.boltz_extra_config ? params.boltz_extra_config : ''} \
         2>&1 | tee boltz_${pred_name}.log
 
-    # Move prediction directory
-    mv boltz_results_*/predictions/${pred_name} .
-    # Copy input yaml to prediction directory
+    # Create prediction directory
+    mkdir ${pred_name}
+   
+    # Copy predictions and input yaml to prediction directory
+    cp boltz_results_*/predictions/*/*.${params.boltz_output_format} ${pred_name}/.
     cp ${yaml} ${pred_name}/.
+    """
+}
+
+process AnalyseBoltz {
+    container "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/pyrosetta_tools.sif"
+    containerOptions "-B ${projectDir}/bin/generate_metadata.py:/generate_metadata.py"
+
+    cpus 4
+    memory '8G'
+    executor 'slurm'
+
+    publishDir "${params.outdir}/${pred_name}/", mode: 'copy'
+
+    input:
+    tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
+
+    output:
+    path "*.png"
+    path "*.csv"
+
+    script:
+    """
+    eval "\$(micromamba shell hook --shell bash)"
+    micromamba activate pyrosetta
+
+    # Generate plots and metadata for Boltz-1 prediction 
+    python /generate_metadata.py "./" -o "./"
+
     """
 }
 

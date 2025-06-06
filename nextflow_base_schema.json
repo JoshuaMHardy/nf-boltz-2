@@ -147,6 +147,13 @@
                     "hidden": true,
                     "help_text": "Number of denoising steps in the diffusion process"
                 },
+                "boltz_output_format": {
+                    "type": "string",
+                    "enum": ["pdb", "mmcif"],
+                    "default": "pdb",
+                    "description": "Output format for structure predictions",
+                    "hidden": true
+                },
                 "boltz_write_full_pae": {
                     "type": "boolean",
                     "default": true,
