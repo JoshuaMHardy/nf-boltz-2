@@ -355,7 +355,7 @@ def main():
     chain_id_map = {}
     for idx, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
         chain_data = next(c for c in chains if c['name'].item() == chain_id)
-        chain_id_map[chain_data['entity_id'].item()] = {
+        chain_id_map[chain_data['asym_id'].item()] = {
             'id': chain_id,
             'type': mol_label,
             'index': idx
