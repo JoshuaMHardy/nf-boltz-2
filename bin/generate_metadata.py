@@ -116,35 +116,102 @@ def add_chain_labels_1d(chain_ranges, non_standard_ranges):
                 ha='center', va='bottom', fontsize=7,
                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
 
-def add_chain_labels_2d(chain_ranges, non_standard_ranges, matrix_size):
-    """Add chain labels and non-standard residue markers to 2D plots"""
-    # Chain boundaries - now dark grey
+def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain_ranges, non_standard_ranges, total_length):
+    """Plot PAE or PDE matrix with compact layout and proper spacing"""
+    file = os.path.join(directory, f"{matrix_type}_{runname}_model_{model_num}.npz")
+    data = np.load(file)
+    matrix = data[matrix_type][:total_length, :total_length]
+    
+    fig, ax = plt.subplots(figsize=(8, 8))  # More compact
+    
+    if matrix_type == 'pae':
+        im = ax.imshow(matrix, cmap='GnBu_r', origin='lower', vmin=0, vmax=30, 
+                      extent=[-0.5, total_length-0.5, -0.5, total_length-0.5])
+        cbar_label = 'Expected prediction error (Å)'
+        explanation = (
+            "PAE shows expected positional error between residue pairs.\n"
+            "Dark blue = low error (high confidence), light colors = higher uncertainty."
+        )
+    else:  # PDE
+        matrix = np.log1p(matrix)
+        im = ax.imshow(matrix, cmap='GnBu_r', origin='lower', 
+                      extent=[-0.5, total_length-0.5, -0.5, total_length-0.5])
+        cbar_label = 'log(Expected Distance Error (Å))'
+        explanation = (
+            "PDE estimates distance constraint reliability (log scale).\n"
+            "Dark blue = confident predictions, light colors = uncertainty."
+        )
+    
+    # Add chain boundary lines in RED
     for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
         if i > 0:
-            plt.axhline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1)
-            plt.axvline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1)
-        
-        # Chain labels
-        plt.text((start + end)/2, matrix_size + 2, f"{chain_id}\n{mol_label}", 
-                ha='center', va='bottom', fontsize=8,
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
-        plt.text(-5, (start + end)/2, f"{chain_id}\n{mol_label}", 
-                ha='center', va='center', fontsize=8, rotation=90,
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+            ax.axhline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1)
+            ax.axvline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1)
     
-    # Non-standard residues - also dark grey
+    # Add non-standard residue boundaries in RED
     for res_name, res_idx, start, end in non_standard_ranges:
-        plt.axhline(start - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        plt.axhline(end - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        plt.axvline(start - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        plt.axvline(end - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        
-        plt.text((start + end)/2, matrix_size + 8, f"{res_name}{res_idx}", 
-                ha='center', va='bottom', fontsize=7,
-                bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
-        plt.text(-8, (start + end)/2, f"{res_name}{res_idx}", 
-                ha='center', va='center', fontsize=7, rotation=90,
-                bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+        ax.axhline(start - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
+        ax.axhline(end - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
+        ax.axvline(start - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
+        ax.axvline(end - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
+    
+    # Set axes properties
+    ax.set_xlim(-0.5, total_length - 0.5)
+    ax.set_ylim(-0.5, total_length - 0.5)
+    ax.set_xlabel("Scored residue", fontsize=11)
+    ax.set_ylabel("Aligned residue", fontsize=11)
+    
+    # Compact label positioning
+    label_offset_close = total_length * 0.025   # Non-standard residues (closer)
+    label_offset_far = total_length * 0.055     # Chain labels (further)
+    
+    # Add non-standard residue labels first (closer to plot)
+    for res_name, res_idx, start, end in non_standard_ranges:
+        mid_pos = (start + end) / 2
+        # Top
+        ax.text(mid_pos, total_length + label_offset_close, f"{res_name}{res_idx}", 
+                ha='center', va='bottom', fontsize=8,
+                bbox=dict(boxstyle="round,pad=0.2", facecolor="lightblue", alpha=0.8))
+        # Right
+        ax.text(total_length + label_offset_close, mid_pos, f"{res_name}{res_idx}", 
+                ha='center', va='center', fontsize=8, rotation=-90,
+                bbox=dict(boxstyle="round,pad=0.2", facecolor="lightblue", alpha=0.8))
+    
+    # Add chain labels (further from plot)
+    for chain_id, mol_label, start, end in chain_ranges:
+        mid_pos = (start + end) / 2
+        # Top
+        ax.text(mid_pos, total_length + label_offset_far, f"{chain_id}\n{mol_label}", 
+                ha='center', va='bottom', fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor='gray'))
+        # Right
+        ax.text(total_length + label_offset_far, mid_pos, f"{chain_id}\n{mol_label}", 
+                ha='center', va='center', fontsize=9, rotation=-90,
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor='gray'))
+    
+    # Add horizontal colorbar with compact positioning
+    cbar = fig.colorbar(im, ax=ax, orientation='horizontal', 
+                       shrink=0.7, pad=0.08, aspect=30)
+    cbar.set_label(cbar_label, fontsize=10)
+    cbar.ax.tick_params(labelsize=9)
+    
+    # Move title higher to avoid overlap with labels
+    fig.suptitle(f"{matrix_type.upper()} - Model {model_num}", 
+                fontsize=14, fontweight='bold', x=0.5, y=0.98, ha='center')
+    
+    # Multi-line explanatory text at bottom
+    fig.text(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=8,
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.8),
+             transform=fig.transFigure)
+    
+    # Compact layout with minimal margins
+    plt.subplots_adjust(left=0.08, bottom=0.15, right=0.85, top=0.93)
+    
+    # Save with tight bounding box to minimize white space
+    plt.savefig(os.path.join(output_dir, f'{matrix_type}_model_{model_num}.png'), 
+               dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+
 
 def plot_all_models_plddt(directory, runname, output_dir, chain_ranges, non_standard_ranges, total_length):
     """Plot pLDDT values for all models in one figure"""
@@ -208,45 +275,6 @@ def plot_single_model_plddt(directory, runname, output_dir, chain_ranges, non_st
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.15)
     plt.savefig(os.path.join(output_dir, f'{runname}_plddt_model_{model_num}.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-
-def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain_ranges, non_standard_ranges, total_length):
-    """Plot PAE or PDE matrix"""
-    file = os.path.join(directory, f"{matrix_type}_{runname}_model_{model_num}.npz")
-    data = np.load(file)
-    matrix = data[matrix_type][:total_length, :total_length]
-    plt.figure(figsize=(12, 10))
-    if matrix_type == 'pae':
-        plt.imshow(matrix, cmap='GnBu_r', origin='lower', vmin=0, vmax=30, 
-                  extent=[-0.5, total_length-0.5, -0.5, total_length-0.5])
-        cbar_label = 'Expected prediction error (Å)'
-        explanation = (
-            "PAE (Predicted Aligned Error) shows expected positional error between residue pairs.\n"
-            "Dark blue indicates low error (high confidence), light colors show higher uncertainty.\n"
-            "Low values within chains suggest good local structure, between chains indicate reliable interfaces."
-        )
-    else:
-        matrix = np.log1p(matrix)
-        plt.imshow(matrix, cmap='GnBu_r', origin='lower', 
-                  extent=[-0.5, total_length-0.5, -0.5, total_length-0.5])
-        cbar_label = 'log(Expected Distance Error (Å))'
-        explanation = (
-            "PDE (Predicted Distance Error) estimates distance constraint reliability (log scale).\n "
-            "Dark blue regions indicate confident distance predictions, lighter areas show uncertainty.\n "
-            "Patterns reveal which residue pairs have reliable geometric relationships."
-        )
-    plt.colorbar(label=cbar_label)
-    add_chain_labels_2d(chain_ranges, non_standard_ranges, total_length)
-    plt.xlim(-0.5, total_length - 0.5)
-    plt.ylim(-0.5, total_length - 0.5)
-    plt.title(f"{matrix_type.upper()} - Model {model_num}")
-    plt.ylabel("Aligned residue")
-    plt.xlabel("Scored residue")
-    plt.figtext(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=9,
-        bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8), wrap=True)    
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.12)
-    plt.savefig(os.path.join(output_dir, f'{runname}_{matrix_type}_model_{model_num}.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
 def process_confidence_data(directory, runname, model_num, chain_id_map):
@@ -393,7 +421,7 @@ def main():
         fieldnames = set()
         for md in all_metadata:
             fieldnames.update(md.keys())
-        #fieldnames = sorted(fieldnames)
+        fieldnames = sorted(fieldnames)
         with open(csv_path, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()

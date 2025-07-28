@@ -69,7 +69,7 @@ workflow {
 
 process RunBoltz {
     container "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/boltz.sif"
-    containerOptions "--nv"
+    containerOptions "--nv --bind ${params.boltz_models}:/boltzcache"
 
     queue 'gpuq'
     clusterOptions '--gres=gpu:' + params.gpu_model + ':1'
@@ -90,11 +90,9 @@ process RunBoltz {
 
     script:
     """
-    # We specify tmp directories as some python packages try to write to the user home directory outside the container
+    # We specify a tmp directory as some python packages try to write to the user home directory outside the container
     mkdir tmp
-    export NUMBA_CACHE_DIR=tmp
-    export XDG_CONFIG_HOME=tmp
-    export TRITON_CACHE_DIR=tmp
+    export HOME=tmp
 
     boltz predict \
         ${yaml} \
@@ -102,7 +100,7 @@ process RunBoltz {
         --diffusion_samples ${params.boltz_diffusion_samples} \
         --recycling_steps ${params.boltz_recycling_steps} \
         --sampling_steps ${params.boltz_sampling_steps} \
-        --cache /boltz/cache \
+        --cache /boltzcache \
         --use_msa_server \
         ${params.boltz_write_full_pae ? '--write_full_pae ' : ''} \
         ${params.boltz_write_full_pde ? '--write_full_pde ' : ''} \

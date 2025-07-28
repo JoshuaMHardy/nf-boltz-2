@@ -96,6 +96,20 @@
           "description": "Additional Boltz-1 configuration",
           "hidden": true,
           "help_text": "Extra command-line arguments for Boltz-1 (e.g., '--msa_pairing_strategy complete --confidence_threshold 0.7')"
+        },
+        "boltz_container": {
+          "type": "string",
+          "format": "directory-path",
+          "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/boltz2.sif",
+          "description": "Path to Boltz-2 container",
+          "hidden": true
+        },
+        "boltz_models": {
+          "type": "string",
+          "format": "directory-path",
+          "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/boltzmodels",
+          "description": "Path to Boltz-2 model checkpoints",
+          "hidden": true
         }
       }
     },
