@@ -32,7 +32,7 @@
         "input_yaml": {
           "type": "string",
           "format": "file-path",
-          "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints parameters below.",
+          "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints etc. parameters below.",
           "help_text": "e.g. '/path/to/input.yml'. The name of each yaml file will be used for the prediction name."
         }
       }
@@ -48,8 +48,8 @@
           "description": "Number of diffusion samples",
           "minimum": 1,
           "maximum": 25,
-          "default": null,
-          "help_text": "Number of independent diffusion samples to generate. More samples improve quality but increase computation time."
+          "default": 5,
+          "help_text": "Number of independent diffusion samples to generate. More samples improve quality but increase computation time. Default: 5"
         },
         "method": {
           "type": "string",
@@ -62,7 +62,7 @@
             "x-ray crystallography",
             "other"
           ],
-          "default": null,
+          "default": "x-ray crystallography",
           "description": "Method conditioning to use for prediction (default: 'x-ray crystallography').",
           "hidden": true,
           "help_text": "Choose from: 'afdb', 'boltz-1', 'md', 'electron microscopy', 'solution-nmr', 'x-ray crystallography', or 'other'. 'Other' includes methods such as electron crystallography, epr, fiber diffraction, fluorescence transfer, infrared spectroscopy, neutron diffraction, powder diffraction, solution scattering, solid-state nmr, theoretical model, that are treated equivalently"
@@ -72,7 +72,7 @@
           "description": "Number of recycling steps",
           "minimum": 1,
           "maximum": 20,
-          "default": null,
+          "default": 10,
           "hidden": true,
           "help_text": "More steps generally improve accuracy but increase computation time. Default = 10, same as AlphaFold3."
         },
@@ -81,9 +81,9 @@
           "description": "Number of sampling steps",
           "minimum": 50,
           "maximum": 1000,
-          "default": null,
+          "default": 200,
           "hidden": true,
-          "help_text": "Number of denoising steps in the diffusion process"
+          "help_text": "Number of denoising steps in the diffusion process. Default: 200"
         },
         "output_format": {
           "type": "string",
