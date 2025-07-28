@@ -50,7 +50,7 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
                     }
                 })
     
-    if params.get('pocket_binder_chain_id') and params.get('pocket_contacts'):
+    if params.get('pocket_ligand_chain_id') and params.get('pocket_contacts'):
         contact_pairs = []
         for contact in parse_constraint_atoms(params['pocket_contacts']):
             if len(contact) >= 2:
@@ -59,7 +59,7 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
             # Wrap the entire contacts list in FlowList for single-line formatting
             constraints.append({
                 'pocket': {
-                    'binder': params['pocket_binder_chain_id'].strip(),
+                    'binder': params['pocket_ligand_chain_id'].strip(),
                     'contacts': FlowList(contact_pairs)
                 }
             })

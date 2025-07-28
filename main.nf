@@ -96,15 +96,19 @@ process RunBoltz {
 
     boltz predict \
         ${yaml} \
-        --output_format ${params.boltz_output_format} \
-        --diffusion_samples ${params.boltz_diffusion_samples} \
-        --recycling_steps ${params.boltz_recycling_steps} \
-        --sampling_steps ${params.boltz_sampling_steps} \
         --cache /boltzcache \
         --use_msa_server \
-        ${params.boltz_write_full_pae ? '--write_full_pae ' : ''} \
-        ${params.boltz_write_full_pde ? '--write_full_pde ' : ''} \
-        ${params.boltz_extra_config ? params.boltz_extra_config : ''} \
+        ${params.diffusion_samples ? "--diffusion_samples ${params.diffusion_samples}" : ''} \
+        ${params.method ? "--method ${params.method}" : ''} \
+        ${params.recycling_steps ? "--recycling_steps ${params.recycling_steps}" : ''} \
+        ${params.sampling_steps ? "--sampling_steps ${params.sampling_steps}" : ''} \
+        ${params.affinity_mw_correction ? '--affinity_mw_correction ' : ''} \
+        ${params.diffusion_samples_affinity ? "--diffusion_samples_affinity ${params.diffusion_samples_affinity}" : ''} \
+        ${params.sampling_steps_affinity ? "--sampling_steps ${params.sampling_steps_affinity}" : ''} \
+        ${params.output_format ? "--output_format ${params.output_format} " :'' } \
+        ${params.write_full_pae ? '--write_full_pae ' : ''} \
+        ${params.write_full_pde ? '--write_full_pde ' : ''} \
+        ${params.extra_config ? params.boltz_extra_config : ''} \
         2>&1 | tee boltz_${pred_name}.log
 
     # Create prediction directory

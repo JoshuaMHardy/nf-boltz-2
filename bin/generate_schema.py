@@ -13,6 +13,11 @@ def load_base_schema(filename: str) -> Dict[str, Any]:
     with open(filename, 'r') as f:
         return json.load(f)
 
+def hide_all_properties(properties: Dict[str, Any]):
+    for prop in properties.values():
+        prop["hidden"] = True
+    return properties
+
 def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, Any]:
     """Generate properties for a sequence (seq1, seq2, etc.)"""
     
@@ -67,8 +72,7 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
     
     # Hide individual parameters for sequences 3-12
     if num > 2:
-        for key in properties:
-            properties[key]["hidden"] = True
+        return hide_all_properties(properties)
             
     return properties
 
@@ -98,96 +102,47 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
     
     # Hide individual parameters for ligands 3-12
     if num > 2:
-        for key in properties:
-            properties[key]["hidden"] = True
+        return hide_all_properties(properties)
             
     return properties
 
-def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate the complete schema with all sequences and ligands"""
-    
+def generate_full_schema(base_schema: Dict[str, Any], num_sequences: int = 12, num_ligands: int = 12) -> Dict[str, Any]:
     schema = copy.deepcopy(base_schema)
-    
-    # Start with base definitions
-    new_definitions = {
-        "input_output_options": schema["definitions"]["input_output_options"],
-        "boltz_options": schema["definitions"]["boltz_options"]
-    }
-    
-    # Create individual sequence groups
-    sequence_refs = []
-    for i in range(1, 13):
-        seq_props = generate_sequence_properties(i, is_first=(i==1))
-        
-        group_definition = {
+    new_defs = {}
+    allof_refs = []
+    # Always add IO and prediction options first
+    for sec in ["input_output_options", "prediction_options"]:
+        new_defs[sec] = schema["definitions"][sec]
+        allof_refs.append({"$ref": f"#/definitions/{sec}"})
+    # Sequence and ligand groups
+    for i in range(1, num_sequences + 1):
+        new_defs[f"sequence_{i}_options"] = {
             "title": f"Sequence {i} options",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": f"Configure sequence {i} (protein, DNA, or RNA)",
-            "properties": seq_props
+            "properties": generate_sequence_properties(i),
+            **({"required": [f"seq{i}_type", f"seq{i}_chain_id", f"seq{i}_seq"]} if i == 1 else {}),
+            **({"hidden": True} if i > 2 else {})
         }
-        
-        # Add required fields for sequence 1
-        if i == 1:
-            group_definition["required"] = ["seq1_type", "seq1_chain_id", "seq1_seq"]
-        
-        # Hide sequences 3-12
-        if i > 2:
-            group_definition["hidden"] = True
-            
-        new_definitions[f"sequence_{i}_options"] = group_definition
-        sequence_refs.append({"$ref": f"#/definitions/sequence_{i}_options"})
-    
-    # Create individual ligand groups
-    ligand_refs = []
-    for i in range(1, 13):
-        lig_props = generate_ligand_properties(i)
-        
-        group_definition = {
+        allof_refs.append({"$ref": f"#/definitions/sequence_{i}_options"})
+    for i in range(1, num_ligands + 1):
+        new_defs[f"ligand_{i}_options"] = {
             "title": f"Ligand {i} options",
             "type": "object",
             "fa_icon": "fas fa-prescription-bottle",
-            "description": f"Configure ligand {i} (small molecules, ions, etc.)",
-            "properties": lig_props
+            "description": f"Configure ligand {i}",
+            "properties": generate_ligand_properties(i),
+            **({"hidden": True} if i > 2 else {})
         }
-        
-        # Hide ligands 3-12
-        if i > 2:
-            group_definition["hidden"] = True
-            
-        new_definitions[f"ligand_{i}_options"] = group_definition
-        ligand_refs.append({"$ref": f"#/definitions/ligand_{i}_options"})
-    
-    # Add constraint and compute options
-    constraint_options = copy.deepcopy(schema["definitions"]["constraint_options"])
-    constraint_options["hidden"] = True
-    
-    new_definitions["constraint_options"] = constraint_options
-    new_definitions["compute_options"] = schema["definitions"]["compute_options"]
-    
-    # Update schema with new definitions
-    schema["definitions"] = new_definitions
-    
-    # Set up allOf references in the desired order
-    allof_refs = [
-        {"$ref": "#/definitions/input_output_options"},
-        {"$ref": "#/definitions/boltz_options"}
-    ]
-    
-    # Add sequence references
-    allof_refs.extend(sequence_refs)
-    
-    # Add ligand references  
-    allof_refs.extend(ligand_refs)
-    
-    # Add constraint and compute
-    allof_refs.extend([
-        {"$ref": "#/definitions/constraint_options"},
-        {"$ref": "#/definitions/compute_options"}
-    ])
-    
+        allof_refs.append({"$ref": f"#/definitions/ligand_{i}_options"})
+    # Other sections (constraint and compute)
+    for sec in ["affinity_options","constraint_options","template_options","compute_options"]:
+        if sec in schema["definitions"]:
+            new_defs[sec] = schema["definitions"][sec]
+            allof_refs.append({"$ref": f"#/definitions/{sec}"})
+    schema["definitions"] = new_defs
     schema["allOf"] = allof_refs
-    
     return schema
 
 def main():
