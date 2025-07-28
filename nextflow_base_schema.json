@@ -34,61 +34,6 @@
                 }
             }
         },
-        "sequence_template": {
-            "type": "string",
-            "description": "Sequence {num} type",
-            "enum": ["protein", "dna", "rna"],
-            "help_text": "Choose the biomolecule type for sequence {num}"
-        },
-        "sequence_chain_id_template": {
-            "type": "string",
-            "description": "Unique sequence {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-            "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C')"
-        },
-        "sequence_seq_template": {
-            "type": "string",
-            "description": "Sequence {num} amino acid/nucleotide sequence",
-            "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-            "minLength": 1,
-            "maxLength": 10000,
-            "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA"
-        },
-        "sequence_mod_template": {
-            "type": "string",
-            "description": "Sequence {num} modifications",
-            "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-            "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]' "
-        },
-        "sequence_cyclic_template": {
-            "type": "boolean",
-            "description": "Is sequence {num} cyclic?",
-            "default": false,
-            "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "sequence_genmsa_template": {
-            "type": "boolean",
-            "description": "Generate MSA for sequence {num}",
-            "default": false,
-            "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        },
-        "ligand_chain_id_template": {
-            "type": "string",
-            "description": "Ligand {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-            "help_text": "Chain identifier(s) for the ligand e.g. 'D', 'L1,L2'"
-        },
-        "ligand_type_template": {
-            "type": "string",
-            "description": "Ligand {num} format",
-            "enum": ["CCD", "SMILES"],
-            "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system"
-        },
-        "ligand_chem_template": {
-            "type": "string",
-            "description": "Ligand {num} chemical identifier",
-            "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'ZN', 'ATP', 'CCO', '[Ca+2]', 'CC(=O)Nc1ccc(O)cc1')"
-        },
         "constraint_options": {
             "title": "Constraint options",
             "type": "object", 

@@ -119,6 +119,12 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 1 (protein, DNA, or RNA)",
       "properties": {
+        "seq1_name": {
+          "type": "string",
+          "description": "Sequence 1 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
         "seq1_type": {
           "type": "string",
           "description": "Sequence 1 type",
@@ -127,8 +133,7 @@
             "dna",
             "rna"
           ],
-          "help_text": "Choose the biomolecule type for sequence 1. Examples: protein, dna, rna",
-          "default": "protein"
+          "help_text": "Choose the biomolecule type for sequence 1. Examples: protein, dna, rna"
         },
         "seq1_seq": {
           "type": "string",
@@ -136,22 +141,19 @@
           "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
           "minLength": 1,
           "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "default": "ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
         },
         "seq1_chain_id": {
           "type": "string",
           "description": "Unique sequence 1 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "default": "A"
+          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L"
         },
         "seq1_mod": {
           "type": "string",
           "description": "Sequence 1 modifications e.g. non-canonical amino acids",
           "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "default": "[33,SEP][42,SEP]"
+          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
         },
         "seq1_cyclic": {
           "type": "boolean",
@@ -179,6 +181,12 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 2 (protein, DNA, or RNA)",
       "properties": {
+        "seq2_name": {
+          "type": "string",
+          "description": "Sequence 2 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
         "seq2_type": {
           "type": "string",
           "description": "Sequence 2 type",
@@ -230,6 +238,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 3 (protein, DNA, or RNA)",
       "properties": {
+        "seq3_name": {
+          "type": "string",
+          "description": "Sequence 3 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq3_type": {
           "type": "string",
           "description": "Sequence 3 type",
@@ -286,6 +301,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 4 (protein, DNA, or RNA)",
       "properties": {
+        "seq4_name": {
+          "type": "string",
+          "description": "Sequence 4 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq4_type": {
           "type": "string",
           "description": "Sequence 4 type",
@@ -342,6 +364,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 5 (protein, DNA, or RNA)",
       "properties": {
+        "seq5_name": {
+          "type": "string",
+          "description": "Sequence 5 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq5_type": {
           "type": "string",
           "description": "Sequence 5 type",
@@ -398,6 +427,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 6 (protein, DNA, or RNA)",
       "properties": {
+        "seq6_name": {
+          "type": "string",
+          "description": "Sequence 6 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq6_type": {
           "type": "string",
           "description": "Sequence 6 type",
@@ -454,6 +490,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 7 (protein, DNA, or RNA)",
       "properties": {
+        "seq7_name": {
+          "type": "string",
+          "description": "Sequence 7 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq7_type": {
           "type": "string",
           "description": "Sequence 7 type",
@@ -510,6 +553,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 8 (protein, DNA, or RNA)",
       "properties": {
+        "seq8_name": {
+          "type": "string",
+          "description": "Sequence 8 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq8_type": {
           "type": "string",
           "description": "Sequence 8 type",
@@ -566,6 +616,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 9 (protein, DNA, or RNA)",
       "properties": {
+        "seq9_name": {
+          "type": "string",
+          "description": "Sequence 9 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq9_type": {
           "type": "string",
           "description": "Sequence 9 type",
@@ -622,6 +679,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 10 (protein, DNA, or RNA)",
       "properties": {
+        "seq10_name": {
+          "type": "string",
+          "description": "Sequence 10 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq10_type": {
           "type": "string",
           "description": "Sequence 10 type",
@@ -678,6 +742,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 11 (protein, DNA, or RNA)",
       "properties": {
+        "seq11_name": {
+          "type": "string",
+          "description": "Sequence 11 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq11_type": {
           "type": "string",
           "description": "Sequence 11 type",
@@ -734,6 +805,13 @@
       "fa_icon": "fas fa-dna",
       "description": "Configure sequence 12 (protein, DNA, or RNA)",
       "properties": {
+        "seq12_name": {
+          "type": "string",
+          "description": "Sequence 12 name/description (optional)",
+          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "hidden": true
+        },
         "seq12_type": {
           "type": "string",
           "description": "Sequence 12 type",

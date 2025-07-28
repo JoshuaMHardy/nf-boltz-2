@@ -18,6 +18,12 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
     
     # Base properties for all sequences
     properties = {
+        f"seq{num}_name": {
+            "type": "string",
+            "description": f"Sequence {num} name/description (optional)",
+            "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+       },
         f"seq{num}_type": {
             "type": "string",
             "description": f"Sequence {num} type",
@@ -58,14 +64,6 @@ def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, 
             "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
     }
-    
-    # First sequence specific settings
-    if is_first:
-        properties[f"seq{num}_type"]["default"] = "protein"
-        properties[f"seq{num}_chain_id"]["default"] = "A"
-        properties[f"seq{num}_seq"]["default"] = "ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
-        properties[f"seq{num}_mod"]["default"] = "[33,SEP][42,SEP]"
-        properties[f"seq{num}_genmsa"]["default"] = True
     
     # Hide individual parameters for sequences 3-12
     if num > 2:
