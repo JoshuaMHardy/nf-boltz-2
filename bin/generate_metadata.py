@@ -457,7 +457,7 @@ def main():
         fieldnames = set()
         for md in all_metadata:
             fieldnames.update(md.keys())
-        fieldnames = sorted(fieldnames)
+
         with open(csv_path, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
