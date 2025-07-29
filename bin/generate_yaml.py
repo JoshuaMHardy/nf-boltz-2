@@ -17,6 +17,89 @@ def flow_list_representer(dumper, data):
 # Register the custom representer
 yaml.add_representer(FlowList, flow_list_representer)
 
+def validate_affinity_ligand_id(params: dict):
+    defined_ligand_ids = set()
+    for i in range(1, 13):
+        chain_id = params.get(f'lig{i}_chain_id')
+        if chain_id:
+            for cid in [x.strip() for x in chain_id.split(',') if x.strip()]:
+                defined_ligand_ids.add(cid)
+    affinity_id = params.get('affinity_ligand_id')
+    if affinity_id:
+        if affinity_id not in defined_ligand_ids:
+            print(f"Error: affinity_ligand_id '{affinity_id}' is not among defined ligand chain IDs: {sorted(defined_ligand_ids)}")
+            sys.exit(1)
+
+def validate_sequence_requiredness(params: dict):
+    for i in range(1, 13):
+        seq_key = f'seq{i}'
+        seq_type = params.get(f'{seq_key}_type')
+        chain_id = params.get(f'{seq_key}_chain_id')
+        seq = params.get(f'{seq_key}_seq')
+        if seq_type:
+            # if any part is missing, error
+            if not chain_id or not seq:
+                print(f"Error: {seq_key}_type is set ('{seq_type}') but corresponding chain_id or seq is missing.")
+                sys.exit(1)
+        elif chain_id or seq:
+            print(f"Error: {seq_key}_chain_id or {seq_key}_seq is set, but {seq_key}_type is not set.")
+            sys.exit(1)
+
+def validate_sequence_string(seq_type: str, seq: str, seq_key: str):
+    PROTEIN_ALPHABET = set('ACDEFGHIKLMNPQRSTVWYUBXZ')
+    DNA_ALPHABET     = set('ACGTN')
+    RNA_ALPHABET     = set('ACGUN')
+    
+    if not seq:
+        print(f"Error: No sequence provided for {seq_key}.")
+        sys.exit(1)
+    s = seq.upper()
+    if seq_type == 'protein':
+        valid = PROTEIN_ALPHABET
+        msg = "protein"
+    elif seq_type == 'dna':
+        valid = DNA_ALPHABET
+        msg = "DNA"
+    elif seq_type == 'rna':
+        valid = RNA_ALPHABET
+        msg = "RNA"
+    else:
+        return
+    invalid = sorted(set(s) - valid)
+    if invalid:
+        print(f"Error: Invalid character(s) {invalid} in {msg} sequence for {seq_key}. Allowed: {''.join(sorted(valid))}")
+        sys.exit(1)
+
+def validate_unique_chain_ids(params: Dict):
+    """
+    Ensure that each chain ID (across all seq/lig entries) is unique.
+    If duplicates are found, exit with an error message.
+    """
+    all_chain_ids = []
+    # Sequences
+    for i in range(1, 13):
+        seq_key = f'seq{i}'
+        ids = params.get(f'{seq_key}_chain_id')
+        if ids:
+            all_chain_ids.extend(x.strip() for x in ids.split(',') if x.strip())
+    # Ligands
+    for i in range(1, 13):
+        lig_key = f'lig{i}'
+        ids = params.get(f'{lig_key}_chain_id')
+        if ids:
+            all_chain_ids.extend(x.strip() for x in ids.split(',') if x.strip())
+    # Check uniqueness
+    seen = set()
+    duplicates = set()
+    for cid in all_chain_ids:
+        if cid in seen:
+            duplicates.add(cid)
+        else:
+            seen.add(cid)
+    if duplicates:
+        print(f"Error: Duplicate chain ID(s) found across entries: {', '.join(sorted(duplicates))}")
+        sys.exit(1)
+
 def parse_modifications(mod_str: Optional[str]) -> List[Dict]:
     if not mod_str:
         return []
@@ -209,6 +292,9 @@ def build_yaml_structure(params: Dict) -> Dict:
             continue
             
         seq_type = params[f'{seq_key}_type']
+        seq_str = params.get(f'{seq_key}_seq', '')
+        validate_sequence_string(seq_type, seq_str, seq_key)
+
         ids = [x.strip() for x in params[f'{seq_key}_chain_id'].split(',')] if params[f'{seq_key}_chain_id'] else []
         
         # Use FlowList for multiple IDs, single string for single ID
@@ -283,6 +369,10 @@ if __name__ == "__main__":
                 elif v.lower() == "false": v = False
             cleaned_params[k] = v
         
+        validate_unique_chain_ids(cleaned_params)
+        validate_affinity_ligand_id(cleaned_params)
+        validate_sequence_requiredness(cleaned_params)
+
         yaml_structure = build_yaml_structure(cleaned_params)
         print(yaml.dump(
             yaml_structure, 
