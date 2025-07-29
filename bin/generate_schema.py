@@ -80,17 +80,6 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
     """Generate properties for a ligand (lig1, lig2, etc.)"""
     
     properties = {
-        f"lig{num}_type": {
-            "type": "string",
-            "description": f"Ligand {num} format",
-            "enum": ["CCD", "SMILES"],
-            "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES"
-        },
-        f"lig{num}_chem": {
-            "type": "string", 
-            "description": f"Ligand {num} chemical identifier",
-            "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
-        },
         f"lig{num}_chain_id": {
             "type": "string",
             "description": f"Unique ligand {num} chain ID(s)",
@@ -98,6 +87,16 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
             "default": None,
             "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
         },
+        f"lig{num}_ccd": {
+            "type": "string",
+            "description": f"Ligand {num} CCD code.",
+            "help_text": "CCD code (e.g., 'ATP', 'ZN')"
+        },
+        f"lig{num}_chem": {
+            "type": "string", 
+            "description": f"Ligand {num} SMILES string (if provided, CCD field will be ignored)",
+            "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)"
+        }
     }
     
     # Hide individual parameters for ligands 3-12

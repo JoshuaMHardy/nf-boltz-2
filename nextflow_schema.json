@@ -65,7 +65,7 @@
           "default": "x-ray crystallography",
           "description": "Method conditioning to use for prediction (default: 'x-ray crystallography').",
           "hidden": true,
-          "help_text": "Choose from: 'afdb', 'boltz-1', 'md', 'electron microscopy', 'solution-nmr', 'x-ray crystallography', or 'other'. 'Other' includes methods such as electron crystallography, epr, fiber diffraction, fluorescence transfer, infrared spectroscopy, neutron diffraction, powder diffraction, solution scattering, solid-state nmr, theoretical model, that are treated equivalently"
+          "help_text": "Choose from: 'afdb', 'boltz-1', 'md', 'electron microscopy', 'solution-nmr', 'x-ray crystallography', or 'other'. 'Other' includes methods that are treated equivalently such as electron crystallography, epr, fiber diffraction, fluorescence transfer, infrared spectroscopy, neutron diffraction, powder diffraction, solution scattering, solid-state nmr, theoretical model"
         },
         "recycling_steps": {
           "type": "integer",
@@ -870,26 +870,22 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 1",
       "properties": {
-        "lig1_type": {
-          "type": "string",
-          "description": "Ligand 1 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES"
-        },
-        "lig1_chem": {
-          "type": "string",
-          "description": "Ligand 1 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
-        },
         "lig1_chain_id": {
           "type": "string",
           "description": "Unique ligand 1 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
+        },
+        "lig1_ccd": {
+          "type": "string",
+          "description": "Ligand 1 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')"
+        },
+        "lig1_chem": {
+          "type": "string",
+          "description": "Ligand 1 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)"
         }
       }
     },
@@ -899,26 +895,22 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 2",
       "properties": {
-        "lig2_type": {
-          "type": "string",
-          "description": "Ligand 2 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES"
-        },
-        "lig2_chem": {
-          "type": "string",
-          "description": "Ligand 2 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
-        },
         "lig2_chain_id": {
           "type": "string",
           "description": "Unique ligand 2 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
+        },
+        "lig2_ccd": {
+          "type": "string",
+          "description": "Ligand 2 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')"
+        },
+        "lig2_chem": {
+          "type": "string",
+          "description": "Ligand 2 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)"
         }
       }
     },
@@ -928,28 +920,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 3",
       "properties": {
-        "lig3_type": {
-          "type": "string",
-          "description": "Ligand 3 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig3_chem": {
-          "type": "string",
-          "description": "Ligand 3 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig3_chain_id": {
           "type": "string",
           "description": "Unique ligand 3 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig3_ccd": {
+          "type": "string",
+          "description": "Ligand 3 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig3_chem": {
+          "type": "string",
+          "description": "Ligand 3 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -961,28 +949,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 4",
       "properties": {
-        "lig4_type": {
-          "type": "string",
-          "description": "Ligand 4 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig4_chem": {
-          "type": "string",
-          "description": "Ligand 4 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig4_chain_id": {
           "type": "string",
           "description": "Unique ligand 4 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig4_ccd": {
+          "type": "string",
+          "description": "Ligand 4 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig4_chem": {
+          "type": "string",
+          "description": "Ligand 4 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -994,28 +978,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 5",
       "properties": {
-        "lig5_type": {
-          "type": "string",
-          "description": "Ligand 5 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig5_chem": {
-          "type": "string",
-          "description": "Ligand 5 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig5_chain_id": {
           "type": "string",
           "description": "Unique ligand 5 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig5_ccd": {
+          "type": "string",
+          "description": "Ligand 5 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig5_chem": {
+          "type": "string",
+          "description": "Ligand 5 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1027,28 +1007,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 6",
       "properties": {
-        "lig6_type": {
-          "type": "string",
-          "description": "Ligand 6 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig6_chem": {
-          "type": "string",
-          "description": "Ligand 6 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig6_chain_id": {
           "type": "string",
           "description": "Unique ligand 6 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig6_ccd": {
+          "type": "string",
+          "description": "Ligand 6 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig6_chem": {
+          "type": "string",
+          "description": "Ligand 6 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1060,28 +1036,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 7",
       "properties": {
-        "lig7_type": {
-          "type": "string",
-          "description": "Ligand 7 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig7_chem": {
-          "type": "string",
-          "description": "Ligand 7 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig7_chain_id": {
           "type": "string",
           "description": "Unique ligand 7 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig7_ccd": {
+          "type": "string",
+          "description": "Ligand 7 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig7_chem": {
+          "type": "string",
+          "description": "Ligand 7 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1093,28 +1065,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 8",
       "properties": {
-        "lig8_type": {
-          "type": "string",
-          "description": "Ligand 8 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig8_chem": {
-          "type": "string",
-          "description": "Ligand 8 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig8_chain_id": {
           "type": "string",
           "description": "Unique ligand 8 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig8_ccd": {
+          "type": "string",
+          "description": "Ligand 8 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig8_chem": {
+          "type": "string",
+          "description": "Ligand 8 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1126,28 +1094,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 9",
       "properties": {
-        "lig9_type": {
-          "type": "string",
-          "description": "Ligand 9 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig9_chem": {
-          "type": "string",
-          "description": "Ligand 9 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig9_chain_id": {
           "type": "string",
           "description": "Unique ligand 9 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig9_ccd": {
+          "type": "string",
+          "description": "Ligand 9 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig9_chem": {
+          "type": "string",
+          "description": "Ligand 9 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1159,28 +1123,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 10",
       "properties": {
-        "lig10_type": {
-          "type": "string",
-          "description": "Ligand 10 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig10_chem": {
-          "type": "string",
-          "description": "Ligand 10 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig10_chain_id": {
           "type": "string",
           "description": "Unique ligand 10 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig10_ccd": {
+          "type": "string",
+          "description": "Ligand 10 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig10_chem": {
+          "type": "string",
+          "description": "Ligand 10 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1192,28 +1152,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 11",
       "properties": {
-        "lig11_type": {
-          "type": "string",
-          "description": "Ligand 11 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig11_chem": {
-          "type": "string",
-          "description": "Ligand 11 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig11_chain_id": {
           "type": "string",
           "description": "Unique ligand 11 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig11_ccd": {
+          "type": "string",
+          "description": "Ligand 11 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig11_chem": {
+          "type": "string",
+          "description": "Ligand 11 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
@@ -1225,28 +1181,24 @@
       "fa_icon": "fas fa-prescription-bottle",
       "description": "Configure ligand 12",
       "properties": {
-        "lig12_type": {
-          "type": "string",
-          "description": "Ligand 12 format",
-          "enum": [
-            "CCD",
-            "SMILES"
-          ],
-          "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES",
-          "hidden": true
-        },
-        "lig12_chem": {
-          "type": "string",
-          "description": "Ligand 12 chemical identifier",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1",
-          "hidden": true
-        },
         "lig12_chain_id": {
           "type": "string",
           "description": "Unique ligand 12 chain ID(s)",
           "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
           "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
+          "hidden": true
+        },
+        "lig12_ccd": {
+          "type": "string",
+          "description": "Ligand 12 CCD code.",
+          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
+          "hidden": true
+        },
+        "lig12_chem": {
+          "type": "string",
+          "description": "Ligand 12 SMILES string (if provided, CCD field will be ignored)",
+          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
           "hidden": true
         }
       },
