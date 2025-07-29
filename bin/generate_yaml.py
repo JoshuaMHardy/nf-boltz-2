@@ -4,6 +4,7 @@ import re
 import json
 import sys
 import ast
+import os
 from typing import List, Dict, Optional
 
 class FlowList(list):
@@ -292,48 +293,65 @@ def parse_contact_constraint(contact_str: str):
         constraints.append(constraint)
     return constraints
 
-def parse_templates(templates_str: Optional[str]) -> Optional[List[Dict]]:
+def parse_templates_from_params(params: Dict) -> Optional[list]:
     """
-    Parse templates string as specified for Boltz-2
+    Parse explicit template fields (template1_path/template2_path, etc.) and the template_extra block string.
+    Return a list of YAML template dicts, or None if nothing to set.
     """
-    if not templates_str:
-        return None
-    # Find all '[...]' fields
-    template_blocks = []
-    # Split template blocks: a block starts with [PATH], there can be multiple in the string
-    block_pattern = r'(\[[^\]]+\](?:\[[^\]]*\]){0,4})'  # up to 5 fields
-    blocks = re.findall(block_pattern, templates_str)
-    for block in blocks:
-        # Extract all [xxx] fields
-        fields = re.findall(r'\[([^\]]*)\]', block)
-        if not fields:
+    templates = []
+    # Parse up to 2 explicit template fields
+    for i in range(1, 3):
+        path = params.get(f'template{i}_path')
+        if not path:
             continue
-        entry = {
-            'cif': fields[0]  # Always exists
-        }
-        # chain_id(s)
-        if len(fields) > 1 and fields[1].strip():
-            ids = [x.strip() for x in fields[1].split(',') if x.strip()]
-            if len(ids) == 1:
-                entry['chain_id'] = ids[0]
-            elif len(ids) > 1:
-                entry['chain_id'] = FlowList(ids)
-        # template_id(s)
-        if len(fields) > 2 and fields[2].strip():
-            ids = [x.strip() for x in fields[2].split(',') if x.strip()]
-            if len(ids) == 1:
-                entry['template_id'] = ids[0]
-            elif len(ids) > 1:
-                entry['template_id'] = FlowList(ids)
-        # force (optional, default False)
-        if len(fields) > 3 and fields[3].strip():
-            entry['force'] = fields[3].lower() == 'true'
-        # threshold (optional, float or int)
-        if len(fields) > 4 and fields[4].strip():
-            thresh = fields[4]
-            entry['threshold'] = float(thresh) if '.' in thresh else int(thresh)
-        template_blocks.append(entry)
-    return template_blocks if template_blocks else None
+        # Use basename of file, because templates are staged in nextflow directory
+        template_entry = {'cif': os.path.basename(path)}
+        # prediction_id: comma separated (string), may be blank
+        pred_ids = params.get(f'template{i}_prediction_id')
+        if pred_ids:
+            ids = [x.strip() for x in pred_ids.split(',') if x.strip()]
+            template_entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+        # template_id: comma separated (string), may be blank
+        templ_ids = params.get(f'template{i}_template_id')
+        if templ_ids:
+            ids = [x.strip() for x in templ_ids.split(',') if x.strip()]
+            template_entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+        # threshold: value triggers a force; if present, set force to True
+        thresh = params.get(f'template{i}_threshold')
+        if thresh is not None:
+            try:
+                template_entry['force'] = True
+                template_entry['threshold'] = float(thresh)
+            except Exception:
+                print(f"Warning: could not parse threshold for template{i}: {thresh}")
+        templates.append(template_entry)
+
+    # Parse template_extra (advanced block syntax)
+    extra = params.get('template_extra')
+    if extra:
+        # Block format: [PATH][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD]
+        block_pattern = r'(\[[^\]]+\](?:\[[^\]]*\]){0,3})'  # up to 4 fields
+        blocks = re.findall(block_pattern, extra)
+        for block in blocks:
+            fields = re.findall(r'\[([^\]]*)\]', block)
+            if not fields or not fields[0].strip():
+                continue  # require at least CIF path
+            # Use basename of file, because templates are staged in nextflow directory
+            entry = {'cif': os.path.basename(fields[0])}
+            if len(fields) > 1 and fields[1].strip():
+                ids = [x.strip() for x in fields[1].split(',') if x.strip()]
+                entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+            if len(fields) > 2 and fields[2].strip():
+                ids = [x.strip() for x in fields[2].split(',') if x.strip()]
+                entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+            if len(fields) > 3 and fields[3].strip():
+                try:
+                    entry['force'] = True
+                    entry['threshold'] = float(fields[3])
+                except Exception:
+                    print(f"Warning: could not parse threshold in template_extra: '{fields[3]}'")
+            templates.append(entry)
+    return templates if templates else None
 
 def build_properties(params: Dict) -> Optional[list]:
     """
@@ -430,10 +448,10 @@ def build_yaml_structure(params: Dict) -> Dict:
     yaml_data['sequences'].extend(ligs_extra)
 
     # Constraints, templates, properties
-    # (no change from your prior version)
     if constraints := build_constraints(params):
         yaml_data['constraints'] = constraints
-    if templates := parse_templates(params.get('templates')):
+    templates = parse_templates_from_params(params)
+    if templates:
         yaml_data['templates'] = templates
     if properties := build_properties(params):
         yaml_data['properties'] = properties

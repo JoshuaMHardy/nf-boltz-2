@@ -6,7 +6,29 @@ nextflow.enable.dsl = 2
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+def collectTemplateFiles(params) {
+    def files = []
 
+    // Check explicit template1/2 fields
+    if (params.template1_path) {
+        files << file(params.template1_path)
+    }
+    if (params.template2_path) {
+        files << file(params.template2_path)
+    }
+
+    // Parse template_extra block string for filenames
+    if (params.template_extra) {
+        // e.g. [./templates/5JZJ.cif][A][A][2]
+        def re = /\[([^\]]+\.cif)\]/  // match anything ending in .cif inside [brackets]
+        (params.template_extra =~ re).each { match ->
+            files << file(match[1])
+        }
+    }
+
+    // Uniquify just in case...
+    return files.unique()
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -44,7 +66,7 @@ workflow {
         
     } else {
         println "Generating YAML from parameters"
-        
+        template_files = collectTemplateFiles(params)
         // Generate YAML from parameters
         GenerateYAML(params)
         
@@ -55,7 +77,7 @@ workflow {
     }
     
     // Run Boltz for each YAML file
-    RunBoltz(yaml_files)
+    RunBoltz(yaml_files,template_files)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results)
@@ -82,6 +104,7 @@ process RunBoltz {
 
     input:
     tuple path(yaml), val(pred_name)
+    path template_files
 
     output:
     path "${pred_name}"
