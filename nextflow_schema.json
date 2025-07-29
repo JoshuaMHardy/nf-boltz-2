@@ -150,8 +150,7 @@
           "hidden": true,
           "description": "Sequence 1: modifications (optional)",
           "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
-          "default": null
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
         },
         "seq1_cyclic": {
           "type": "boolean",
@@ -204,8 +203,7 @@
           "hidden": true,
           "description": "Sequence 2: modifications (optional)",
           "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
-          "default": null
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
         },
         "seq2_cyclic": {
           "type": "boolean",
@@ -258,8 +256,7 @@
           "hidden": true,
           "description": "Sequence 3: modifications (optional)",
           "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
-          "default": null
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
         },
         "seq3_cyclic": {
           "type": "boolean",
@@ -312,8 +309,7 @@
           "hidden": true,
           "description": "Sequence 4: modifications (optional)",
           "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
-          "default": null
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
         },
         "seq4_cyclic": {
           "type": "boolean",
@@ -335,7 +331,7 @@
       "title": "Extra sequences (advanced)",
       "type": "object",
       "fa_icon": "fas fa-plus-square",
-      "description": "Add additional input sequences. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
+      "description": "Add additional input sequences here. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
       "properties": {
         "sequences_extra": {
           "type": "string",
@@ -362,14 +358,12 @@
         "lig1_ccd": {
           "type": "string",
           "description": "Ligand 1: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
-          "default": null
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
         },
         "lig1_smiles": {
           "type": "string",
           "description": "Ligand 1: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
-          "default": null
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -388,14 +382,12 @@
         "lig2_ccd": {
           "type": "string",
           "description": "Ligand 2: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
-          "default": null
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
         },
         "lig2_smiles": {
           "type": "string",
           "description": "Ligand 2: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
-          "default": null
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -414,14 +406,12 @@
         "lig3_ccd": {
           "type": "string",
           "description": "Ligand 3: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
-          "default": null
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
         },
         "lig3_smiles": {
           "type": "string",
           "description": "Ligand 3: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
-          "default": null
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -440,14 +430,12 @@
         "lig4_ccd": {
           "type": "string",
           "description": "Ligand 4: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
-          "default": null
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
         },
         "lig4_smiles": {
           "type": "string",
           "description": "Ligand 4: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
-          "default": null
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -455,7 +443,7 @@
       "title": "Extra ligands (advanced)",
       "type": "object",
       "fa_icon": "fas fa-plus-square",
-      "description": "(Advanced) Add additional ligands. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
+      "description": "Add additional ligands here. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
       "properties": {
         "ligands_extra": {
           "type": "string",
