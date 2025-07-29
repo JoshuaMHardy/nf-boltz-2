@@ -42,11 +42,11 @@
             "properties": {
                 "diffusion_samples": {
                     "type": "integer", 
-                    "description": "Number of diffusion samples",
+                    "description": "Number of independent diffusion samples (predictions)",
                     "minimum": 1,
                     "maximum": 25,
                     "default": 5,
-                    "help_text": "Number of independent diffusion samples to generate. More samples improve quality but increase computation time. Default: 5"
+                    "help_text": "More samples improve quality but increase computation time. Default: 5"
                 },
                 "method": {
                     "type": "string",
@@ -109,7 +109,7 @@
             "properties": {
                 "affinity_ligand_id": {
                     "type": "string",
-                    "description": "Chain ID of ligand for affinity calculations",
+                    "description": "Chain ID of ligand for affinity calculations. Required for affinity prediction.",
                     "pattern": "^[A-Za-z0-9]+$",
                     "help_text": "e.g. 'E', 'L1', 'D'",
                     "hidden": true
