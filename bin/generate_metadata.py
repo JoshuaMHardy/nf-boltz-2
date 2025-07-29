@@ -17,6 +17,42 @@ def detect_runname(directory):
     base = os.path.basename(plddt_files[0])
     return base.split('_model_')[0].split('plddt_')[1]
 
+def affinity_ensemble_row(model_idx, pred_log_ic50, prob_binder):
+    """Convert raw log(IC50) and probability to multiple human-readable columns for a single ensemble component."""
+    # IC50 in μM (3 decimals), pIC50 (2 decimals), deltaG in kcal/mol (2 decimal), probability (3 decimals)
+    ic50_um = 10 ** pred_log_ic50
+    pIC50 = 6 - pred_log_ic50
+    deltaG = (6 - pred_log_ic50) * 1.364
+    return {
+        "ensemble": model_idx,
+        "pred_IC50_μM": f"{ic50_um:.3g}",       # e.g., "0.001", "0.1", "5.6", "120"
+        "pred_pIC50": f"{pIC50:.2f}",           # e.g., "9.00"
+        "pred_deltaG": f"{deltaG:.2f}",         # e.g., "8.18"
+        "prob_binder": f"{prob_binder:.3f}",    # e.g., "0.126"
+    }
+def read_affinity_ensembles(directory, runname):
+    """Extract all affinity ensemble predictions and convert for reporting."""
+    affinity_json = os.path.join(directory, f'affinity_{runname}.json')
+    if not os.path.exists(affinity_json):
+        return []
+    with open(affinity_json) as f:
+        affinity_data = json.load(f)
+    # Find all unique ensemble IDs by suffix
+    ensemble_rows = []
+    idx = 0
+    while True:
+        suffix = "" if idx == 0 else str(idx)
+        pred_key = f"affinity_pred_value{suffix}"
+        prob_key = f"affinity_probability_binary{suffix}"
+        if pred_key in affinity_data and prob_key in affinity_data:
+            pred = float(affinity_data[pred_key])
+            prob = float(affinity_data[prob_key])
+            ensemble_rows.append(affinity_ensemble_row(idx, pred, prob))
+            idx += 1
+        else:
+            break
+    return ensemble_rows
+
 def load_chains_data(directory, runname):
     """Load chain and residue information from npz file"""
     chains_file = os.path.join(directory, f"{runname}.npz")
@@ -426,6 +462,16 @@ def main():
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(all_metadata)
+    
+    # Write separate affinity CSV (if present)
+    affinity_ensembles = read_affinity_ensembles(args.input_dir, runname)
+    if affinity_ensembles:
+        affinity_csv_path = os.path.join(args.output, f'{runname}_affinity.csv')
+        fieldnames = ["ensemble", "pred_IC50_μM", "pred_pIC50", "pred_deltaG", "prob_binder"]
+        with open(affinity_csv_path, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(affinity_ensembles)
 
 if __name__ == '__main__':
     main()
