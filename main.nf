@@ -122,7 +122,7 @@ process RunBoltz {
         --cache /boltzcache \
         --use_msa_server \
         ${params.diffusion_samples ? "--diffusion_samples ${params.diffusion_samples}" : ''} \
-        ${params.method ? "--method ${params.method}" : ''} \
+        ${params.method ? "--method '${params.method}'" : ''} \
         ${params.recycling_steps ? "--recycling_steps ${params.recycling_steps}" : ''} \
         ${params.sampling_steps ? "--sampling_steps ${params.sampling_steps}" : ''} \
         ${params.affinity_mw_correction ? '--affinity_mw_correction ' : ''} \
@@ -131,7 +131,7 @@ process RunBoltz {
         ${params.output_format == "pdb" ? "--output_format pdb " :'' } \
         ${params.write_full_pae ? '--write_full_pae ' : ''} \
         ${params.write_full_pde ? '--write_full_pde ' : ''} \
-        ${params.extra_config ? params.extra_config : ''} \
+        ${params.extra_config ? "'${params.extra_config}'" : ''} \
         2>&1 | tee boltz_${pred_name}.log
 
     # Create prediction directory
