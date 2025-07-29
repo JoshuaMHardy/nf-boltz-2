@@ -59,13 +59,12 @@
             "md",
             "electron microscopy",
             "solution-nmr",
-            "x-ray crystallography",
+            "x-ray diffraction",
             "other"
           ],
-          "default": "x-ray crystallography",
-          "description": "Method conditioning to use for prediction (default: 'x-ray crystallography').",
+          "description": "Method conditioning to use for prediction.",
           "hidden": true,
-          "help_text": "Choose from: 'afdb', 'boltz-1', 'md', 'electron microscopy', 'solution-nmr', 'x-ray crystallography', or 'other'. 'Other' includes methods that are treated equivalently such as electron crystallography, epr, fiber diffraction, fluorescence transfer, infrared spectroscopy, neutron diffraction, powder diffraction, solution scattering, solid-state nmr, theoretical model"
+          "help_text": "Choose from: 'afdb', 'boltz-1', 'md', 'electron microscopy', 'solution-nmr', 'x-ray diffraction', or 'other'. 'Other' includes methods that are treated equivalently such as electron crystallography, epr, fiber diffraction, fluorescence transfer, infrared spectroscopy, neutron diffraction, powder diffraction, solution scattering, solid-state nmr, theoretical model"
         },
         "recycling_steps": {
           "type": "integer",
