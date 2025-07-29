@@ -473,6 +473,13 @@ if __name__ == "__main__":
                 elif v.lower() == "false": v = False
             cleaned_params[k] = v
 
+        # If affinity_ligand_id is not provided, default to lig1_chain_id if available
+        if not cleaned_params.get("affinity_ligand_id"):
+            lig1 = cleaned_params.get("lig1_chain_id")
+            if lig1:
+                # Only use the *first* chain id from lig1_chain_id, even if comma-separated list
+                cleaned_params["affinity_ligand_id"] = lig1.split(",")[0].strip()
+
         # Validation
         validate_no_duplicate_chain_ids_within_field(cleaned_params)
         validate_unique_chain_ids(cleaned_params)
