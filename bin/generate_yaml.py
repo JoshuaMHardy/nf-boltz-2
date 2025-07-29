@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import yaml
 import re
 import json
@@ -7,88 +7,110 @@ import ast
 from typing import List, Dict, Optional
 
 class FlowList(list):
-    """Custom list class to mark lists that should use flow style"""
     pass
 
 def flow_list_representer(dumper, data):
-    """Custom representer for FlowList to force flow style"""
     return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
-
-# Register the custom representer
 yaml.add_representer(FlowList, flow_list_representer)
 
-def validate_affinity_ligand_id(params: dict):
-    defined_ligand_ids = set()
-    for i in range(1, 13):
-        chain_id = params.get(f'lig{i}_chain_id')
-        if chain_id:
-            for cid in [x.strip() for x in chain_id.split(',') if x.strip()]:
-                defined_ligand_ids.add(cid)
-    affinity_id = params.get('affinity_ligand_id')
-    if affinity_id:
-        if affinity_id not in defined_ligand_ids:
-            print(f"Error: affinity_ligand_id '{affinity_id}' is not among defined ligand chain IDs: {sorted(defined_ligand_ids)}")
-            sys.exit(1)
+PROTEIN_ALPHABET = set('ACDEFGHIKLMNPQRSTVWYUBXZ')
+DNA_ALPHABET     = set('ACGTN')
+RNA_ALPHABET     = set('ACGUN')
 
-def validate_sequence_requiredness(params: dict):
-    for i in range(1, 13):
-        seq_key = f'seq{i}'
-        seq_type = params.get(f'{seq_key}_type')
-        chain_id = params.get(f'{seq_key}_chain_id')
-        seq = params.get(f'{seq_key}_seq')
-        if seq_type:
-            # if any part is missing, error
-            if not chain_id or not seq:
-                print(f"Error: {seq_key}_type is set ('{seq_type}') but corresponding chain_id or seq is missing.")
-                sys.exit(1)
-        elif chain_id or seq:
-            print(f"Error: {seq_key}_chain_id or {seq_key}_seq is set, but {seq_key}_type is not set.")
-            sys.exit(1)
+###############################
+# Sequence/Ligand Type Detection
+###############################
+def autodetect_seq_type(seq: str) -> Optional[str]:
+    s = seq.upper()
+    # Remove gap, whitespace, ambiguous chars
+    s = re.sub(r'[^A-Z]', '', s)
+    if not s: return None
+    if set(s) <= DNA_ALPHABET: return 'dna'
+    if set(s) <= RNA_ALPHABET: return 'rna'
+    # Heuristic: is valid protein? (don't allow only "ACGTUN" or only DNA/RNA)
+    if set(s) <= PROTEIN_ALPHABET: return 'protein'
+    # Most likely protein else
+    return 'protein'
 
-def validate_sequence_string(seq_type: str, seq: str, seq_key: str):
-    PROTEIN_ALPHABET = set('ACDEFGHIKLMNPQRSTVWYUBXZ')
-    DNA_ALPHABET     = set('ACGTN')
-    RNA_ALPHABET     = set('ACGUN')
-    
-    if not seq:
-        print(f"Error: No sequence provided for {seq_key}.")
+def validate_explicit_sequence(i, params):
+    seq_key = f'seq{i}'
+    seq = params.get(f'{seq_key}_seq')
+    chain_id = params.get(f'{seq_key}_chain_id')
+    seq_type = params.get(f'{seq_key}_type')
+    # Requiredness
+    if seq and not chain_id:
+        print(f"Error: {seq_key}_seq is set but chain_id is missing.")
         sys.exit(1)
+    if chain_id and not seq:
+        print(f"Error: {seq_key}_chain_id is set but seq is missing.")
+        sys.exit(1)
+    if not seq and not chain_id:
+        return None
+    if not seq_type or seq_type not in ("protein", "dna", "rna"):
+        print(f"Error: {seq_key}_type must be specified as 'protein', 'dna', or 'rna'.")
+        sys.exit(1)
+
+    # Validate character set
     s = seq.upper()
     if seq_type == 'protein':
         valid = PROTEIN_ALPHABET
-        msg = "protein"
     elif seq_type == 'dna':
         valid = DNA_ALPHABET
-        msg = "DNA"
     elif seq_type == 'rna':
         valid = RNA_ALPHABET
-        msg = "RNA"
     else:
-        return
+        print(f"Error: Unknown sequence type '{seq_type}' for {seq_key}.")
+        sys.exit(1)
     invalid = sorted(set(s) - valid)
     if invalid:
-        print(f"Error: Invalid character(s) {invalid} in {msg} sequence for {seq_key}. Allowed: {''.join(sorted(valid))}")
+        print(f"Error: Invalid character(s) {invalid} in {seq_type} sequence for {seq_key}.")
         sys.exit(1)
+    return seq_type
+
+def validate_no_duplicate_chain_ids_within_field(params: dict):
+    for kind in ['seq', 'lig']:
+        for i in range(1, 5):
+            key = f'{kind}{i}_chain_id'
+            cids = params.get(key)
+            if cids:
+                cid_list = [x.strip() for x in cids.split(',') if x.strip()]
+                if len(cid_list) != len(set(cid_list)):
+                    print(f"Error: Duplicate chain IDs within field {key}: {cid_list}")
+                    sys.exit(1)
+    # Extra
+    for field, block_pat in [('sequences_extra', r"\[([A-Za-z0-9_,]+)\]"), ('ligands_extra', r"\[([A-Za-z0-9_,]+)\]")]:
+        extra = params.get(field)
+        if extra:
+            seen = set()
+            for m in re.finditer(block_pat, extra):
+                ids = [i.strip() for i in m.group(1).split(',')]
+                for id_ in ids:
+                    if id_ in seen:
+                        print(f"Error: Duplicate chain ID '{id_}' found in {field}.")
+                        sys.exit(1)
+                    seen.add(id_)
 
 def validate_unique_chain_ids(params: Dict):
-    """
-    Ensure that each chain ID (across all seq/lig entries) is unique.
-    If duplicates are found, exit with an error message.
-    """
     all_chain_ids = []
-    # Sequences
-    for i in range(1, 13):
-        seq_key = f'seq{i}'
-        ids = params.get(f'{seq_key}_chain_id')
+    for i in range(1, 5):
+        ids = params.get(f'seq{i}_chain_id')
         if ids:
             all_chain_ids.extend(x.strip() for x in ids.split(',') if x.strip())
-    # Ligands
-    for i in range(1, 13):
-        lig_key = f'lig{i}'
-        ids = params.get(f'{lig_key}_chain_id')
+    for i in range(1, 5):
+        ids = params.get(f'lig{i}_chain_id')
         if ids:
             all_chain_ids.extend(x.strip() for x in ids.split(',') if x.strip())
-    # Check uniqueness
+    # Extra sequences
+    seqe = params.get('sequences_extra')
+    if seqe:
+        blocks = re.findall(r"\[([A-Za-z0-9_,]+)\]", seqe)
+        for ids in blocks:
+            all_chain_ids.extend(x.strip() for x in ids.split(','))
+    lige = params.get('ligands_extra')
+    if lige:
+        blocks = re.findall(r"\[([A-Za-z0-9_,]+)\]", lige)
+        for ids in blocks:
+            all_chain_ids.extend(x.strip() for x in ids.split(','))
     seen = set()
     duplicates = set()
     for cid in all_chain_ids:
@@ -99,6 +121,74 @@ def validate_unique_chain_ids(params: Dict):
     if duplicates:
         print(f"Error: Duplicate chain ID(s) found across entries: {', '.join(sorted(duplicates))}")
         sys.exit(1)
+
+def validate_affinity_ligand_id(params: dict):
+    defined_ligand_ids = set()
+    for i in range(1, 5):
+        chain_id = params.get(f'lig{i}_chain_id')
+        if chain_id:
+            for cid in [x.strip() for x in chain_id.split(',') if x.strip()]:
+                defined_ligand_ids.add(cid)
+    # Extra ligands
+    ligextr = params.get('ligands_extra')
+    if ligextr:
+        for ids in re.findall(r"\[([A-Za-z0-9_,]+)\]", ligextr):
+            for cid in ids.split(','):
+                defined_ligand_ids.add(cid.strip())
+    affinity_id = params.get('affinity_ligand_id')
+    if affinity_id and affinity_id not in defined_ligand_ids:
+        print(f"Error: affinity_ligand_id '{affinity_id}' is not among defined ligand chain IDs: {sorted(defined_ligand_ids)}")
+        sys.exit(1)
+
+#############################
+# Parsing helpers for extras
+#############################
+def parse_sequences_extra(seqstr: Optional[str]) -> List[Dict]:
+    if not seqstr: return []
+    seqs = []
+    # Block: [IDs][SEQUENCE]
+    pat = r"\[([A-Za-z0-9_,]+)\]\[([A-Za-z*.,\-\/\s]+)\]"
+    for ids, sequence in re.findall(pat, seqstr):
+        ids_list = [x.strip() for x in ids.split(',') if x.strip()]
+        seq_type = autodetect_seq_type(sequence)
+        if not seq_type:
+            print(f"Error auto-detecting sequence type for extra sequence '{sequence}'.")
+            sys.exit(1)
+        s = sequence.upper()
+        valid = PROTEIN_ALPHABET if seq_type == "protein" else DNA_ALPHABET if seq_type == "dna" else RNA_ALPHABET
+        invalid = sorted(set(s) - valid)
+        if invalid:
+            print(f"Error: Invalid character(s) {invalid} in {seq_type} sequence for extra chains {ids}.")
+            sys.exit(1)
+        entry = {
+            seq_type: {
+                "id": ids_list[0] if len(ids_list) == 1 else FlowList(ids_list),
+                "sequence": sequence,
+                "msa": True if seq_type == "protein" else "empty"
+            }
+        }
+        seqs.append(entry)
+    return seqs
+
+def parse_ligands_extra(ligstr: Optional[str]) -> List[Dict]:
+    if not ligstr: return []
+    ligs = []
+    # Block: [IDs][CCD][SMILES]
+    pat = r"\[([A-Za-z0-9_,]+)\]\[([A-Za-z0-9\-+]*)\]\[([^\[\]]*)\]"
+    for ids, ccd, smiles in re.findall(pat, ligstr):
+        ids_list = [x.strip() for x in ids.split(',') if x.strip()]
+        if not (ccd or smiles):
+            print(f"Error: Must supply CCD or SMILES for ligand ids {ids}.")
+            sys.exit(1)
+        obj = {"ligand": {"id": ids_list[0] if len(ids_list) == 1 else FlowList(ids_list)}}
+        # SMILES takes precedence
+        if smiles:
+            obj["ligand"]["smiles"] = smiles
+        elif ccd:
+            obj["ligand"]["ccd"] = ccd
+        ligs.append(obj)
+    return ligs
+
 
 def parse_modifications(mod_str: Optional[str]) -> List[Dict]:
     if not mod_str:
@@ -282,83 +372,79 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
 
     return constraints if constraints else None
 
-
 def build_yaml_structure(params: Dict) -> Dict:
     yaml_data = {'sequences': []}
-    
-    for i in range(1, 13):
-        seq_key = f'seq{i}'
-        if not params.get(f'{seq_key}_type'):
-            continue
-            
-        seq_type = params[f'{seq_key}_type']
-        seq_str = params.get(f'{seq_key}_seq', '')
-        validate_sequence_string(seq_type, seq_str, seq_key)
 
-        ids = [x.strip() for x in params[f'{seq_key}_chain_id'].split(',')] if params[f'{seq_key}_chain_id'] else []
-        
-        # Use FlowList for multiple IDs, single string for single ID
+    # Explicit sequences
+    for i in range(1, 5):
+        seq_key = f'seq{i}'
+        seq = params.get(f'{seq_key}_seq')
+        chain_id = params.get(f'{seq_key}_chain_id')
+        seq_type = params.get(f'{seq_key}_type')  # <- explicit
+        if not seq or not chain_id or not seq_type:
+            continue
+        ids = [x.strip() for x in chain_id.split(',')]
         id_value = ids[0] if len(ids) == 1 else FlowList(ids)
-        
         seq_entry = {
             seq_type: {
                 'id': id_value,
-                'sequence': params[f'{seq_key}_seq']
+                'sequence': seq
             }
         }
-        
-        if mods := parse_modifications(params[f'{seq_key}_mod']):
+        mods = parse_modifications(params.get(f'{seq_key}_mod'))
+        if mods:
             seq_entry[seq_type]['modifications'] = mods
-        
-        if seq_type in ('protein', 'dna', 'rna') and not params[f'{seq_key}_genmsa']:
-            seq_entry[seq_type]['msa'] = 'empty'
-            
-        yaml_data['sequences'].append(seq_entry)
-    
-    for i in range(1, 13):
+        # MSA only for protein
+        if seq_type == "protein":
+            if params.get(f'{seq_key}_genmsa') in [None, True]:
+                pass
+            else:
+                seq_entry[seq_type]['msa'] = "empty"
+        yaml_data["sequences"].append(seq_entry)
+
+    # Extra sequences
+    seqs_extra = parse_sequences_extra(params.get('sequences_extra'))
+    yaml_data["sequences"].extend(seqs_extra)
+
+    # Explicit ligands
+    for i in range(1, 5):
         lig_key = f'lig{i}'
         chain_id = params.get(f'{lig_key}_chain_id')
         ccd = params.get(f'{lig_key}_ccd')
         smiles = params.get(f'{lig_key}_smiles')
-
         if not chain_id:
-            continue  # No ligand defined in this slot
-
-        ids = [x.strip() for x in chain_id.split(',')] if chain_id else []
-        id_value = ids[0] if len(ids) == 1 else FlowList(ids)
-        ligand = {
-            'ligand': {
-                'id': id_value
-            }
-        }
-
-        # Precedence: SMILES > CCD
+            continue
+        ids = [x.strip() for x in chain_id.split(',')]
+        ligand = {'ligand': {"id": ids[0] if len(ids) == 1 else FlowList(ids)}}
         if smiles:
             ligand['ligand']['smiles'] = smiles
         elif ccd:
             ligand['ligand']['ccd'] = ccd
         else:
-            print(f"Error: Ligand chain_id '{chain_id}' provided but neither 'CCD' nor 'SMILES' given for {lig_key}.")
+            print(f"Error: Ligand chain_id '{chain_id}' provided but neither CCD nor SMILES given for {lig_key}.")
             sys.exit(1)
-
         yaml_data['sequences'].append(ligand)
-    
+
+    # Extra ligands
+    ligs_extra = parse_ligands_extra(params.get('ligands_extra'))
+    yaml_data['sequences'].extend(ligs_extra)
+
+    # Constraints, templates, properties
+    # (no change from your prior version)
     if constraints := build_constraints(params):
         yaml_data['constraints'] = constraints
-    
     if templates := parse_templates(params.get('templates')):
         yaml_data['templates'] = templates
-    
     if properties := build_properties(params):
         yaml_data['properties'] = properties
 
     return yaml_data
 
+#############################
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Error: Missing parameters")
         sys.exit(1)
-        
     try:
         input_params = json.loads(sys.argv[1])
         cleaned_params = {}
@@ -368,10 +454,14 @@ if __name__ == "__main__":
                 elif v.lower() == "true": v = True
                 elif v.lower() == "false": v = False
             cleaned_params[k] = v
-        
+
+        # Validation
+        validate_no_duplicate_chain_ids_within_field(cleaned_params)
         validate_unique_chain_ids(cleaned_params)
         validate_affinity_ligand_id(cleaned_params)
-        validate_sequence_requiredness(cleaned_params)
+        # Per-sequence validation
+        for i in range(1, 5):
+            validate_explicit_sequence(i, cleaned_params)
 
         yaml_structure = build_yaml_structure(cleaned_params)
         print(yaml.dump(
@@ -382,7 +472,6 @@ if __name__ == "__main__":
             indent=4,
             allow_unicode=True
         ))
-        
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {str(e)}")
         sys.exit(1)

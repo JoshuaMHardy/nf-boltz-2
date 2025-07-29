@@ -154,16 +154,74 @@
                     "help_text": "For both atoms that form each bond, provide the chain ID, res number, and atom name. Format: '[CHAIN_ID, RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME] [CHAIN_ID,RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME]...' e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' ",
                     "hidden": true
                 },
-                "constraints_pocket": {
+                "constraints_contacts": {
                     "type": "string",
-                    "description": "Pocket constraints. Multiple pockets can be specified, seperated by spaces.",
-                    "help_text": "For each pocket, specify the ID of the binder and a list of the pocket residues/atoms. Optionally provide the max distance in Angstroms of the ligand from the pocket (default: 6), and whether to use a potential to enforce the pocket constraint (default: false). Format: '[BINDER_ID][[POCKET_CHAIN_ID,RES_IDX/ATOM_NAME],[POCKET_CHAIN_ID,RES_IDX/ATOM_NAME],...][DIST_ANGSTROM][FORCE_BOOLEAN]' e.g. '[B][[A,53],[A,57],[A,61]] [C][[A,101],[A,130]][5][true]'",
+                    "description": "Contact constraints provided as pairs of residues or atoms. Multiple contacts can be specified, separated by spaces.",
+                    "pattern": "^(\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)(\\s+\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)*$",
+                    "help_text": "Multiple contacts as pairs of atoms/residues: '[CHAIN_ID,RES_IDX/ATOM][CHAIN_ID,RES_IDX/ATOM][DIST][FORCE]'. E.g. '[A,53][A,57] [A,101][A,130][5][true]'. Max distance (Angstroms, default: 6) and force (default: false) are optional.",
                     "hidden": true
                 },
-                "contraints_contacts": {
+                "constraints_pocket1_binder": {
                     "type": "string",
-                    "description": "Contact constraints provided as pairs of residues or atoms. Multiple contacts can be specified, seperated by spaces.",
-                    "help_text": "For each contact, provide: a pair of chain IDs and residue/atoms. Optionally provide a max distance in Angstroms (default: 6) and whether to use a potential to enforce the contact (default: false). Format: '[CHAIN_ID,RES_IDX/ATOM_NAME][CHAIN_ID,RES_IDX/ATOM_NAME][DIST_ANGSTROM][FORCE_BOOLEAN]' e.g. '[A,53][A,57] [A,101][A,130][5][true]",
+                    "pattern": "^[A-Za-z0-9_]+$",
+                    "description": "Binder chain ID for pocket 1",
+                    "help_text": "Chain ID of ligand or binder for pocket 1. E.g. 'B'.",
+                    "hidden": true
+                },
+                "constraints_pocket1_contacts": {
+                    "type": "string",
+                    "pattern": "^((\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])(,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])*)$",
+                    "description": "Contacts (residues or atoms) for pocket 1",
+                    "help_text": "Comma-separated. [CHAIN_ID,RES_IDX/ATOM_NAME],[CHAIN_ID,RES_IDX/ATOM_NAME],... E.g. '[A,53],[A,57],[A,61]'",
+                    "hidden": true
+                },
+                "constraints_pocket1_max_distance": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Max distance (Å) for pocket 1",
+                    "help_text": "Maximum distance in Å between binder and contact sites. Default 6.0 if omitted.",
+                    "hidden": true
+                },
+                "constraints_pocket1_force": {
+                    "type": "boolean",
+                    "description": "Force potential for pocket 1 (true/false)",
+                    "help_text": "Whether to enforce a restraint potential for pocket 1.",
+                    "hidden": true
+                },
+                "constraints_pocket2_binder": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_]+$",
+                    "description": "Binder chain ID for pocket 2",
+                    "help_text": "Chain ID of ligand or binder for pocket 2. E.g. 'C'.",
+                    "hidden": true
+                },
+                "constraints_pocket2_contacts": {
+                    "type": "string",
+                    "pattern": "^((\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])(,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])*)$",
+                    "description": "Contacts (residues or atoms) for pocket 2",
+                    "help_text": "Comma-separated. E.g. '[A,77],[B,12]'.",
+                    "hidden": true
+                },
+                "constraints_pocket2_max_distance": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Max distance (Å) for pocket 2",
+                    "help_text": "Maximum distance in Å between binder and contact sites. Default 6.0 if omitted.",
+                    "hidden": true
+                },
+                "constraints_pocket2_force": {
+                    "type": "boolean",
+                    "description": "Force potential for pocket 2 (true/false)",
+                    "help_text": "Whether to enforce a restraint potential for pocket 2.",
+                    "hidden": true
+                },
+
+                "constraints_pocket_extra": {
+                    "type": "string",
+                    "description": "Advanced or extra pocket constraints (block format)",
+                    "help_text": "For advanced use, specify additional pockets with space-separated '[BINDER][[CONTACTS]][DIST][FORCE]'. Example: '[D][[A,5],[B,12]] [E][[B,99],[C,1]][4][true]'. Usually not required unless >2 pockets needed.",
                     "hidden": true
                 }
             },
@@ -171,14 +229,75 @@
         },
         "template_options": {
             "title": "Template options",
-            "type": "object", 
+            "type": "object",
             "fa_icon": "fas fa-link",
-            "description": "Define structural templates (protein chains only)",
+            "description": "Structural templates (protein chains only)",
             "properties": {
-                "templates": {
+                "template1_path": {
                     "type": "string",
-                    "description": "Structural templates (for protein sequences only). Multiple templates can be specified, seperated by spaces.",
-                    "help_text": "Each template block consists of a path to a CIF file, the prediction chain ID(s) to be templated, template chain ID(s), whether to use a force potential (default: false), and the distance in Angstroms that the prediction can deviate from the template (required when force=true, default='inf'). Format: '[CIF_PATH][PREDICTION_IDs][TEMPLATE_IDs][FORCE_BOOLEAN][THRESHOLD_ANGSTROM]'. If chain IDs are not provided, Boltz will automatically match prediction chains to template chains i.e. to automatically match leave one or both chain ID elements empty e.g. '['./template.cif'][][]' will match all template chains to prediction chains, '['./template.cif'][A][]' will only find templates for chain A, '['./template.cif'][][Y]' will match chain Y of template to closest prediction chain. You can explicitly map prediction chains to templates e.g. To map chain A to template chain Y, and map chain D to template chain Z '['./template.cif'][C,D][Y,Z]'. You can use the same template chain for multiple prediction chains. e.g. To map chains A and B to template chain Y, and use a potential with a threshold of 5 angstroms during prediction '['./template.cif'][A,B][Y,Y][true][5]'",
+                    "format": "file-path",
+                    "pattern": ".*\\.cif$",
+                    "description": "Path to template 1 CIF file",
+                    "help_text": "Path to CIF file to use as template #1.",
+                    "hidden": true
+                },
+                "template1_prediction_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Prediction chain IDs for template 1",
+                    "help_text": "Comma-separated. E.g. 'A,B'. Leave blank to use all chains.",
+                    "hidden": true
+                },
+                "template1_template_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Template chain IDs for template 1",
+                    "help_text": "Comma-separated. E.g. 'X,Y'. Leave blank to use all template chains.",
+                    "hidden": true
+                },
+                "template1_threshold": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "RMSD threshold (Angstroms) for template 1",
+                    "help_text": "If provided, enables potential to keep prediction close to template #1 within N Å.",
+                    "hidden": true
+                },
+                "template2_path": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": ".*\\.cif$",
+                    "description": "Path to template 2 CIF file",
+                    "help_text": "Path to CIF file to use as template #2.",
+                    "hidden": true
+                },
+                "template2_prediction_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Prediction chain IDs for template 2",
+                    "help_text": "Comma-separated. E.g. 'A,B'. Leave blank to use all chains.",
+                    "hidden": true
+                },
+                "template2_template_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Template chain IDs for template 2",
+                    "help_text": "Comma-separated. E.g. 'X,Y'. Leave blank to use all template chains.",
+                    "hidden": true
+                },
+                "template2_threshold": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "RMSD threshold (Angstroms) for template 2",
+                    "help_text": "If provided, enables potential to keep prediction close to template #2 within N Å.",
+                    "hidden": true
+                },
+
+                "template_extra": {
+                    "type": "string",
+                    "description": "Advanced/extra template block(s)",
+                    "help_text": "Advanced use only: specify additional templates as blocks: '[PATH][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[./a.cif][A][X][5] [./b.cif][B][Y][4]'. If threshold given, a force will be applied to restrice the prediction within an RMSD of the template.",
                     "hidden": true
                 }
             },

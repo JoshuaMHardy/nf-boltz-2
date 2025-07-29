@@ -119,118 +119,107 @@
       "title": "Sequence 1 options",
       "type": "object",
       "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 1 (protein, DNA, or RNA)",
+      "description": "Configure sequence 1 (protein, DNA or RNA chain)",
       "properties": {
-        "seq1_name": {
-          "type": "string",
-          "description": "Sequence 1 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$"
-        },
         "seq1_type": {
           "type": "string",
-          "description": "Sequence 1 type",
           "enum": [
             "protein",
             "dna",
             "rna"
           ],
-          "help_text": "Choose the biomolecule type for sequence 1. Examples: protein, dna, rna"
+          "description": "Sequence 1: type",
+          "help_text": "Choose one: protein, dna, or rna."
         },
         "seq1_seq": {
           "type": "string",
-          "description": "Sequence 1 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
+          "description": "Sequence 1: amino acid/nucleotide sequence",
           "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+          "maxLength": 5000,
+          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq1_chain_id": {
           "type": "string",
-          "description": "Unique sequence 1 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L"
+          "description": "Sequence 1: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
         },
         "seq1_mod": {
           "type": "string",
-          "description": "Sequence 1 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
+          "hidden": true,
+          "description": "Sequence 1: modifications (optional)",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
+          "default": null
         },
         "seq1_cyclic": {
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 1 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
+          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         },
         "seq1_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 1",
+          "description": "Generate MSA for sequence 1 (if protein)?",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
         }
-      },
-      "required": [
-        "seq1_type",
-        "seq1_chain_id",
-        "seq1_seq"
-      ]
+      }
     },
     "sequence_2_options": {
       "title": "Sequence 2 options",
       "type": "object",
       "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 2 (protein, DNA, or RNA)",
+      "description": "Configure sequence 2 (protein, DNA or RNA chain)",
       "properties": {
-        "seq2_name": {
-          "type": "string",
-          "description": "Sequence 2 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$"
-        },
         "seq2_type": {
           "type": "string",
-          "description": "Sequence 2 type",
           "enum": [
             "protein",
             "dna",
             "rna"
           ],
-          "help_text": "Choose the biomolecule type for sequence 2. Examples: protein, dna, rna"
+          "description": "Sequence 2: type",
+          "help_text": "Choose one: protein, dna, or rna."
         },
         "seq2_seq": {
           "type": "string",
-          "description": "Sequence 2 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
+          "description": "Sequence 2: amino acid/nucleotide sequence",
           "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+          "maxLength": 5000,
+          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq2_chain_id": {
           "type": "string",
-          "description": "Unique sequence 2 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L"
+          "description": "Sequence 2: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
         },
         "seq2_mod": {
           "type": "string",
-          "description": "Sequence 2 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
+          "hidden": true,
+          "description": "Sequence 2: modifications (optional)",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
+          "default": null
         },
         "seq2_cyclic": {
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 2 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
+          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         },
         "seq2_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 2",
+          "description": "Generate MSA for sequence 2 (if protein)?",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
         }
       }
     },
@@ -238,654 +227,149 @@
       "title": "Sequence 3 options",
       "type": "object",
       "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 3 (protein, DNA, or RNA)",
+      "description": "Configure sequence 3 (protein, DNA or RNA chain)",
       "properties": {
-        "seq3_name": {
-          "type": "string",
-          "description": "Sequence 3 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
         "seq3_type": {
           "type": "string",
-          "description": "Sequence 3 type",
           "enum": [
             "protein",
             "dna",
             "rna"
           ],
-          "help_text": "Choose the biomolecule type for sequence 3. Examples: protein, dna, rna",
-          "hidden": true
+          "description": "Sequence 3: type",
+          "help_text": "Choose one: protein, dna, or rna."
         },
         "seq3_seq": {
           "type": "string",
-          "description": "Sequence 3 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
+          "description": "Sequence 3: amino acid/nucleotide sequence",
           "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
+          "maxLength": 5000,
+          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq3_chain_id": {
           "type": "string",
-          "description": "Unique sequence 3 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
+          "description": "Sequence 3: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
         },
         "seq3_mod": {
           "type": "string",
-          "description": "Sequence 3 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
+          "hidden": true,
+          "description": "Sequence 3: modifications (optional)",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
+          "default": null
         },
         "seq3_cyclic": {
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 3 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
+          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         },
         "seq3_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 3",
+          "description": "Generate MSA for sequence 3 (if protein)?",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
         }
-      },
-      "hidden": true
+      }
     },
     "sequence_4_options": {
       "title": "Sequence 4 options",
       "type": "object",
       "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 4 (protein, DNA, or RNA)",
+      "description": "Configure sequence 4 (protein, DNA or RNA chain)",
       "properties": {
-        "seq4_name": {
-          "type": "string",
-          "description": "Sequence 4 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
         "seq4_type": {
           "type": "string",
-          "description": "Sequence 4 type",
           "enum": [
             "protein",
             "dna",
             "rna"
           ],
-          "help_text": "Choose the biomolecule type for sequence 4. Examples: protein, dna, rna",
-          "hidden": true
+          "description": "Sequence 4: type",
+          "help_text": "Choose one: protein, dna, or rna."
         },
         "seq4_seq": {
           "type": "string",
-          "description": "Sequence 4 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
+          "description": "Sequence 4: amino acid/nucleotide sequence",
           "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
+          "maxLength": 5000,
+          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq4_chain_id": {
           "type": "string",
-          "description": "Unique sequence 4 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
+          "description": "Sequence 4: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
         },
         "seq4_mod": {
           "type": "string",
-          "description": "Sequence 4 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
+          "hidden": true,
+          "description": "Sequence 4: modifications (optional)",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
+          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
+          "default": null
         },
         "seq4_cyclic": {
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 4 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
+          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         },
         "seq4_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 4",
+          "description": "Generate MSA for sequence 4 (if protein)?",
           "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
         }
-      },
-      "hidden": true
+      }
     },
-    "sequence_5_options": {
-      "title": "Sequence 5 options",
+    "sequences_extra_options": {
+      "title": "Extra sequences (advanced)",
       "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 5 (protein, DNA, or RNA)",
+      "fa_icon": "fas fa-plus-square",
+      "description": "Add additional input sequences. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
       "properties": {
-        "seq5_name": {
+        "sequences_extra": {
           "type": "string",
-          "description": "Sequence 5 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
+          "default": null,
+          "description": "Extra sequences block-string",
+          "pattern": "^(\\[[A-Za-z0-9_,]+\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
+          "help_text": "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... IDs = comma separated for multi-chain. Sequence type is auto-detected. Example: '[E][MAAAD] [F,G][ACTGACTG]'. No modifications or cyclic/msa control.",
           "hidden": true
-        },
-        "seq5_type": {
-          "type": "string",
-          "description": "Sequence 5 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 5. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq5_seq": {
-          "type": "string",
-          "description": "Sequence 5 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq5_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 5 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq5_mod": {
-          "type": "string",
-          "description": "Sequence 5 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq5_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 5 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq5_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 5",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
         }
-      },
-      "hidden": true
-    },
-    "sequence_6_options": {
-      "title": "Sequence 6 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 6 (protein, DNA, or RNA)",
-      "properties": {
-        "seq6_name": {
-          "type": "string",
-          "description": "Sequence 6 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq6_type": {
-          "type": "string",
-          "description": "Sequence 6 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 6. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq6_seq": {
-          "type": "string",
-          "description": "Sequence 6 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq6_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 6 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq6_mod": {
-          "type": "string",
-          "description": "Sequence 6 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq6_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 6 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq6_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 6",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
-    },
-    "sequence_7_options": {
-      "title": "Sequence 7 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 7 (protein, DNA, or RNA)",
-      "properties": {
-        "seq7_name": {
-          "type": "string",
-          "description": "Sequence 7 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq7_type": {
-          "type": "string",
-          "description": "Sequence 7 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 7. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq7_seq": {
-          "type": "string",
-          "description": "Sequence 7 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq7_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 7 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq7_mod": {
-          "type": "string",
-          "description": "Sequence 7 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq7_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 7 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq7_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 7",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
-    },
-    "sequence_8_options": {
-      "title": "Sequence 8 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 8 (protein, DNA, or RNA)",
-      "properties": {
-        "seq8_name": {
-          "type": "string",
-          "description": "Sequence 8 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq8_type": {
-          "type": "string",
-          "description": "Sequence 8 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 8. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq8_seq": {
-          "type": "string",
-          "description": "Sequence 8 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq8_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 8 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq8_mod": {
-          "type": "string",
-          "description": "Sequence 8 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq8_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 8 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq8_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 8",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
-    },
-    "sequence_9_options": {
-      "title": "Sequence 9 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 9 (protein, DNA, or RNA)",
-      "properties": {
-        "seq9_name": {
-          "type": "string",
-          "description": "Sequence 9 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq9_type": {
-          "type": "string",
-          "description": "Sequence 9 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 9. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq9_seq": {
-          "type": "string",
-          "description": "Sequence 9 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq9_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 9 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq9_mod": {
-          "type": "string",
-          "description": "Sequence 9 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq9_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 9 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq9_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 9",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
-    },
-    "sequence_10_options": {
-      "title": "Sequence 10 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 10 (protein, DNA, or RNA)",
-      "properties": {
-        "seq10_name": {
-          "type": "string",
-          "description": "Sequence 10 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq10_type": {
-          "type": "string",
-          "description": "Sequence 10 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 10. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq10_seq": {
-          "type": "string",
-          "description": "Sequence 10 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq10_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 10 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq10_mod": {
-          "type": "string",
-          "description": "Sequence 10 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq10_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 10 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq10_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 10",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
-    },
-    "sequence_11_options": {
-      "title": "Sequence 11 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 11 (protein, DNA, or RNA)",
-      "properties": {
-        "seq11_name": {
-          "type": "string",
-          "description": "Sequence 11 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq11_type": {
-          "type": "string",
-          "description": "Sequence 11 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 11. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq11_seq": {
-          "type": "string",
-          "description": "Sequence 11 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq11_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 11 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq11_mod": {
-          "type": "string",
-          "description": "Sequence 11 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq11_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 11 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq11_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 11",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
-    },
-    "sequence_12_options": {
-      "title": "Sequence 12 options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "description": "Configure sequence 12 (protein, DNA, or RNA)",
-      "properties": {
-        "seq12_name": {
-          "type": "string",
-          "description": "Sequence 12 name/description (optional)",
-          "help_text": "Optional name used in plots. Only letters, numbers, underscores, and dashes allowed.",
-          "pattern": "^[a-zA-Z0-9_-]+$",
-          "hidden": true
-        },
-        "seq12_type": {
-          "type": "string",
-          "description": "Sequence 12 type",
-          "enum": [
-            "protein",
-            "dna",
-            "rna"
-          ],
-          "help_text": "Choose the biomolecule type for sequence 12. Examples: protein, dna, rna",
-          "hidden": true
-        },
-        "seq12_seq": {
-          "type": "string",
-          "description": "Sequence 12 amino acid/nucleotide sequence",
-          "pattern": "^[ACDEFGHIKLMNPQRSTUVWYXZ*-]+$",
-          "minLength": 1,
-          "maxLength": 10000,
-          "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK",
-          "hidden": true
-        },
-        "seq12_chain_id": {
-          "type": "string",
-          "description": "Unique sequence 12 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "help_text": "Unique single chain ID (e.g., 'A') or multiple IDs separated by commas for multiple copies (e.g., 'A,B,C'). Examples: A, B,C, H,L",
-          "hidden": true
-        },
-        "seq12_mod": {
-          "type": "string",
-          "description": "Sequence 12 modifications e.g. non-canonical amino acids",
-          "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-          "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'",
-          "hidden": true
-        },
-        "seq12_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 12 cyclic?",
-          "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "seq12_genmsa": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Generate MSA for sequence 12",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        }
-      },
-      "hidden": true
+      }
     },
     "ligand_1_options": {
       "title": "Ligand 1 options",
       "type": "object",
       "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 1",
+      "description": "Configure ligand 1 (small molecule/ion)",
       "properties": {
         "lig1_chain_id": {
           "type": "string",
-          "description": "Unique ligand 1 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
+          "description": "Ligand 1: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Single id ('D') or comma-separated ('G,H')."
         },
         "lig1_ccd": {
           "type": "string",
-          "description": "Ligand 1 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')"
+          "description": "Ligand 1: CCD code",
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
+          "default": null
         },
-        "lig1_chem": {
+        "lig1_smiles": {
           "type": "string",
-          "description": "Ligand 1 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)"
+          "description": "Ligand 1: SMILES string",
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
+          "default": null
         }
       }
     },
@@ -893,24 +377,25 @@
       "title": "Ligand 2 options",
       "type": "object",
       "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 2",
+      "description": "Configure ligand 2 (small molecule/ion)",
       "properties": {
         "lig2_chain_id": {
           "type": "string",
-          "description": "Unique ligand 2 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'"
+          "description": "Ligand 2: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Single id ('D') or comma-separated ('G,H')."
         },
         "lig2_ccd": {
           "type": "string",
-          "description": "Ligand 2 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')"
+          "description": "Ligand 2: CCD code",
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
+          "default": null
         },
-        "lig2_chem": {
+        "lig2_smiles": {
           "type": "string",
-          "description": "Ligand 2 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)"
+          "description": "Ligand 2: SMILES string",
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
+          "default": null
         }
       }
     },
@@ -918,291 +403,69 @@
       "title": "Ligand 3 options",
       "type": "object",
       "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 3",
+      "description": "Configure ligand 3 (small molecule/ion)",
       "properties": {
         "lig3_chain_id": {
           "type": "string",
-          "description": "Unique ligand 3 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
+          "description": "Ligand 3: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Single id ('D') or comma-separated ('G,H')."
         },
         "lig3_ccd": {
           "type": "string",
-          "description": "Ligand 3 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
+          "description": "Ligand 3: CCD code",
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
+          "default": null
         },
-        "lig3_chem": {
+        "lig3_smiles": {
           "type": "string",
-          "description": "Ligand 3 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
+          "description": "Ligand 3: SMILES string",
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
+          "default": null
         }
-      },
-      "hidden": true
+      }
     },
     "ligand_4_options": {
       "title": "Ligand 4 options",
       "type": "object",
       "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 4",
+      "description": "Configure ligand 4 (small molecule/ion)",
       "properties": {
         "lig4_chain_id": {
           "type": "string",
-          "description": "Unique ligand 4 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
+          "description": "Ligand 4: unique chain ID(s)",
+          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
+          "help_text": "Single id ('D') or comma-separated ('G,H')."
         },
         "lig4_ccd": {
           "type": "string",
-          "description": "Ligand 4 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
+          "description": "Ligand 4: CCD code",
+          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
+          "default": null
         },
-        "lig4_chem": {
+        "lig4_smiles": {
           "type": "string",
-          "description": "Ligand 4 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
+          "description": "Ligand 4: SMILES string",
+          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
+          "default": null
         }
-      },
-      "hidden": true
+      }
     },
-    "ligand_5_options": {
-      "title": "Ligand 5 options",
+    "ligands_extra_options": {
+      "title": "Extra ligands (advanced)",
       "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 5",
+      "fa_icon": "fas fa-plus-square",
+      "description": "(Advanced) Add additional ligands. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
       "properties": {
-        "lig5_chain_id": {
+        "ligands_extra": {
           "type": "string",
-          "description": "Unique ligand 5 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
           "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig5_ccd": {
-          "type": "string",
-          "description": "Ligand 5 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig5_chem": {
-          "type": "string",
-          "description": "Ligand 5 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
+          "description": "Extra ligands block-string",
+          "pattern": "^(\\[[A-Za-z0-9_,]+\\]\\[[A-Za-z0-9\\-+]*\\]\\[[^\\[\\]]*\\]\\s*)*$",
+          "help_text": "Extra ligands: space separated blocks: [IDs][CCD][SMILES]. IDs: comma-separated for multiple copies. For SMILES only, leave CCD blank '[E][][C1CCCCC1]'; for CCD only, leave SMILES blank. Example: '[H][ZN][] [I][][N[C@@H](Cc1ccc(O)cc1)C(=O)O]'",
           "hidden": true
         }
-      },
-      "hidden": true
-    },
-    "ligand_6_options": {
-      "title": "Ligand 6 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 6",
-      "properties": {
-        "lig6_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 6 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig6_ccd": {
-          "type": "string",
-          "description": "Ligand 6 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig6_chem": {
-          "type": "string",
-          "description": "Ligand 6 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
-    },
-    "ligand_7_options": {
-      "title": "Ligand 7 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 7",
-      "properties": {
-        "lig7_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 7 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig7_ccd": {
-          "type": "string",
-          "description": "Ligand 7 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig7_chem": {
-          "type": "string",
-          "description": "Ligand 7 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
-    },
-    "ligand_8_options": {
-      "title": "Ligand 8 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 8",
-      "properties": {
-        "lig8_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 8 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig8_ccd": {
-          "type": "string",
-          "description": "Ligand 8 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig8_chem": {
-          "type": "string",
-          "description": "Ligand 8 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
-    },
-    "ligand_9_options": {
-      "title": "Ligand 9 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 9",
-      "properties": {
-        "lig9_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 9 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig9_ccd": {
-          "type": "string",
-          "description": "Ligand 9 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig9_chem": {
-          "type": "string",
-          "description": "Ligand 9 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
-    },
-    "ligand_10_options": {
-      "title": "Ligand 10 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 10",
-      "properties": {
-        "lig10_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 10 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig10_ccd": {
-          "type": "string",
-          "description": "Ligand 10 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig10_chem": {
-          "type": "string",
-          "description": "Ligand 10 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
-    },
-    "ligand_11_options": {
-      "title": "Ligand 11 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 11",
-      "properties": {
-        "lig11_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 11 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig11_ccd": {
-          "type": "string",
-          "description": "Ligand 11 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig11_chem": {
-          "type": "string",
-          "description": "Ligand 11 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
-    },
-    "ligand_12_options": {
-      "title": "Ligand 12 options",
-      "type": "object",
-      "fa_icon": "fas fa-prescription-bottle",
-      "description": "Configure ligand 12",
-      "properties": {
-        "lig12_chain_id": {
-          "type": "string",
-          "description": "Unique ligand 12 chain ID(s)",
-          "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-          "default": null,
-          "help_text": "Unique chain identifier(s) for the ligand e.g. 'B'. Use multiple IDs separated by commas for multiple copies e.g. 'D,E'",
-          "hidden": true
-        },
-        "lig12_ccd": {
-          "type": "string",
-          "description": "Ligand 12 CCD code.",
-          "help_text": "CCD code (e.g., 'ATP', 'ZN')",
-          "hidden": true
-        },
-        "lig12_chem": {
-          "type": "string",
-          "description": "Ligand 12 SMILES string (if provided, CCD field will be ignored)",
-          "help_text": "SMILES string (e.g., CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1)",
-          "hidden": true
-        }
-      },
-      "hidden": true
+      }
     },
     "affinity_options": {
       "title": "Affinity options",
@@ -1257,16 +520,73 @@
           "help_text": "For both atoms that form each bond, provide the chain ID, res number, and atom name. Format: '[CHAIN_ID, RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME] [CHAIN_ID,RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME]...' e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' ",
           "hidden": true
         },
-        "constraints_pocket": {
+        "constraints_contacts": {
           "type": "string",
-          "description": "Pocket constraints. Multiple pockets can be specified, seperated by spaces.",
-          "help_text": "For each pocket, specify the ID of the binder and a list of the pocket residues/atoms. Optionally provide the max distance in Angstroms of the ligand from the pocket (default: 6), and whether to use a potential to enforce the pocket constraint (default: false). Format: '[BINDER_ID][[POCKET_CHAIN_ID,RES_IDX/ATOM_NAME],[POCKET_CHAIN_ID,RES_IDX/ATOM_NAME],...][DIST_ANGSTROM][FORCE_BOOLEAN]' e.g. '[B][[A,53],[A,57],[A,61]] [C][[A,101],[A,130]][5][true]'",
+          "description": "Contact constraints provided as pairs of residues or atoms. Multiple contacts can be specified, separated by spaces.",
+          "pattern": "^(\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)(\\s+\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)*$",
+          "help_text": "Multiple contacts as pairs of atoms/residues: '[CHAIN_ID,RES_IDX/ATOM][CHAIN_ID,RES_IDX/ATOM][DIST][FORCE]'. E.g. '[A,53][A,57] [A,101][A,130][5][true]'. Max distance (Angstroms, default: 6) and force (default: false) are optional.",
           "hidden": true
         },
-        "contraints_contacts": {
+        "constraints_pocket1_binder": {
           "type": "string",
-          "description": "Contact constraints provided as pairs of residues or atoms. Multiple contacts can be specified, seperated by spaces.",
-          "help_text": "For each contact, provide: a pair of chain IDs and residue/atoms. Optionally provide a max distance in Angstroms (default: 6) and whether to use a potential to enforce the contact (default: false). Format: '[CHAIN_ID,RES_IDX/ATOM_NAME][CHAIN_ID,RES_IDX/ATOM_NAME][DIST_ANGSTROM][FORCE_BOOLEAN]' e.g. '[A,53][A,57] [A,101][A,130][5][true]",
+          "pattern": "^[A-Za-z0-9_]+$",
+          "description": "Binder chain ID for pocket 1",
+          "help_text": "Chain ID of ligand or binder for pocket 1. E.g. 'B'.",
+          "hidden": true
+        },
+        "constraints_pocket1_contacts": {
+          "type": "string",
+          "pattern": "^((\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])(,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])*)$",
+          "description": "Contacts (residues or atoms) for pocket 1",
+          "help_text": "Comma-separated. [CHAIN_ID,RES_IDX/ATOM_NAME],[CHAIN_ID,RES_IDX/ATOM_NAME],... E.g. '[A,53],[A,57],[A,61]'",
+          "hidden": true
+        },
+        "constraints_pocket1_max_distance": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Max distance (\u00c5) for pocket 1",
+          "help_text": "Maximum distance in \u00c5 between binder and contact sites. Default 6.0 if omitted.",
+          "hidden": true
+        },
+        "constraints_pocket1_force": {
+          "type": "boolean",
+          "description": "Force potential for pocket 1 (true/false)",
+          "help_text": "Whether to enforce a restraint potential for pocket 1.",
+          "hidden": true
+        },
+        "constraints_pocket2_binder": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$",
+          "description": "Binder chain ID for pocket 2",
+          "help_text": "Chain ID of ligand or binder for pocket 2. E.g. 'C'.",
+          "hidden": true
+        },
+        "constraints_pocket2_contacts": {
+          "type": "string",
+          "pattern": "^((\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])(,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])*)$",
+          "description": "Contacts (residues or atoms) for pocket 2",
+          "help_text": "Comma-separated. E.g. '[A,77],[B,12]'.",
+          "hidden": true
+        },
+        "constraints_pocket2_max_distance": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Max distance (\u00c5) for pocket 2",
+          "help_text": "Maximum distance in \u00c5 between binder and contact sites. Default 6.0 if omitted.",
+          "hidden": true
+        },
+        "constraints_pocket2_force": {
+          "type": "boolean",
+          "description": "Force potential for pocket 2 (true/false)",
+          "help_text": "Whether to enforce a restraint potential for pocket 2.",
+          "hidden": true
+        },
+        "constraints_pocket_extra": {
+          "type": "string",
+          "description": "Advanced or extra pocket constraints (block format)",
+          "help_text": "For advanced use, specify additional pockets with space-separated '[BINDER][[CONTACTS]][DIST][FORCE]'. Example: '[D][[A,5],[B,12]] [E][[B,99],[C,1]][4][true]'. Usually not required unless >2 pockets needed.",
           "hidden": true
         }
       },
@@ -1276,12 +596,72 @@
       "title": "Template options",
       "type": "object",
       "fa_icon": "fas fa-link",
-      "description": "Define structural templates (protein chains only)",
+      "description": "Structural templates (protein chains only)",
       "properties": {
-        "templates": {
+        "template1_path": {
           "type": "string",
-          "description": "Structural templates (for protein sequences only). Multiple templates can be specified, seperated by spaces.",
-          "help_text": "Each template block consists of a path to a CIF file, the prediction chain ID(s) to be templated, template chain ID(s), whether to use a force potential (default: false), and the distance in Angstroms that the prediction can deviate from the template (required when force=true, default='inf'). Format: '[CIF_PATH][PREDICTION_IDs][TEMPLATE_IDs][FORCE_BOOLEAN][THRESHOLD_ANGSTROM]'. If chain IDs are not provided, Boltz will automatically match prediction chains to template chains i.e. to automatically match leave one or both chain ID elements empty e.g. '['./template.cif'][][]' will match all template chains to prediction chains, '['./template.cif'][A][]' will only find templates for chain A, '['./template.cif'][][Y]' will match chain Y of template to closest prediction chain. You can explicitly map prediction chains to templates e.g. To map chain A to template chain Y, and map chain D to template chain Z '['./template.cif'][C,D][Y,Z]'. You can use the same template chain for multiple prediction chains. e.g. To map chains A and B to template chain Y, and use a potential with a threshold of 5 angstroms during prediction '['./template.cif'][A,B][Y,Y][true][5]'",
+          "format": "file-path",
+          "pattern": ".*\\.cif$",
+          "description": "Path to template 1 CIF file",
+          "help_text": "Path to CIF file to use as template #1.",
+          "hidden": true
+        },
+        "template1_prediction_id": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+          "description": "Prediction chain IDs for template 1",
+          "help_text": "Comma-separated. E.g. 'A,B'. Leave blank to use all chains.",
+          "hidden": true
+        },
+        "template1_template_id": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+          "description": "Template chain IDs for template 1",
+          "help_text": "Comma-separated. E.g. 'X,Y'. Leave blank to use all template chains.",
+          "hidden": true
+        },
+        "template1_threshold": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "RMSD threshold (Angstroms) for template 1",
+          "help_text": "If provided, enables potential to keep prediction close to template #1 within N \u00c5.",
+          "hidden": true
+        },
+        "template2_path": {
+          "type": "string",
+          "format": "file-path",
+          "pattern": ".*\\.cif$",
+          "description": "Path to template 2 CIF file",
+          "help_text": "Path to CIF file to use as template #2.",
+          "hidden": true
+        },
+        "template2_prediction_id": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+          "description": "Prediction chain IDs for template 2",
+          "help_text": "Comma-separated. E.g. 'A,B'. Leave blank to use all chains.",
+          "hidden": true
+        },
+        "template2_template_id": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+          "description": "Template chain IDs for template 2",
+          "help_text": "Comma-separated. E.g. 'X,Y'. Leave blank to use all template chains.",
+          "hidden": true
+        },
+        "template2_threshold": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "RMSD threshold (Angstroms) for template 2",
+          "help_text": "If provided, enables potential to keep prediction close to template #2 within N \u00c5.",
+          "hidden": true
+        },
+        "template_extra": {
+          "type": "string",
+          "description": "Advanced/extra template block(s)",
+          "help_text": "Advanced use only: specify additional templates as blocks: '[PATH][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[./a.cif][A][X][5] [./b.cif][B][Y][4]'. If threshold given, a force will be applied to restrice the prediction within an RMSD of the template.",
           "hidden": true
         }
       },
@@ -1359,28 +739,7 @@
       "$ref": "#/definitions/sequence_4_options"
     },
     {
-      "$ref": "#/definitions/sequence_5_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_6_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_7_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_8_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_9_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_10_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_11_options"
-    },
-    {
-      "$ref": "#/definitions/sequence_12_options"
+      "$ref": "#/definitions/sequences_extra_options"
     },
     {
       "$ref": "#/definitions/ligand_1_options"
@@ -1395,28 +754,7 @@
       "$ref": "#/definitions/ligand_4_options"
     },
     {
-      "$ref": "#/definitions/ligand_5_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_6_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_7_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_8_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_9_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_10_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_11_options"
-    },
-    {
-      "$ref": "#/definitions/ligand_12_options"
+      "$ref": "#/definitions/ligands_extra_options"
     },
     {
       "$ref": "#/definitions/affinity_options"
