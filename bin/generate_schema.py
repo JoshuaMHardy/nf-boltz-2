@@ -40,8 +40,7 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
             "hidden": True,
             "description": f"Sequence {num}: modifications (optional)",
             "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-            "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none.",
-            "default": None
+            "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
         },
         f"seq{num}_cyclic": {
             "type": "boolean",
@@ -70,14 +69,12 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
         f"lig{num}_ccd": {
             "type": "string",
             "description": f"Ligand {num}: CCD code",
-            "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES.",
-            "default": None
+            "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
         },
         f"lig{num}_smiles": {
             "type": "string",
             "description": f"Ligand {num}: SMILES string",
-            "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored.",
-            "default": None
+            "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
     }
 
@@ -106,7 +103,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         "title": "Extra sequences (advanced)",
         "type": "object",
         "fa_icon": "fas fa-plus-square",
-        "description": "Add additional input sequences. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
+        "description": "Add additional input sequences here. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
         "properties": {
             "sequences_extra": {
                 "type": "string",
@@ -141,7 +138,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         "title": "Extra ligands (advanced)",
         "type": "object",
         "fa_icon": "fas fa-plus-square",
-        "description": "(Advanced) Add additional ligands. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
+        "description": "Add additional ligands here. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
         "properties": {
             "ligands_extra": {
                 "type": "string",
