@@ -72,8 +72,8 @@ workflow {
     } else {
         def (template_files_list, pdb_codes_list) = collectTemplateFilesAndPDBs(params)
 
-        def files_ch = Channel.fromList(template_files_list)
-        def cif_files_ch = Channel.empty()
+        files_ch = Channel.fromList(template_files_list)
+        cif_files_ch = Channel.empty()
 
         if (pdb_codes_list.size() > 0) {
             println "Downloading templates"
@@ -84,13 +84,13 @@ workflow {
         // Merge all files to a single channel for staging
         template_files_ch = files_ch.mix(cif_files_ch).collect()
         println "Generating YAML from parameters"
-        GenerateYAML(params, template_files_ch)
+        GenerateYAML(params)
         yaml_files = GenerateYAML.out.yaml.map { yaml_file ->
             [yaml_file, params.pred_name]
+        }
     }
-    
     // Run Boltz for each YAML file
-    RunBoltz(yaml_files,template_files)
+    RunBoltz(yaml_files,template_files_ch)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results)
