@@ -6,29 +6,34 @@ nextflow.enable.dsl = 2
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-def collectTemplateFiles(params) {
+def collectTemplateFilesAndPDBs(params) {
     def files = []
+    def pdb_codes = []
 
-    // Check explicit template1/2 fields
-    if (params.template1_path) {
-        files << file(params.template1_path)
-    }
-    if (params.template2_path) {
-        files << file(params.template2_path)
-    }
-
-    // Parse template_extra block string for filenames
-    if (params.template_extra) {
-        // e.g. [./templates/5JZJ.cif][A][A][2]
-        def re = /\[([^\]]+\.cif)\]/  // match anything ending in .cif inside [brackets]
-        (params.template_extra =~ re).each { match ->
-            files << file(match[1])
+    // Handle explicit template1/2 fields
+    [1,2].each { i ->
+        def path = params["template${i}_path"]
+        def pdb_code = params["template${i}_pdb_code"]
+        if (pdb_code) {
+            pdb_codes << [pdb_code.toUpperCase(), "${pdb_code.toUpperCase()}.cif"]
+        } else if (path) {
+            files << file(path)
         }
     }
 
-    // Uniquify just in case...
-    return files.unique()
+    // Handle template_extra (assume only PDB codes, no paths)
+    if (params.template_extra) {
+        // regex: [XXXX] with XXXX = 4-char alphanum code
+        def re = /\[([0-9A-Za-z]{4})\]/
+        (params.template_extra =~ re).each { match ->
+            def code = match[1].toUpperCase()
+            pdb_codes << [code, "${code}.cif"]
+        }
+    }
+
+    return [files.unique(), pdb_codes.unique()]
 }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -65,15 +70,23 @@ workflow {
         }
         
     } else {
-        println "Generating YAML from parameters"
-        template_files = collectTemplateFiles(params)
-        // Generate YAML from parameters
-        GenerateYAML(params)
-        
-        // Create channel from generated YAML
-        yaml_files = GenerateYAML.out.yaml.map { yaml_file -> 
-            return [yaml_file, params.pred_name]
+        def (template_files_list, pdb_codes_list) = collectTemplateFilesAndPDBs(params)
+
+        def files_ch = Channel.fromList(template_files_list)
+        def cif_files_ch = Channel.empty()
+
+        if (pdb_codes_list.size() > 0) {
+            println "Downloading templates"
+            DownloadTemplates(pdb_codes_list)
+            cif_files_ch = DownloadTemplates.out.cif_files
         }
+
+        // Merge all files to a single channel for staging
+        template_files_ch = files_ch.mix(cif_files_ch).collect()
+        println "Generating YAML from parameters"
+        GenerateYAML(params, template_files_ch)
+        yaml_files = GenerateYAML.out.yaml.map { yaml_file ->
+            [yaml_file, params.pred_name]
     }
     
     // Run Boltz for each YAML file
@@ -88,6 +101,30 @@ workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process DownloadTemplates {
+    input:
+    val pdb_codes_tuples
+
+    output:
+    path "*.cif", emit: cif_files
+
+    when:
+    pdb_codes_tuples.size() > 0
+
+    script:
+    def download_cmds = pdb_codes_tuples.collect { pdb_code, filename ->
+        "wget -q -O ${filename} https://files.rcsb.org/download/${pdb_code}.cif"
+    }.join('\n')
+    """
+    ${download_cmds}
+    for file in *.cif; do
+      if [ ! -s "\$file" ]; then
+        echo "Error: Could not download \$file"
+        exit 1
+      fi
+    done
+    """
+}
 
 process RunBoltz {
     container "${params.container_path}"

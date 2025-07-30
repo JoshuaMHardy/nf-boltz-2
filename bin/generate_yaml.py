@@ -295,28 +295,33 @@ def parse_contact_constraint(contact_str: str):
 
 def parse_templates_from_params(params: Dict) -> Optional[list]:
     """
-    Parse explicit template fields (template1_path/template2_path, etc.) and the template_extra block string.
-    Return a list of YAML template dicts, or None if nothing to set.
+    Parses up to 2 explicit template fields (template1_path/template1_pdb_code, etc.)
+    and the template_extra block string (which now contains only PDB codes).
+    Returns a list of YAML template dicts, or None if nothing to set.
     """
     templates = []
-    # Parse up to 2 explicit template fields
+
+    # Up to 2 explicit templates; prefer pdb_code, then path
     for i in range(1, 3):
+        pdb_code = params.get(f'template{i}_pdb_code')
         path = params.get(f'template{i}_path')
-        if not path:
+        if pdb_code:
+            cif_filename = f"{pdb_code.upper()}.cif"
+        elif path:
+            cif_filename = os.path.basename(path)
+        else:
             continue
-        # Use basename of file, because templates are staged in nextflow directory
-        template_entry = {'cif': os.path.basename(path)}
-        # prediction_id: comma separated (string), may be blank
+
+        template_entry = {'cif': cif_filename}
+        # Handle the rest: prediction_id, template_id, threshold/force
         pred_ids = params.get(f'template{i}_prediction_id')
         if pred_ids:
             ids = [x.strip() for x in pred_ids.split(',') if x.strip()]
             template_entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
-        # template_id: comma separated (string), may be blank
         templ_ids = params.get(f'template{i}_template_id')
         if templ_ids:
             ids = [x.strip() for x in templ_ids.split(',') if x.strip()]
             template_entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
-        # threshold: value triggers a force; if present, set force to True
         thresh = params.get(f'template{i}_threshold')
         if thresh is not None:
             try:
@@ -326,18 +331,22 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
                 print(f"Warning: could not parse threshold for template{i}: {thresh}")
         templates.append(template_entry)
 
-    # Parse template_extra (advanced block syntax)
+    # template_extra: expect only PDB code (not a file path) in first field
     extra = params.get('template_extra')
     if extra:
-        # Block format: [PATH][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD]
+        # Block format: [PDB][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD]
         block_pattern = r'(\[[^\]]+\](?:\[[^\]]*\]){0,3})'  # up to 4 fields
         blocks = re.findall(block_pattern, extra)
         for block in blocks:
             fields = re.findall(r'\[([^\]]*)\]', block)
             if not fields or not fields[0].strip():
-                continue  # require at least CIF path
-            # Use basename of file, because templates are staged in nextflow directory
-            entry = {'cif': os.path.basename(fields[0])}
+                continue  # must have a PDB code
+            pdb_code = fields[0].strip()
+            # Only allow 4-character pdb codes (defensive)
+            if not re.match(r'^[0-9A-Za-z]{4}$', pdb_code):
+                print(f"Warning: Unexpected template_extra code: '{pdb_code}'")
+                continue
+            entry = {'cif': f"{pdb_code.upper()}.cif"}
             if len(fields) > 1 and fields[1].strip():
                 ids = [x.strip() for x in fields[1].split(',') if x.strip()]
                 entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
@@ -351,6 +360,7 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
                 except Exception:
                     print(f"Warning: could not parse threshold in template_extra: '{fields[3]}'")
             templates.append(entry)
+
     return templates if templates else None
 
 def build_properties(params: Dict) -> Optional[list]:

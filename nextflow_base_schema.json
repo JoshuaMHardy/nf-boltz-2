@@ -108,7 +108,7 @@
             "properties": {
                 "affinity_ligand_id": {
                     "type": "string",
-                    "description": "Chain ID of ligand for affinity calculations. If not specified, defaults to first ligand ID.",
+                    "description": "Chain ID of ligand for affinity calculations. If not specified, defaults to ligand 1 ID.",
                     "pattern": "^[A-Za-z0-9]+$",
                     "help_text": "e.g. 'E', 'L1', 'D'"
                 },
@@ -231,12 +231,18 @@
             "fa_icon": "fas fa-link",
             "description": "Structural templates (protein chains only)",
             "properties": {
+                "template1_pdb_code": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Za-z]{4}$",
+                    "description": "PDB code for template 1 (auto-download CIF from RCSB)",
+                    "help_text": "Specify a 4-character PDB code to download the template structure automatically."
+                },
                 "template1_path": {
                     "type": "string",
                     "format": "file-path",
                     "pattern": ".*\\.cif$",
-                    "description": "Path to template 1 CIF file",
-                    "help_text": "Path to CIF file to use as template #1.",
+                    "description": "Path to template 1 CIF file. Alternative to PDB code.",
+                    "help_text": "e.g. '/home/users/josh/mytemplate.cif'",
                     "hidden": true
                 },
                 "template1_prediction_id": {
@@ -261,12 +267,18 @@
                     "help_text": "If provided, enables potential to keep prediction close to template #1 within N Å.",
                     "hidden": true
                 },
+                "template2_pdb_code": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Za-z]{4}$",
+                    "description": "PDB code for template 2 (auto-download CIF from RCSB)",
+                    "help_text": "Specify a 4-character PDB code to download the template structure automatically."
+                },
                 "template2_path": {
                     "type": "string",
                     "format": "file-path",
                     "pattern": ".*\\.cif$",
-                    "description": "Path to template 2 CIF file",
-                    "help_text": "Path to CIF file to use as template #2.",
+                    "description": "Path to template 2 CIF file. Alternative to PDB code.",
+                    "help_text": "e.g. '/home/users/josh/mytemplate.cif'",
                     "hidden": true
                 },
                 "template2_prediction_id": {
@@ -291,11 +303,10 @@
                     "help_text": "If provided, enables potential to keep prediction close to template #2 within N Å.",
                     "hidden": true
                 },
-
                 "template_extra": {
                     "type": "string",
                     "description": "Advanced/extra template block(s)",
-                    "help_text": "Advanced use only: specify additional templates as blocks: '[PATH][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[./a.cif][A][X][5] [./b.cif][B][Y][4]'. If threshold given, a force will be applied to restrice the prediction within an RMSD of the template.",
+                    "help_text": "Specify additional templates as blocks: '[PDBCODE][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[1ATP][A][X][5] [4HHB][B][Y][4]'. Only 4-character PDB codes (no file paths) are accepted in template_extra; CIF will be auto-downloaded and staged.",
                     "hidden": true
                 }
             },
