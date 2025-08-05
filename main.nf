@@ -3,94 +3,64 @@ nextflow.enable.dsl = 2
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-def collectTemplateFilesAndPDBs(params) {
-    def files = []
-    def pdb_codes = []
-
-    // Handle explicit template1/2 fields
-    [1,2].each { i ->
-        def path = params["template${i}_path"]
-        def pdb_code = params["template${i}_pdb_code"]
-        if (pdb_code) {
-            pdb_codes << [pdb_code.toUpperCase(), "${pdb_code.toUpperCase()}.cif"]
-        } else if (path) {
-            files << file(path)
-        }
-    }
-
-    // Handle template_extra (assume only PDB codes, no paths)
-    if (params.template_extra) {
-        // regex: [XXXX] with XXXX = 4-char alphanum code
-        def re = /\[([0-9A-Za-z]{4})\]/
-        (params.template_extra =~ re).each { match ->
-            def code = match[1].toUpperCase()
-            pdb_codes << [code, "${code}.cif"]
-        }
-    }
-
-    return [files.unique(), pdb_codes.unique()]
-}
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 workflow {
-    main:
+    validateInputs()
     
-    if(params.input_yaml) {
+    if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
-        
-        if(input_yaml_path.isDirectory()) {
-            println "Using existing YAMLs from: ${params.input_yaml}"
-            
+
+        if (input_yaml_path.isDirectory()) {
+            println("Using existing YAMLs from: ${params.input_yaml}")
+
             // Create channel from YAML files in directory
-            yaml_files = Channel.fromPath("${params.input_yaml}/*.yaml")
-                .map { yaml_file -> 
+            yaml_files = Channel
+                .fromPath("${params.input_yaml}/*.yaml")
+                .map { yaml_file ->
                     def pred_name = yaml_file.getSimpleName()
                     return [yaml_file, pred_name]
                 }
-            
+
             yaml_files.view { "Found YAML: ${it[1]}" }
-            
-        } else if(input_yaml_path.isFile()) {
-            println "Using single YAML file: ${params.input_yaml}"
+        }
+        else if (input_yaml_path.isFile()) {
+            println("Using single YAML file: ${params.input_yaml}")
             pred_name = input_yaml_path.getSimpleName()
-            
+
             // Create channel with single file
             yaml_files = Channel.of([input_yaml_path, pred_name])
-            
-        } else {
-            error "Input YAML path does not exist: ${params.input_yaml}"
         }
-        
-    } else {
+        else {
+            error("Input YAML path does not exist: ${params.input_yaml}")
+        }
+    }
+    else {
+        // Check for templates
         def (template_files_list, pdb_codes_list) = collectTemplateFilesAndPDBs(params)
 
         files_ch = Channel.fromList(template_files_list)
         cif_files_ch = Channel.empty()
 
         if (pdb_codes_list.size() > 0) {
-            println "Downloading templates"
+            println("Downloading templates")
             DownloadTemplates(pdb_codes_list)
             cif_files_ch = DownloadTemplates.out.cif_files
         }
 
         // Merge all files to a single channel for staging
-        template_files_ch = files_ch.mix(cif_files_ch).collect()
-        println "Generating YAML from parameters"
+        template_files_ch = files_ch.mix(cif_files_ch).collect().ifEmpty([])
+
+        println("Generating YAML from parameters")
         GenerateYAML(params)
         yaml_files = GenerateYAML.out.yaml.map { yaml_file ->
             [yaml_file, params.pred_name]
         }
     }
     // Run Boltz for each YAML file
-    RunBoltz(yaml_files,template_files_ch)
+    RunBoltz(yaml_files, template_files_ch)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results)
@@ -112,9 +82,11 @@ process DownloadTemplates {
     pdb_codes_tuples.size() > 0
 
     script:
-    def download_cmds = pdb_codes_tuples.collect { pdb_code, filename ->
-        "wget -q -O ${filename} https://files.rcsb.org/download/${pdb_code}.cif"
-    }.join('\n')
+    def download_cmds = pdb_codes_tuples
+        .collect { pdb_code, filename ->
+            "wget -q -O ${filename} https://files.rcsb.org/download/${pdb_code}.cif"
+        }
+        .join('\n')
     """
     ${download_cmds}
     for file in *.cif; do
@@ -146,7 +118,7 @@ process RunBoltz {
     output:
     path "${pred_name}"
     tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), val(pred_name), emit: boltz_results
-    path ("*.log")
+    path "*.log"
 
     script:
     """
@@ -165,7 +137,7 @@ process RunBoltz {
         ${params.affinity_mw_correction ? '--affinity_mw_correction ' : ''} \
         ${params.diffusion_samples_affinity ? "--diffusion_samples_affinity ${params.diffusion_samples_affinity}" : ''} \
         ${params.sampling_steps_affinity ? "--sampling_steps ${params.sampling_steps_affinity}" : ''} \
-        ${params.output_format == "pdb" ? "--output_format pdb " :'' } \
+        ${params.output_format == "pdb" ? "--output_format pdb " : ''} \
         ${params.write_full_pae ? '--write_full_pae ' : ''} \
         ${params.write_full_pde ? '--write_full_pde ' : ''} \
         ${params.extra_config ? "'${params.extra_config}'" : ''} \
@@ -211,10 +183,10 @@ process AnalyseBoltz {
 process GenerateYAML {
     input:
     val params
-    
+
     output:
     path "*.yaml", emit: yaml
-    
+
     script:
     """
     generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
@@ -223,6 +195,49 @@ process GenerateYAML {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    THE END
+    IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+def validateInputs() {
+    if (params.input_yaml && !file(params.input_yaml).exists()) {
+        exit 1, "ERROR: Input YAML file not found: ${params.input_yaml}"
+    }
+    
+    if (!params.seq1_seq && !params.input_yaml) {
+        exit 1, "ERROR: At least one sequence must be provided"
+    }
+    
+    // Validate prediction name
+    if (!params.pred_name.matches(/^[a-zA-Z0-9_-]+$/)) {
+        exit 1, "ERROR: pred_name can only contain letters, numbers, underscores, and dashes"
+    }
+}
+
+def collectTemplateFilesAndPDBs(params) {
+    def files = []
+    def pdb_codes = []
+
+    // Handle explicit template1/2 fields
+    [1, 2].each { i ->
+        def path = params["template${i}_path"]
+        def pdb_code = params["template${i}_pdb_code"]
+        if (pdb_code) {
+            pdb_codes << [pdb_code.toUpperCase(), "${pdb_code.toUpperCase()}.cif"]
+        }
+        else if (path) {
+            files << file(path)
+        }
+    }
+
+    // Handle template_extra (assume only PDB codes, no paths)
+    if (params.template_extra) {
+        // regex: [XXXX] with XXXX = 4-char alphanum code
+        def re = /\[([0-9A-Za-z]{4})\]/
+        (params.template_extra =~ re).each { match ->
+            def code = match[1].toUpperCase()
+            pdb_codes << [code, "${code}.cif"]
+        }
+    }
+
+    return [files.unique(), pdb_codes.unique()]
+}
