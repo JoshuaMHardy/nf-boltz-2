@@ -40,15 +40,15 @@ def validate_explicit_sequence(i, params):
     seq_type = params.get(f'{seq_key}_type')
     # Requiredness
     if seq and not chain_id:
-        print(f"Error: {seq_key}_seq is set but chain_id is missing.")
+        sys.stderr.write(f"Error: {seq_key}_seq is set but chain_id is missing.")
         sys.exit(1)
     if chain_id and not seq:
-        print(f"Error: {seq_key}_chain_id is set but seq is missing.")
+        sys.stderr.write(f"Error: {seq_key}_chain_id is set but seq is missing.")
         sys.exit(1)
     if not seq and not chain_id:
         return None
     if not seq_type or seq_type not in ("protein", "dna", "rna"):
-        print(f"Error: {seq_key}_type must be specified as 'protein', 'dna', or 'rna'.")
+        sys.stderr.write(f"Error: {seq_key}_type must be specified as 'protein', 'dna', or 'rna'.")
         sys.exit(1)
 
     # Validate character set
@@ -60,11 +60,11 @@ def validate_explicit_sequence(i, params):
     elif seq_type == 'rna':
         valid = RNA_ALPHABET
     else:
-        print(f"Error: Unknown sequence type '{seq_type}' for {seq_key}.")
+        sys.stderr.write(f"Error: Unknown sequence type '{seq_type}' for {seq_key}.")
         sys.exit(1)
     invalid = sorted(set(s) - valid)
     if invalid:
-        print(f"Error: Invalid character(s) {invalid} in {seq_type} sequence for {seq_key}.")
+        sys.stderr.write(f"Error: Invalid character(s) {invalid} in {seq_type} sequence for {seq_key}.")
         sys.exit(1)
     return seq_type
 
@@ -76,7 +76,7 @@ def validate_no_duplicate_chain_ids_within_field(params: dict):
             if cids:
                 cid_list = [x.strip() for x in cids.split(',') if x.strip()]
                 if len(cid_list) != len(set(cid_list)):
-                    print(f"Error: Duplicate chain IDs within field {key}: {cid_list}")
+                    sys.stderr.write(f"Error: Duplicate chain IDs within field {key}: {cid_list}")
                     sys.exit(1)
     # Extra
     for field, block_pat in [('sequences_extra', r"\[([A-Za-z0-9_,]+)\]"), ('ligands_extra', r"\[([A-Za-z0-9_,]+)\]")]:
@@ -87,7 +87,7 @@ def validate_no_duplicate_chain_ids_within_field(params: dict):
                 ids = [i.strip() for i in m.group(1).split(',')]
                 for id_ in ids:
                     if id_ in seen:
-                        print(f"Error: Duplicate chain ID '{id_}' found in {field}.")
+                        sys.stderr.write(f"Error: Duplicate chain ID '{id_}' found in {field}.")
                         sys.exit(1)
                     seen.add(id_)
 
@@ -120,7 +120,7 @@ def validate_unique_chain_ids(params: Dict):
         else:
             seen.add(cid)
     if duplicates:
-        print(f"Error: Duplicate chain ID(s) found across entries: {', '.join(sorted(duplicates))}")
+        sys.stderr.write(f"Error: Duplicate chain ID(s) found across entries: {', '.join(sorted(duplicates))}")
         sys.exit(1)
 
 def validate_affinity_ligand_id(params: dict):
@@ -138,7 +138,7 @@ def validate_affinity_ligand_id(params: dict):
                 defined_ligand_ids.add(cid.strip())
     affinity_id = params.get('affinity_ligand_id')
     if affinity_id and affinity_id not in defined_ligand_ids:
-        print(f"Error: affinity_ligand_id '{affinity_id}' is not among defined ligand chain IDs: {sorted(defined_ligand_ids)}")
+        sys.stderr.write(f"Error: affinity_ligand_id '{affinity_id}' is not among defined ligand chain IDs: {sorted(defined_ligand_ids)}")
         sys.exit(1)
 
 #############################
@@ -153,13 +153,13 @@ def parse_sequences_extra(seqstr: Optional[str]) -> List[Dict]:
         ids_list = [x.strip() for x in ids.split(',') if x.strip()]
         seq_type = autodetect_seq_type(sequence)
         if not seq_type:
-            print(f"Error auto-detecting sequence type for extra sequence '{sequence}'.")
+            sys.stderr.write(f"Error auto-detecting sequence type for extra sequence '{sequence}'.")
             sys.exit(1)
         s = sequence.upper()
         valid = PROTEIN_ALPHABET if seq_type == "protein" else DNA_ALPHABET if seq_type == "dna" else RNA_ALPHABET
         invalid = sorted(set(s) - valid)
         if invalid:
-            print(f"Error: Invalid character(s) {invalid} in {seq_type} sequence for extra chains {ids}.")
+            sys.stderr.write(f"Error: Invalid character(s) {invalid} in {seq_type} sequence for extra chains {ids}.")
             sys.exit(1)
         entry = {
             seq_type: {
@@ -179,7 +179,7 @@ def parse_ligands_extra(ligstr: Optional[str]) -> List[Dict]:
     for ids, ccd, smiles in re.findall(pat, ligstr):
         ids_list = [x.strip() for x in ids.split(',') if x.strip()]
         if not (ccd or smiles):
-            print(f"Error: Must supply CCD or SMILES for ligand ids {ids}.")
+            sys.stderr.write(f"Error: Must supply CCD or SMILES for ligand ids {ids}.")
             sys.exit(1)
         obj = {"ligand": {"id": ids_list[0] if len(ids_list) == 1 else FlowList(ids_list)}}
         # SMILES takes precedence
@@ -328,7 +328,7 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
                 template_entry['force'] = True
                 template_entry['threshold'] = float(thresh)
             except Exception:
-                print(f"Warning: could not parse threshold for template{i}: {thresh}")
+                sys.stderr.write(f"Warning: could not parse threshold for template{i}: {thresh}")
         templates.append(template_entry)
 
     # template_extra: expect only PDB code (not a file path) in first field
@@ -344,7 +344,7 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
             pdb_code = fields[0].strip()
             # Only allow 4-character pdb codes (defensive)
             if not re.match(r'^[0-9A-Za-z]{4}$', pdb_code):
-                print(f"Warning: Unexpected template_extra code: '{pdb_code}'")
+                sys.stderr.write(f"Warning: Unexpected template_extra code: '{pdb_code}'")
                 continue
             entry = {'cif': f"{pdb_code.upper()}.cif"}
             if len(fields) > 1 and fields[1].strip():
@@ -358,7 +358,7 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
                     entry['force'] = True
                     entry['threshold'] = float(fields[3])
                 except Exception:
-                    print(f"Warning: could not parse threshold in template_extra: '{fields[3]}'")
+                    sys.stderr.write(f"Warning: could not parse threshold in template_extra: '{fields[3]}'")
             templates.append(entry)
 
     return templates if templates else None
@@ -449,7 +449,7 @@ def build_yaml_structure(params: Dict) -> Dict:
         elif ccd:
             ligand['ligand']['ccd'] = ccd
         else:
-            print(f"Error: Ligand chain_id '{chain_id}' provided but neither CCD nor SMILES given for {lig_key}.")
+            sys.stderr.write(f"Error: Ligand chain_id '{chain_id}' provided but neither CCD nor SMILES given for {lig_key}.")
             sys.exit(1)
         yaml_data['sequences'].append(ligand)
 
@@ -471,7 +471,7 @@ def build_yaml_structure(params: Dict) -> Dict:
 #############################
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Error: Missing parameters")
+        sys.stderr.write("Error: Missing parameters")
         sys.exit(1)
     try:
         input_params = json.loads(sys.argv[1])
@@ -508,5 +508,5 @@ if __name__ == "__main__":
             allow_unicode=True
         ))
     except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {str(e)}")
+        sys.stderr.write(f"Error decoding JSON: {str(e)}")
         sys.exit(1)
