@@ -9,7 +9,7 @@ nextflow.enable.dsl = 2
 
 workflow {
     validateInputs()
-    
+
     if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
 
@@ -64,6 +64,17 @@ workflow {
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results)
+
+    // Save log file on completion
+    def out_pred_name = params.pred_name
+    def outputDir = file(params.outdir)
+
+    workflow.onComplete {
+        def logFile = file('.nextflow.log')
+        if (logFile.exists()) {
+            logFile.copyTo(outputDir.resolve("${out_pred_name}/nextflow.log"))
+        }
+    }
 }
 
 /*
@@ -109,7 +120,6 @@ process RunBoltz {
     executor 'slurm'
 
     publishDir "${params.outdir}", mode: 'copy', pattern: "${pred_name}"
-    publishDir "${params.outdir}", mode: 'copy', pattern: "*.log"
 
     input:
     tuple path(yaml), val(pred_name)
@@ -118,13 +128,15 @@ process RunBoltz {
     output:
     path "${pred_name}"
     tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), val(pred_name), emit: boltz_results
-    path "*.log"
 
     script:
     """
     # We specify a tmp directory as some python packages try to write to the user home directory outside the container
     mkdir tmp
     export HOME=tmp
+
+    # Create prediction directory to copy results into
+    mkdir ${pred_name}
 
     boltz predict \
         ${yaml} \
@@ -143,10 +155,7 @@ process RunBoltz {
         ${params.write_full_pae ? '--write_full_pae ' : ''} \
         ${params.write_full_pde ? '--write_full_pde ' : ''} \
         ${params.extra_config ? "'${params.extra_config}'" : ''} \
-        2>&1 | tee boltz_${pred_name}.log
-
-    # Create prediction directory
-    mkdir ${pred_name}
+        2>&1 | tee ${pred_name}/boltz.log
    
     # Copy predictions and input yaml to prediction directory. Use .cif if mmcif format.
     cp boltz_results_*/predictions/*/*.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} ${pred_name}/.
@@ -162,7 +171,8 @@ process AnalyseBoltz {
     memory '8G'
     executor 'slurm'
 
-    publishDir "${params.outdir}/${pred_name}/", mode: 'copy'
+    publishDir "${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
+    publishDir "${params.outdir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
 
     input:
     tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
@@ -202,16 +212,16 @@ process GenerateYAML {
 */
 def validateInputs() {
     if (params.input_yaml && !file(params.input_yaml).exists()) {
-        exit 1, "ERROR: Input YAML file not found: ${params.input_yaml}"
+        exit(1, "ERROR: Input YAML file not found: ${params.input_yaml}")
     }
-    
+
     if (!params.seq1_seq && !params.input_yaml) {
-        exit 1, "ERROR: At least one sequence must be provided"
+        exit(1, "ERROR: At least one sequence must be provided")
     }
-    
+
     // Validate prediction name
     if (!params.pred_name.matches(/^[a-zA-Z0-9_-]+$/)) {
-        exit 1, "ERROR: pred_name can only contain letters, numbers, underscores, and dashes"
+        exit(1, "ERROR: pred_name can only contain letters, numbers, underscores, and dashes")
     }
 }
 
