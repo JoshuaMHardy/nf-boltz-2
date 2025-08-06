@@ -10,6 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Rectangle
 from matplotlib.collections import LineCollection
 from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import MaxNLocator
 from glob import glob
 
 
@@ -137,56 +138,36 @@ def get_processed_chain_ranges(chains, residues):
     return chain_ranges, current_idx
 
 
-def create_alphafold_colormap():
-    """Create corrected AlphaFold colormap"""
-    colors = [
-        (0.0, (0.992, 0.490, 0.302)),   # Red/orange
-        (50/100, (0.992, 0.490, 0.302)),
-        (50/100, (0.996, 0.851, 0.212)), # Yellow
-        (70/100, (0.996, 0.851, 0.212)),
-        (70/100, (0.416, 0.796, 0.945)), # Light blue
-        (90/100, (0.416, 0.796, 0.945)),
-        (90/100, (0.051, 0.341, 0.827)), # Dark blue
-        (1.0, (0.051, 0.341, 0.827))
-    ]
-    
-    return LinearSegmentedColormap.from_list(
-        'alphafold_corrected',
-        colors,
-        N=256
-    )
-
-
 def create_confidence_legend():
     """Create confidence legend elements"""
     return [
-        Rectangle((0, 0), 1, 1, facecolor=(0.051, 0.341, 0.827), label='Very high (pLDDT > 90)'),
-        Rectangle((0, 0), 1, 1, facecolor=(0.416, 0.796, 0.945), label='Confident (90 > pLDDT > 70)'),
-        Rectangle((0, 0), 1, 1, facecolor=(0.996, 0.851, 0.212), label='Low (70 > pLDDT > 50)'),
-        Rectangle((0, 0), 1, 1, facecolor=(0.992, 0.490, 0.302), label='Very low (pLDDT < 50)')
+        Rectangle((0, 0), 1, 1, facecolor=(0.051, 0.341, 0.827), alpha=0.5, label='Very high (pLDDT > 90)'),
+        Rectangle((0, 0), 1, 1, facecolor=(0.416, 0.796, 0.945), alpha=0.5, label='Confident (90 > pLDDT > 70)'),
+        Rectangle((0, 0), 1, 1, facecolor=(0.996, 0.851, 0.212), alpha=0.5, label='Low (70 > pLDDT > 50)'),
+        Rectangle((0, 0), 1, 1, facecolor=(0.992, 0.490, 0.302), alpha=0.5, label='Very low (pLDDT < 50)')
     ]
 
 
 def add_confidence_background(ax):
     """Add confidence background bands"""
-    ax.axhspan(0, 50, color=(0.992, 0.490, 0.302), alpha=0.1, zorder=0)
-    ax.axhspan(50, 70, color=(0.996, 0.851, 0.212), alpha=0.1, zorder=0)
-    ax.axhspan(70, 90, color=(0.416, 0.796, 0.945), alpha=0.1, zorder=0)
-    ax.axhspan(90, 100, color=(0.051, 0.341, 0.827), alpha=0.1, zorder=0)
+    ax.axhspan(0, 50, color=(0.992, 0.490, 0.302), alpha=0.3, zorder=0)
+    ax.axhspan(50, 70, color=(0.996, 0.851, 0.212), alpha=0.3, zorder=0)
+    ax.axhspan(70, 90, color=(0.416, 0.796, 0.945), alpha=0.3, zorder=0)
+    ax.axhspan(90, 100, color=(0.051, 0.341, 0.827), alpha=0.3, zorder=0)
 
 
 def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
     """Plot pLDDT data for a single chain"""
-    cmap = create_alphafold_colormap()
+
     mol_type_info = get_molecule_type_info()
     x_vals = np.arange(1, len(pl_values) + 1)
     
     add_confidence_background(ax)
-    
+    ax.xaxis.set_major_locator(MaxNLocator(steps = [1, 2, 5, 10]))
+
     # Handle single data point differently
     if len(pl_values) == 1:
-        color = cmap(pl_values[0]/100)
-        ax.scatter(x_vals[0], pl_values[0], color=color, s=10, zorder=5)
+        ax.scatter(x_vals[0], pl_values[0], s=10, zorder=5, color=(0.2, 0.2, 0.2))
         ax.set_xlim(0.5, 1.5)
         ax.set_xticks([1])
     else:
@@ -195,14 +176,9 @@ def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
         lc = LineCollection(
             segments,
-            colors=[cmap(v/100) for v in pl_values[:-1]],
+            color=(0.2,0.2,0.2),
             linewidths=2)
         ax.add_collection(lc)
-        
-        # Colormap shading below the line
-        for j in range(len(pl_values)):
-            ax.fill_between([x_vals[j], x_vals[j]], [0, 0], [pl_values[j], pl_values[j]],
-                            color=cmap(pl_values[j]/100), alpha=0.3, linewidth=0)
         
         ax.set_xlim(1, len(pl_values))
   
@@ -275,7 +251,9 @@ def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_f
     mol_type_info = get_molecule_type_info()
     
     add_confidence_background(ax)
-    
+
+    ax.xaxis.set_major_locator(MaxNLocator(steps = [1, 2, 5, 10]))
+
     # Handle single data point differently
     if len(all_model_values[0]) == 1:
         # For single points, use scatter plots with different colors per model
@@ -295,7 +273,7 @@ def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_f
                    label=f'Model {model_idx}', linewidth=2)
         
         ax.set_xlim(1, len(all_model_values[0]))
-    
+
     ax.set_ylim(0, 100)
     ax.yaxis.set_major_locator(MultipleLocator(10))
     
@@ -490,10 +468,9 @@ def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, ip
             if symmetric_matrix[i, j] > 0:
                 plt.text(j, i, f'{symmetric_matrix[i, j]:.2f}', 
                         ha='center', va='center', 
-                        color='white' if symmetric_matrix[i, j] < 0.5 else 'black',
-                        fontsize=9)
+                        color='white' if symmetric_matrix[i, j] < 0.5 else 'black')
             else:
-                plt.text(j, i, 'N/A', ha='center', va='center', color='grey', fontsize=8, style='italic')
+                plt.text(j, i, 'N/A', ha='center', va='center', color='grey', style='italic')
     
     plt.title(f"Interface Confidence - Model {model_num}")
     plt.xlabel("Interacting Chain")
