@@ -25,9 +25,8 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
             "description": f"Sequence {num}: amino acid/nucleotide sequence",
             "minLength": 1,
             "maxLength": 5000,
-            "help_text": ("Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. "
-                          "Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'."),
-            "pattern": "^[A-Za-z*.,\\-\\s]+$"  # loose: actual type/chars validated downstream
+            "help_text": ("Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'"),
+            "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         f"seq{num}_chain_id": {
             "type": "string",

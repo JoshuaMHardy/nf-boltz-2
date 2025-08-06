@@ -145,7 +145,7 @@
           "description": "Sequence 1: amino acid/nucleotide sequence",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq1_chain_id": {
@@ -198,7 +198,7 @@
           "description": "Sequence 2: amino acid/nucleotide sequence",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq2_chain_id": {
@@ -251,7 +251,7 @@
           "description": "Sequence 3: amino acid/nucleotide sequence",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq3_chain_id": {
@@ -304,7 +304,7 @@
           "description": "Sequence 4: amino acid/nucleotide sequence",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, ATCG for DNA/ RNA. Type will be auto-detected: do not prefix with anything. E.g., 'MDYK...'.",
+          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq4_chain_id": {
@@ -686,7 +686,7 @@
             "A30",
             "A100"
           ],
-          "default": "A30",
+          "default": "A100",
           "help_text": "Choose GPU model based on availability and computational requirements",
           "hidden": true
         },
