@@ -135,6 +135,7 @@ process RunBoltz {
         ${params.use_potentials ? '--use_potentials' : ''} \
         ${params.recycling_steps ? "--recycling_steps ${params.recycling_steps}" : ''} \
         ${params.sampling_steps ? "--sampling_steps ${params.sampling_steps}" : ''} \
+        ${params.step_scale ? "--step_scale ${params.step_scale}" : ''} \
         ${params.affinity_mw_correction ? '--affinity_mw_correction ' : ''} \
         ${params.diffusion_samples_affinity ? "--diffusion_samples_affinity ${params.diffusion_samples_affinity}" : ''} \
         ${params.sampling_steps_affinity ? "--sampling_steps ${params.sampling_steps_affinity}" : ''} \

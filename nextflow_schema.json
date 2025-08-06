@@ -47,7 +47,6 @@
           "type": "integer",
           "description": "Number of independent diffusion samples (predictions)",
           "minimum": 1,
-          "default": 1,
           "help_text": "More samples improve quality but increase computation time. Default: 1"
         },
         "use_potentials": {
@@ -86,6 +85,13 @@
           "default": 200,
           "hidden": true,
           "help_text": "Number of denoising steps in the diffusion process. Default: 200"
+        },
+        "step_scale": {
+          "type": "number",
+          "description": "Number of sampling steps",
+          "default": 1.638,
+          "hidden": true,
+          "help_text": "The step scale is related to the temperature at which the diffusion process samples the distribution. The lower the higher the diversity among samples (recommended between 1 and 2, default=1.638)"
         },
         "output_format": {
           "type": "string",
