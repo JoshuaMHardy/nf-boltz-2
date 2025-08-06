@@ -31,8 +31,8 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
         f"seq{num}_chain_id": {
             "type": "string",
             "description": f"Sequence {num}: unique chain ID(s)",
-            "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-            "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
+            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$",
+            "help_text": "Unique single alphanumeric chain id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C')."
         },
         f"seq{num}_mod": {
             "type": "string",
@@ -62,8 +62,8 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
         f"lig{num}_chain_id": {
             "type": "string",
             "description": f"Ligand {num}: unique chain ID(s)",
-            "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-            "help_text": "Single id ('D') or comma-separated ('G,H')."
+            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$",
+            "help_text": "Single alphanumeric id (e.g. 'D' or '2') or comma-separated (e.g. 'G,H')."
         },
         f"lig{num}_ccd": {
             "type": "string",
@@ -108,7 +108,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
                 "type": "string",
                 "default": None,
                 "description": "Extra sequences block-string",
-                "pattern": "^(\\[[A-Za-z0-9_,]+\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
+                "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
                 "help_text": (
                     "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... "
                     "IDs = comma separated for multi-chain. Sequence type is auto-detected. Example: '[E][MAAAD] [F,G][ACTGACTG]'. "
@@ -144,7 +144,7 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
                 "default": None,
                 "description": "Extra ligands block-string",
                 "pattern": (
-                    r"^(\[[A-Za-z0-9_,]+\]"                # IDs, comma
+                    r"^(\[[A-Za-z0-9](,[A-Za-z0-9])*\]"    # IDs, comma
                     r"\[[A-Za-z0-9\-+]*\]"                 # CCD (may be blank)
                     r"\[[^\[\]]*\]\s*)*$"                  # SMILES (may be blank, allow anything but brackets inside)
                 ),
