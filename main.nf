@@ -132,6 +132,7 @@ process RunBoltz {
         --use_msa_server \
         ${params.diffusion_samples ? "--diffusion_samples ${params.diffusion_samples}" : ''} \
         ${params.method ? "--method '${params.method}'" : ''} \
+        ${params.use_potentials ? '--use_potentials' : ''} \
         ${params.recycling_steps ? "--recycling_steps ${params.recycling_steps}" : ''} \
         ${params.sampling_steps ? "--sampling_steps ${params.sampling_steps}" : ''} \
         ${params.affinity_mw_correction ? '--affinity_mw_correction ' : ''} \

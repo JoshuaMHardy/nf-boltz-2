@@ -47,9 +47,14 @@
           "type": "integer",
           "description": "Number of independent diffusion samples (predictions)",
           "minimum": 1,
-          "maximum": 25,
-          "default": 5,
-          "help_text": "More samples improve quality but increase computation time. Default: 5"
+          "default": 1,
+          "help_text": "More samples improve quality but increase computation time. Default: 1"
+        },
+        "use_potentials": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to use potentials to improve the physical quality of the predictions (a.k.a. Boltz-2x)",
+          "hidden": true
         },
         "method": {
           "type": "string",
@@ -70,16 +75,14 @@
           "type": "integer",
           "description": "Number of recycling steps",
           "minimum": 1,
-          "maximum": 20,
-          "default": 10,
+          "default": 3,
           "hidden": true,
-          "help_text": "More steps generally improve accuracy but increase computation time. Default = 10, same as AlphaFold3."
+          "help_text": "More steps generally improve accuracy but increase computation time. Default = 3."
         },
         "sampling_steps": {
           "type": "integer",
           "description": "Number of sampling steps",
-          "minimum": 50,
-          "maximum": 1000,
+          "minimum": 1,
           "default": 200,
           "hidden": true,
           "help_text": "Number of denoising steps in the diffusion process. Default: 200"
@@ -476,7 +479,6 @@
           "type": "integer",
           "description": "The number of diffusion samples to use for affinity prediction.",
           "minimum": 1,
-          "maximum": 25,
           "default": 5,
           "help_text": "More samples improve quality but increase computation time. Default: 5",
           "hidden": true
@@ -484,8 +486,7 @@
         "sampling_steps_affinity": {
           "type": "integer",
           "description": "Number of sampling steps for affinity prediction",
-          "minimum": 50,
-          "maximum": 1000,
+          "minimum": 1,
           "default": 200,
           "help_text": "Default: 200",
           "hidden": true
