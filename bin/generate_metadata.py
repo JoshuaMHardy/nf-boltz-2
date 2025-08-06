@@ -4,10 +4,14 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import re
+import pickle
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Rectangle
 from matplotlib.collections import LineCollection
+from matplotlib.ticker import MultipleLocator
 from glob import glob
+
 
 def detect_runname(directory):
     """Auto-detect RUNNAME from files in directory"""
@@ -17,41 +21,6 @@ def detect_runname(directory):
     base = os.path.basename(plddt_files[0])
     return base.split('_model_')[0].split('plddt_')[1]
 
-def affinity_ensemble_row(model_idx, pred_log_ic50, prob_binder):
-    """Convert raw log(IC50) and probability to multiple human-readable columns for a single ensemble component."""
-    # IC50 in μM (3 decimals), pIC50 (2 decimals), deltaG in kcal/mol (2 decimal), probability (3 decimals)
-    ic50_um = 10 ** pred_log_ic50
-    pIC50 = 6 - pred_log_ic50
-    deltaG = (6 - pred_log_ic50) * 1.364
-    return {
-        "ensemble": model_idx,
-        "pred_IC50_μM": f"{ic50_um:.3g}",       # e.g., "0.001", "0.1", "5.6", "120"
-        "pred_pIC50": f"{pIC50:.2f}",           # e.g., "9.00"
-        "pred_deltaG": f"{deltaG:.2f}",         # e.g., "8.18"
-        "prob_binder": f"{prob_binder:.3f}",    # e.g., "0.126"
-    }
-def read_affinity_ensembles(directory, runname):
-    """Extract all affinity ensemble predictions and convert for reporting."""
-    affinity_json = os.path.join(directory, f'affinity_{runname}.json')
-    if not os.path.exists(affinity_json):
-        return []
-    with open(affinity_json) as f:
-        affinity_data = json.load(f)
-    # Find all unique ensemble IDs by suffix
-    ensemble_rows = []
-    idx = 0
-    while True:
-        suffix = "" if idx == 0 else str(idx)
-        pred_key = f"affinity_pred_value{suffix}"
-        prob_key = f"affinity_probability_binary{suffix}"
-        if pred_key in affinity_data and prob_key in affinity_data:
-            pred = float(affinity_data[pred_key])
-            prob = float(affinity_data[prob_key])
-            ensemble_rows.append(affinity_ensemble_row(idx, pred, prob))
-            idx += 1
-        else:
-            break
-    return ensemble_rows
 
 def load_chains_data(directory, runname):
     """Load chain and residue information from npz file"""
@@ -59,41 +28,114 @@ def load_chains_data(directory, runname):
     data = np.load(chains_file, allow_pickle=True)
     return data['chains'], data['residues']
 
-def parse_chain_ranges_with_residues(chains, residues):
-    """Calculate residue ranges for each chain accounting for non-standard residues"""
-    chain_ranges = []
-    non_standard_ranges = []
-    current_idx = 0
-    mol_type_names = {0: 'PROT', 1: 'DNA', 2: 'RNA', 3: 'LIG'}
+
+def get_molecule_type_info():
+    """Return molecule type mapping and labeling"""
+    return {
+        0: {'label': 'PROT', 'axis_label': 'Residue'},
+        1: {'label': 'DNA', 'axis_label': 'Base'},
+        2: {'label': 'RNA', 'axis_label': 'Base'},
+        3: {'label': 'LIG', 'axis_label': 'Atom'}
+    }
+
+
+def create_residue_mapping(chains, residues):
+    """Create mapping between atom-level indices and residue-level indices"""
+    atom_to_residue_map = []
+    residue_boundaries = []  # For tracking which atoms belong to which residue
+    current_atom_idx = 0
+    current_residue_idx = 0
+    
+    mol_type_info = get_molecule_type_info()
     
     for chain in chains:
-        chain_id = chain['name'].item()
         mol_type = chain['mol_type'].item()
-        mol_label = mol_type_names[mol_type]
         
-        if mol_type == 3:  # Ligand
+        if mol_type == 3:  # Ligand - keep as atoms
             length = chain['atom_num'].item()
-            chain_ranges.append((chain_id, mol_label, current_idx, current_idx + length))
-            current_idx += length
-        else:  # Protein/DNA/RNA
+            for _ in range(length):
+                atom_to_residue_map.append(current_residue_idx)
+                residue_boundaries.append((current_atom_idx, current_atom_idx + 1))
+                current_atom_idx += 1
+                current_residue_idx += 1
+        else:  # Protein/DNA/RNA - map atoms to residues
             start_res_idx = chain['res_idx'].item()
             end_res_idx = start_res_idx + chain['res_num'].item()
-            chain_start_idx = current_idx
             
             for res_idx in range(start_res_idx, end_res_idx):
                 if res_idx < len(residues):
                     residue = residues[res_idx]
                     if residue['is_standard']:
-                        current_idx += 1
+                        # Standard residue: one atom
+                        atom_to_residue_map.append(current_residue_idx)
+                        residue_boundaries.append((current_atom_idx, current_atom_idx + 1))
+                        current_atom_idx += 1
                     else:
+                        # Non-standard residue: multiple atoms map to one residue
                         atom_count = residue['atom_num']
-                        res_name = residue['name'].item()
-                        non_standard_ranges.append((res_name, res_idx, current_idx, current_idx + atom_count))
-                        current_idx += atom_count
-            
-            chain_ranges.append((chain_id, mol_label, chain_start_idx, current_idx))
+                        for _ in range(atom_count):
+                            atom_to_residue_map.append(current_residue_idx)
+                        residue_boundaries.append((current_atom_idx, current_atom_idx + atom_count))
+                        current_atom_idx += atom_count
+                    current_residue_idx += 1
     
-    return chain_ranges, non_standard_ranges, current_idx
+    return atom_to_residue_map, residue_boundaries, current_residue_idx
+
+
+def average_data_by_residue(data, residue_boundaries):
+    """Average any data type (pLDDT, PAE, PDE) by residue using residue boundaries"""
+    if data.ndim == 1:
+        # 1D data (like pLDDT)
+        averaged_data = []
+        for start, end in residue_boundaries:
+            if end > start:
+                averaged_data.append(np.mean(data[start:end]))
+            else:
+                averaged_data.append(0.0)  # Fallback for empty ranges
+        return np.array(averaged_data)
+    
+    elif data.ndim == 2:
+        # 2D data (like PAE, PDE matrices)
+        n_residues = len(residue_boundaries)
+        averaged_matrix = np.zeros((n_residues, n_residues))
+        
+        for i, (start_i, end_i) in enumerate(residue_boundaries):
+            for j, (start_j, end_j) in enumerate(residue_boundaries):
+                if end_i > start_i and end_j > start_j:
+                    # Average the submatrix
+                    submatrix = data[start_i:end_i, start_j:end_j]
+                    averaged_matrix[i, j] = np.mean(submatrix)
+        
+        return averaged_matrix
+    
+    else:
+        raise ValueError(f"Unsupported data dimensionality: {data.ndim}")
+
+
+def get_processed_chain_ranges(chains, residues):
+    """Get chain ranges after residue-level processing"""
+    chain_ranges = []
+    current_idx = 0
+    mol_type_info = get_molecule_type_info()
+    
+    for chain in chains:
+        chain_id = chain['name'].item()
+        mol_type = chain['mol_type'].item()
+        mol_label = mol_type_info[mol_type]['label']
+        chain_start_idx = current_idx
+        
+        if mol_type == 3:  # Ligand - count atoms
+            length = chain['atom_num'].item()
+            current_idx += length
+        else:  # Protein/DNA/RNA - count residues
+            start_res_idx = chain['res_idx'].item()
+            end_res_idx = start_res_idx + chain['res_num'].item()
+            current_idx += (end_res_idx - start_res_idx)
+        
+        chain_ranges.append((chain_id, mol_label, chain_start_idx, current_idx))
+    
+    return chain_ranges, current_idx
+
 
 def create_alphafold_colormap():
     """Create corrected AlphaFold colormap"""
@@ -114,207 +156,364 @@ def create_alphafold_colormap():
         N=256
     )
 
-def add_confidence_legend():
-    """Add confidence color legend to the plot"""
-    legend_elements = [
+
+def create_confidence_legend():
+    """Create confidence legend elements"""
+    return [
         Rectangle((0, 0), 1, 1, facecolor=(0.051, 0.341, 0.827), label='Very high (pLDDT > 90)'),
         Rectangle((0, 0), 1, 1, facecolor=(0.416, 0.796, 0.945), label='Confident (90 > pLDDT > 70)'),
         Rectangle((0, 0), 1, 1, facecolor=(0.996, 0.851, 0.212), label='Low (70 > pLDDT > 50)'),
         Rectangle((0, 0), 1, 1, facecolor=(0.992, 0.490, 0.302), label='Very low (pLDDT < 50)')
     ]
-    plt.legend(handles=legend_elements, title='Model Confidence:', 
-              loc='upper right', bbox_to_anchor=(1, 1))
 
-def add_confidence_background():
-    """Add horizontal confidence bands to background"""
-    plt.axhspan(0, 50, color=(0.992, 0.490, 0.302), alpha=0.1, zorder=0)  # Very low
-    plt.axhspan(50, 70, color=(0.996, 0.851, 0.212), alpha=0.1, zorder=0)  # Low
-    plt.axhspan(70, 90, color=(0.416, 0.796, 0.945), alpha=0.1, zorder=0)  # Confident
-    plt.axhspan(90, 100, color=(0.051, 0.341, 0.827), alpha=0.1, zorder=0)  # Very high
 
-def add_chain_labels_1d(chain_ranges, non_standard_ranges):
-    """Add chain labels and non-standard residue markers to 1D plots"""
-    # Chain boundaries - now dark grey
-    for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
-        if i > 0:
-            plt.axvline(start, color='#333333', linestyle='-', alpha=0.8, linewidth=2)
+def add_confidence_background(ax):
+    """Add confidence background bands"""
+    ax.axhspan(0, 50, color=(0.992, 0.490, 0.302), alpha=0.1, zorder=0)
+    ax.axhspan(50, 70, color=(0.996, 0.851, 0.212), alpha=0.1, zorder=0)
+    ax.axhspan(70, 90, color=(0.416, 0.796, 0.945), alpha=0.1, zorder=0)
+    ax.axhspan(90, 100, color=(0.051, 0.341, 0.827), alpha=0.1, zorder=0)
+
+
+def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
+    """Plot pLDDT data for a single chain"""
+    cmap = create_alphafold_colormap()
+    mol_type_info = get_molecule_type_info()
+    x_vals = np.arange(1, len(pl_values) + 1)
+    
+    add_confidence_background(ax)
+    
+    # Handle single data point differently
+    if len(pl_values) == 1:
+        color = cmap(pl_values[0]/100)
+        ax.scatter(x_vals[0], pl_values[0], color=color, s=10, zorder=5)
+        ax.set_xlim(0.5, 1.5)
+        ax.set_xticks([1])
+    else:
+        # Multiple points: use LineCollection method
+        points = np.array([x_vals, pl_values]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lc = LineCollection(
+            segments,
+            colors=[cmap(v/100) for v in pl_values[:-1]],
+            linewidths=2)
+        ax.add_collection(lc)
         
-        # Chain labels
-        plt.text((start + end)/2, 5, f"{chain_id}\n{mol_label}", 
-                ha='center', va='bottom', fontsize=8, 
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+        # Colormap shading below the line
+        for j in range(len(pl_values)):
+            ax.fill_between([x_vals[j], x_vals[j]], [0, 0], [pl_values[j], pl_values[j]],
+                            color=cmap(pl_values[j]/100), alpha=0.3, linewidth=0)
+        
+        ax.set_xlim(1, len(pl_values))
+  
+    ax.set_ylim(0, 100)
+    ax.yaxis.set_major_locator(MultipleLocator(10))
     
-    # Non-standard residues - also dark grey
-    for res_name, res_idx, start, end in non_standard_ranges:
-        plt.axvline(start, color='#333333', linestyle='--', alpha=0.8, linewidth=1)
-        plt.axvline(end, color='#333333', linestyle='--', alpha=0.8, linewidth=1)
-        plt.text((start + end)/2, 15, f"{res_name}{res_idx}", 
-                ha='center', va='bottom', fontsize=7,
-                bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.8))
+    if is_first_chain:
+        ax.set_ylabel("pLDDT Confidence")
+    else:
+        ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
+    
+    # Get axis label from molecule type
+    xlabel = next(info['axis_label'] for key, info in mol_type_info.items() 
+                 if info['label'] == mol_label)
+    ax.set_xlabel(xlabel)
+    ax.set_title(f"Chain {chain_id}\n({mol_label})", fontsize=12)
 
-def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain_ranges, non_standard_ranges, total_length):
-    """Plot PAE or PDE matrix with compact layout and proper spacing"""
-    file = os.path.join(directory, f"{matrix_type}_{runname}_model_{model_num}.npz")
+
+def plot_single_model_plddt(directory, runname, output_dir, chains, residues, model_num):
+    """Multi-panel pLDDT plot with horizontal layout and averaged non-standard residues"""
+    file = os.path.join(directory, f'plddt_{runname}_model_{model_num}.npz')
     data = np.load(file)
-    matrix = data[matrix_type][:total_length, :total_length]
+    raw_plddt = data['plddt'] * 100
     
-    fig, ax = plt.subplots(figsize=(8, 8))  # More compact
+    # Process pLDDT data
+    atom_to_residue_map, residue_boundaries, total_residues = create_residue_mapping(chains, residues)
+    processed_plddt = average_data_by_residue(raw_plddt, residue_boundaries)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
     
-    if matrix_type == 'pae':
-        im = ax.imshow(matrix, cmap='GnBu_r', origin='lower', vmin=0, vmax=30, 
-                      extent=[-0.5, total_length-0.5, -0.5, total_length-0.5])
-        cbar_label = 'Expected prediction error (Å)'
-        explanation = (
-            "PAE shows expected positional error between residue pairs.\n"
-            "Dark blue = low error (high confidence), light colors = higher uncertainty."
-        )
-    else:  # PDE
-        matrix = np.log1p(matrix)
-        im = ax.imshow(matrix, cmap='GnBu_r', origin='lower', 
-                      extent=[-0.5, total_length-0.5, -0.5, total_length-0.5])
-        cbar_label = 'log(Expected Distance Error (Å))'
-        explanation = (
-            "PDE estimates distance constraint reliability (log scale).\n"
-            "Dark blue = confident predictions, light colors = uncertainty."
-        )
+    n_chains = len(chain_ranges)
+    chain_lengths = [max(end - start, 1) for _, _, start, end in chain_ranges]
+    width_ratios = [max(length, 0.3) for length in chain_lengths]
     
-    # Add chain boundary lines in RED
+    fig, axes = plt.subplots(1, n_chains, figsize=(16, 5), sharey=True, 
+                            gridspec_kw={'width_ratios': width_ratios})
+    if n_chains == 1:
+        axes = [axes]
+    
     for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
-        if i > 0:
-            ax.axhline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1)
-            ax.axvline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1)
+        pl_values = processed_plddt[start:end]
+        plot_plddt_chain(axes[i], pl_values, chain_id, mol_label, is_first_chain=(i == 0))
     
-    # Add non-standard residue boundaries in RED
-    for res_name, res_idx, start, end in non_standard_ranges:
-        ax.axhline(start - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        ax.axhline(end - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        ax.axvline(start - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
-        ax.axvline(end - 0.5, color='red', linestyle='--', alpha=0.8, linewidth=0.5)
+    # Add legend
+    legend_elements = create_confidence_legend()
+    fig.legend(
+        handles=legend_elements,
+        title='pLDDT confidence (non-standard residues averaged):',
+        loc='lower center', 
+        bbox_to_anchor=(0.5, 0.01), 
+        ncol=4, 
+        fontsize=10, 
+        framealpha=0.9, 
+        title_fontsize=11
+    )
     
-    # Set axes properties
-    ax.set_xlim(-0.5, total_length - 0.5)
-    ax.set_ylim(-0.5, total_length - 0.5)
-    ax.set_xlabel("Scored residue", fontsize=11)
-    ax.set_ylabel("Aligned residue", fontsize=11)
+    plt.suptitle(f"pLDDT Confidence - Model {model_num}", 
+                fontsize=15, fontweight='bold')
     
-    # Compact label positioning
-    label_offset_close = total_length * 0.025   # Non-standard residues (closer)
-    label_offset_far = total_length * 0.055     # Chain labels (further)
+    plt.subplots_adjust(
+        left=0.06, right=0.95, top=0.85, bottom=0.25, wspace=0.05
+    )
     
-    # Add non-standard residue labels first (closer to plot)
-    for res_name, res_idx, start, end in non_standard_ranges:
-        mid_pos = (start + end) / 2
-        # Top
-        ax.text(mid_pos, total_length + label_offset_close, f"{res_name}{res_idx}", 
-                ha='center', va='bottom', fontsize=8,
-                bbox=dict(boxstyle="round,pad=0.2", facecolor="lightblue", alpha=0.8))
-        # Right
-        ax.text(total_length + label_offset_close, mid_pos, f"{res_name}{res_idx}", 
-                ha='center', va='center', fontsize=8, rotation=-90,
-                bbox=dict(boxstyle="round,pad=0.2", facecolor="lightblue", alpha=0.8))
+    plt.savefig(os.path.join(output_dir, f'{runname}_plddt_model_{model_num}.png'),
+                dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+
+
+def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_first_chain=False):
+    """Plot pLDDT data for multiple models on a single chain"""
+    mol_type_info = get_molecule_type_info()
     
-    # Add chain labels (further from plot)
-    for chain_id, mol_label, start, end in chain_ranges:
-        mid_pos = (start + end) / 2
-        # Top
-        ax.text(mid_pos, total_length + label_offset_far, f"{chain_id}\n{mol_label}", 
-                ha='center', va='bottom', fontsize=9,
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor='gray'))
-        # Right
-        ax.text(total_length + label_offset_far, mid_pos, f"{chain_id}\n{mol_label}", 
-                ha='center', va='center', fontsize=9, rotation=-90,
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor='gray'))
+    add_confidence_background(ax)
     
-    # Add horizontal colorbar with compact positioning
-    cbar = fig.colorbar(im, ax=ax, orientation='horizontal', 
-                       shrink=0.7, pad=0.08, aspect=30)
-    cbar.set_label(cbar_label, fontsize=10)
-    cbar.ax.tick_params(labelsize=9)
+    # Handle single data point differently
+    if len(all_model_values[0]) == 1:
+        # For single points, use scatter plots with different colors per model
+        colors = plt.cm.tab10(np.linspace(0, 1, len(all_model_values)))
+        for model_idx, pl_values in enumerate(all_model_values):
+            ax.scatter(1, pl_values[0], color=colors[model_idx], s=10, 
+                      label=f'Model {model_idx}', zorder=5, alpha=0.8)
+        ax.set_xlim(0.5, 1.5)
+        ax.set_xticks([1])
+    else:
+        # Multiple points: use regular line plots with different colors per model
+        x_vals = np.arange(1, len(all_model_values[0]) + 1)
+        colors = plt.cm.tab10(np.linspace(0, 1, len(all_model_values)))
+        
+        for model_idx, pl_values in enumerate(all_model_values):
+            ax.plot(x_vals, pl_values, color=colors[model_idx], alpha=0.8, 
+                   label=f'Model {model_idx}', linewidth=2)
+        
+        ax.set_xlim(1, len(all_model_values[0]))
     
-    # Move title higher to avoid overlap with labels
-    fig.suptitle(f"{matrix_type.upper()} - Model {model_num}", 
-                fontsize=14, fontweight='bold', x=0.5, y=0.98, ha='center')
+    ax.set_ylim(0, 100)
+    ax.yaxis.set_major_locator(MultipleLocator(10))
     
-    # Multi-line explanatory text at bottom
-    fig.text(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=8,
-             bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.8),
-             transform=fig.transFigure)
+    if is_first_chain:
+        ax.set_ylabel("pLDDT Confidence")
+        # Add model legend only to the first subplot
+        ax.legend(loc='upper left', fontsize=9)
+    else:
+        ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
     
-    # Compact layout with minimal margins
-    plt.subplots_adjust(left=0.08, bottom=0.15, right=0.85, top=0.93)
+    # Get axis label from molecule type
+    xlabel = next(info['axis_label'] for key, info in mol_type_info.items() 
+                 if info['label'] == mol_label)
+    ax.set_xlabel(xlabel)
+    ax.set_title(f"Chain {chain_id}\n({mol_label})", fontsize=12)
+
+
+def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
+    """Plot pLDDT values for all models with horizontal layout and averaged non-standard residues"""
+    plddt_files = sorted(glob(os.path.join(directory, f'plddt_{runname}_model_*.npz')))
     
-    # Save with tight bounding box to minimize white space
-    plt.savefig(os.path.join(output_dir, f'{matrix_type}_model_{model_num}.png'), 
+    # Process data
+    atom_to_residue_map, residue_boundaries, total_residues = create_residue_mapping(chains, residues)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
+    
+    n_chains = len(chain_ranges)
+    n_models = len(plddt_files)
+    
+    # Load and process all model data
+    all_processed_plddt = []
+    for file in plddt_files:
+        data = np.load(file)
+        raw_plddt = data['plddt'] * 100
+        processed_plddt = average_data_by_residue(raw_plddt, residue_boundaries)
+        all_processed_plddt.append(processed_plddt)
+    
+    # Calculate width ratios based on chain lengths (same as single model plot)
+    chain_lengths = [max(end - start, 1) for _, _, start, end in chain_ranges]
+    width_ratios = [max(length, 0.3) for length in chain_lengths]
+    
+    # Create horizontal subplots with proportional widths (matching single model layout)
+    fig, axes = plt.subplots(1, n_chains, figsize=(16, 5), sharey=True, 
+                            gridspec_kw={'width_ratios': width_ratios})
+    if n_chains == 1:
+        axes = [axes]
+    
+    # Plot each chain
+    for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+        # Get pLDDT values for all models for this chain
+        all_model_chain_values = []
+        for processed_plddt in all_processed_plddt:
+            pl_values = processed_plddt[start:end]
+            all_model_chain_values.append(pl_values)
+        
+        plot_plddt_chain_multi_model(axes[i], all_model_chain_values, chain_id, mol_label, 
+                                    is_first_chain=(i == 0))
+    
+    # Add confidence legend (same as single model plot)
+    legend_elements = create_confidence_legend()
+    fig.legend(
+        handles=legend_elements,
+        title='pLDDT confidence (non-standard residues averaged):',
+        loc='lower center', 
+        bbox_to_anchor=(0.5, 0.01), 
+        ncol=4, 
+        fontsize=10, 
+        framealpha=0.9, 
+        title_fontsize=11
+    )
+    
+    plt.suptitle("pLDDT Confidence Scores - All Models", 
+                fontsize=15, fontweight='bold')
+    
+    # Use same layout adjustments as single model plot
+    plt.subplots_adjust(
+        left=0.06, right=0.95, top=0.85, bottom=0.25, wspace=0.05
+    )
+    
+    plt.savefig(os.path.join(output_dir, f'{runname}_plddt_all_models.png'), 
                dpi=300, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
 
-def plot_all_models_plddt(directory, runname, output_dir, chain_ranges, non_standard_ranges, total_length):
-    """Plot pLDDT values for all models in one figure"""
-    plddt_files = sorted(glob(os.path.join(directory, f'plddt_{runname}_model_*.npz')))
-    plt.figure(figsize=(14, 7))
-    add_confidence_background()
-    for i, file in enumerate(plddt_files):
-        data = np.load(file)
-        plddt = data['plddt'][:total_length] * 100
-        plt.plot(range(len(plddt)), plddt, alpha=0.7, label=f'Model {i}', linewidth=1.5)
-    add_chain_labels_1d(chain_ranges, non_standard_ranges)
-    add_confidence_legend()
-    plt.xlim(0, total_length)
-    plt.ylim(0, 100)
-    plt.ylabel("pLDDT Confidence")
-    plt.xlabel("Residue/Atom number")
-    plt.title("pLDDT Confidence Scores - All Models")
-    plt.legend(loc='upper left')
+def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chains, residues):
+    """Plot PAE or PDE matrix with non-standard residue averaging and optimized layout"""
+    file = os.path.join(directory, f"{matrix_type}_{runname}_model_{model_num}.npz")
+    if not os.path.exists(file):
+        return
+        
+    data = np.load(file)
+    raw_matrix = data[matrix_type]
+    
+    # Process matrix data
+    atom_to_residue_map, residue_boundaries, total_residues = create_residue_mapping(chains, residues)
+    processed_matrix = average_data_by_residue(raw_matrix, residue_boundaries)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
+    
+    # Create figure with optimized size - made it square to reduce whitespace
+    fig, ax = plt.subplots(figsize=(7, 8))
+    
+    if matrix_type == 'pae':
+        im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower', vmin=0, vmax=30, 
+                      extent=[-0.5, total_residues-0.5, -0.5, total_residues-0.5])
+        cbar_label = 'Expected position error (Å)'
+        explanation = (
+            f"{matrix_type.upper()} measures confidence in relative positions. "
+            "Dark blue = high confidence, light colors = uncertainty. Non-standard residues averaged."
+        )
+    else:  # PDE
+        im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower', 
+                      extent=[-0.5, total_residues-0.5, -0.5, total_residues-0.5])
+        cbar_label = 'Expected distance error (Å)'
+        explanation = (
+            f"{matrix_type.upper()} measures distance confidence. "
+            "Dark blue = high confidence, light colors = uncertainty. Non-standard residues averaged."
+        )
+    
+    # Add chain boundary lines
+    for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+        if i > 0:
+            ax.axhline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1.5)
+            ax.axvline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1.5)
+    
+    # Set plot limits
+    ax.set_xlim(-0.5, total_residues - 0.5)
+    ax.set_ylim(-0.5, total_residues - 0.5)
+    
+    # Add axis labels
+    ax.set_xlabel("Scored residue", fontsize=12)
+    ax.set_ylabel("Aligned residue", fontsize=12)
+    
+    # Reduced label offset to minimize whitespace
+    label_offset = total_residues * 0.02
+    
+    for chain_id, mol_label, start, end in chain_ranges:
+        mid_pos = (start + end) / 2
+        
+        # Top labels - closer to plot
+        ax.text(mid_pos, total_residues + label_offset, f"{chain_id}\n{mol_label}", 
+                ha='center', va='bottom', fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.2", facecolor="white", 
+                         alpha=0.9, edgecolor='gray'))
+        
+        # Right labels - closer to plot
+        ax.text(total_residues + label_offset, mid_pos, f"{chain_id} - {mol_label}",
+                ha='left', va='center', fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.2", facecolor="white", 
+                         alpha=0.9, edgecolor='gray'))
+    
+    # Add colorbar with better positioning
+    cbar = fig.colorbar(im, ax=ax, orientation='horizontal', 
+                       shrink=0.8, pad=0.1, aspect=35, fraction=0.046)
+    cbar.set_label(cbar_label, fontsize=11)
+    cbar.ax.tick_params(labelsize=10)
+    
+    # Position title at the very top, above chain labels
+    fig.suptitle(f"{matrix_type.upper()} - Model {model_num}", 
+                fontsize=14, fontweight='bold', y=0.98)
+    
+    # Position explanation text more compactly
+    fig.text(0.5, 0.03, explanation, ha='center', va='bottom', fontsize=9,
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.8),
+             transform=fig.transFigure, wrap=True)
+    
+    # Adjusted layout to accommodate title at the top
+    plt.subplots_adjust(
+        top=0.9,       # Reduced top margin to make room for title above chain labels
+        bottom=0.12     # Reduced bottom margin
+    )
+    
+    plt.savefig(os.path.join(output_dir, f'{runname}_{matrix_type}_model_{model_num}.png'), 
+               dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+
+
+def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, iptm_matrix):
+    """Plot chain interaction ipTM matrix"""
+    plt.figure(figsize=(8, 7))
+    chain_ids = [f"{chain_id}\n{mol_label}" for chain_id, mol_label, _, _ in chain_ranges]
+    num_chains = len(chain_ids)
+    symmetric_matrix = np.maximum(iptm_matrix, iptm_matrix.T)
+    masked_matrix = np.ma.masked_where(symmetric_matrix == 0, symmetric_matrix)
+    cmap = plt.get_cmap('viridis')
+    im = plt.imshow(masked_matrix, cmap=cmap, origin='lower', vmin=0, vmax=1, aspect='equal')
+    plt.xticks(range(num_chains), chain_ids, fontsize=10)
+    plt.yticks(range(num_chains), chain_ids, fontsize=10)
+    cbar = plt.colorbar(im, label='Interface Confidence (ipTM)', shrink=0.8)
+    cbar.set_ticks(np.arange(0, 1.1, 0.2))
+    
+    for i in range(num_chains):
+        for j in range(num_chains):
+            if symmetric_matrix[i, j] > 0:
+                plt.text(j, i, f'{symmetric_matrix[i, j]:.2f}', 
+                        ha='center', va='center', 
+                        color='white' if symmetric_matrix[i, j] < 0.5 else 'black',
+                        fontsize=9)
+            else:
+                plt.text(j, i, 'N/A', ha='center', va='center', color='grey', fontsize=8, style='italic')
+    
+    plt.title(f"Interface Confidence - Model {model_num}")
+    plt.xlabel("Interacting Chain")
+    plt.ylabel("Interacting Chain")
+    
     explanation = (
-        "pLDDT (predicted Local Distance Difference Test) estimates per-residue confidence.\n"
-        "Background bands show confidence ranges: >90 (very high), 70-90 (confident), "
-        "50-70 (low), <50 (very low). Higher scores indicate more reliable structure predictions."
+        "ipTM scores estimate interface prediction confidence (0-1).\n"
+        "Values show mutual interface quality between chain pairs.\n"
+        "Higher scores indicate more reliable interactions."
     )
     plt.figtext(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8))
     plt.tight_layout()
-    plt.subplots_adjust(bottom=0.15)
-    plt.savefig(os.path.join(output_dir, f'{runname}_plddt_all_models.png'), dpi=300, bbox_inches='tight')
+    plt.subplots_adjust(bottom=0.18)
+    plt.savefig(os.path.join(output_dir, f'{runname}_iptm_model_{model_num}.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
-def plot_single_model_plddt(directory, runname, output_dir, chain_ranges, non_standard_ranges, total_length, model_num):
-    """Plot pLDDT for a single model with AlphaFold colored line and shading"""
-    file = os.path.join(directory, f'plddt_{runname}_model_{model_num}.npz')
-    data = np.load(file)
-    plddt = data['plddt'][:total_length] * 100
-    plt.figure(figsize=(14, 6))
-    cmap = create_alphafold_colormap()
-    x_vals = np.arange(len(plddt))
-    for i in range(len(plddt)):
-        color = cmap(plddt[i]/100)
-        plt.fill_between([i, i+1], [0, 0], [plddt[i], plddt[i]], color=color, alpha=0.3, linewidth=0)
-    points = np.array([x_vals, plddt]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    colors = [cmap(plddt[i]/100) for i in range(len(plddt)-1)]
-    lc = LineCollection(segments, colors=colors, linewidths=1.5, alpha=0.8)
-    plt.gca().add_collection(lc)
-    add_chain_labels_1d(chain_ranges, non_standard_ranges)
-    add_confidence_legend()
-    plt.xlim(0, total_length)
-    plt.ylim(0, 100)
-    plt.ylabel("pLDDT Confidence")
-    plt.xlabel("Residue/Atom number")
-    plt.title(f"pLDDT Confidence Scores - Model {model_num}")
-    explanation = (
-        "Line and shading colors indicate confidence levels at each position. "
-        "Blue regions show high confidence predictions, while red/orange indicate uncertainty.\n"
-        "Chain boundaries marked with grey lines, non-standard residues with dashed lines."
-    )
-    plt.figtext(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=9,
-                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8), wrap=True)
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.15)
-    plt.savefig(os.path.join(output_dir, f'{runname}_plddt_model_{model_num}.png'), dpi=300, bbox_inches='tight')
-    plt.close()
 
-def process_confidence_data(directory, runname, model_num, chain_id_map):
-    """Process confidence JSON file and return metadata"""
+def process_confidence_data(directory, runname, model_num, chains):
+    """Process confidence JSON file and return metadata and matrix with ordered keys"""
     json_file = os.path.join(directory, f'confidence_{runname}_model_{model_num}.json')
     if not os.path.exists(json_file):
         return None, None
@@ -322,31 +521,69 @@ def process_confidence_data(directory, runname, model_num, chain_id_map):
     with open(json_file) as f:
         data = json.load(f)
     
-    # Process metadata for CSV (same as before)
-    metadata = {
-        'model': model_num,
-        'confidence_score': round(data.get('confidence_score', 0), 3),
-        'ptm': round(data.get('ptm', 0), 3),
-        'iptm': round(data.get('iptm', 0), 3),
-        'ligand_iptm': round(data.get('ligand_iptm', 0), 3),
-        'complex_plddt': round(data.get('complex_plddt', 0), 3),
-        'complex_iplddt': round(data.get('complex_iplddt', 0), 3)
-    }
+    # Create chain ID mapping
+    chain_id_map = {}
+    chain_ranges, _ = get_processed_chain_ranges(chains, [])
     
-    # Process chains_ptm
+    for idx, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+        chain_data = next(c for c in chains if c['name'].item() == chain_id)
+        chain_id_map[chain_data['asym_id'].item()] = {
+            'id': chain_id,
+            'type': mol_label,
+            'index': idx
+        }
+    
+    # Define ordered fieldnames following JSON structure
+    ordered_fieldnames = [
+        'model',  # Put model first for clarity
+        'confidence_score',
+        'ptm',
+        'iptm',
+        'ligand_iptm',
+        'protein_iptm',
+        'complex_plddt',
+        'complex_iplddt',
+        'complex_pde',
+        'complex_ipde'
+    ]
+    
+    # Add chains_ptm fields in alphabetical chain order
+    chain_ids = sorted([info['id'] for info in chain_id_map.values()])
+    for chain_id in chain_ids:
+        ordered_fieldnames.append(f'ptm_{chain_id}')
+    
+    # Add pair_chains_iptm fields in alphabetical pair order
+    for src_chain in chain_ids:
+        for dst_chain in chain_ids:
+            ordered_fieldnames.append(f'iptm_{src_chain}_{dst_chain}')
+    
+    # Process metadata in order
+    metadata = {}
+    
+    # Main metrics (in order)
+    metadata['model'] = model_num
+    metadata['confidence_score'] = round(data.get('confidence_score', 0), 3)
+    metadata['ptm'] = round(data.get('ptm', 0), 3)
+    metadata['iptm'] = round(data.get('iptm', 0), 3)
+    metadata['ligand_iptm'] = round(data.get('ligand_iptm', 0), 3)
+    metadata['protein_iptm'] = round(data.get('protein_iptm', 0), 3)
+    metadata['complex_plddt'] = round(data.get('complex_plddt', 0), 3)
+    metadata['complex_iplddt'] = round(data.get('complex_iplddt', 0), 3)
+    metadata['complex_pde'] = round(data.get('complex_pde', 0), 3)
+    metadata['complex_ipde'] = round(data.get('complex_ipde', 0), 3)
+    
+    # Process chains_ptm in chain order
     chains_ptm = data.get('chains_ptm', {})
     for eid, value in chains_ptm.items():
-        if float(value) == 0.0:
-            continue
         chain_info = chain_id_map.get(int(eid))
-        if chain_info:
+        if chain_info and float(value) != 0.0:
             metadata[f'ptm_{chain_info["id"]}'] = round(float(value), 3)
     
-    # Create matrix sized by number of chains, not residues
+    # Create ipTM matrix
     num_chains = len(chain_id_map)
     iptm_matrix = np.zeros((num_chains, num_chains), dtype=np.float32)
     
-    # Process pair_chains_iptm
+    # Process pair_chains_iptm in chain order
     pair_iptm = data.get('pair_chains_iptm', {})
     for src_eid, targets in pair_iptm.items():
         src_chain = chain_id_map.get(int(src_eid))
@@ -359,111 +596,164 @@ def process_confidence_data(directory, runname, model_num, chain_id_map):
             if value == 0.0 or not dst_chain:
                 continue
                 
-            # Add to metadata
             metadata[f'iptm_{src_chain["id"]}_{dst_chain["id"]}'] = round(value, 3)
-            
-            # Add to matrix using chain indices, not residue indices
             iptm_matrix[src_chain['index'], dst_chain['index']] = value
+    
+    # Store the ordered fieldnames for later use
+    metadata['_ordered_fieldnames'] = ordered_fieldnames
     
     return metadata, iptm_matrix
 
-def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, iptm_matrix):
-    """Plot chain interaction ipTM matrix with interface-focused visualization"""
-    plt.figure(figsize=(8, 7))
-    chain_ids = [f"{chain_id}\n{mol_label}" for chain_id, mol_label, _, _ in chain_ranges]
-    num_chains = len(chain_ids)
-    symmetric_matrix = np.maximum(iptm_matrix, iptm_matrix.T)
-    masked_matrix = np.ma.masked_where(symmetric_matrix == 0, symmetric_matrix)
-    cmap = plt.get_cmap('viridis')
-    im = plt.imshow(masked_matrix, cmap=cmap, origin='lower', vmin=0, vmax=1, aspect='equal')
-    plt.xticks(range(num_chains), chain_ids, fontsize=10)
-    plt.yticks(range(num_chains), chain_ids, fontsize=10)
-    cbar = plt.colorbar(im, label='Interface Confidence (ipTM)', shrink=0.8)
-    cbar.set_ticks(np.arange(0, 1.1, 0.2))
-    for i in range(num_chains):
-        for j in range(num_chains):
-            if symmetric_matrix[i, j] > 0:
-                plt.text(j, i, f'{symmetric_matrix[i, j]:.2f}', 
-                        ha='center', va='center', 
-                        color='white' if symmetric_matrix[i, j] < 0.5 else 'black',
-                        fontsize=9)
+# Utility functions for affinity data (unchanged)
+def affinity_ensemble_row(model_idx, pred_log_ic50, prob_binder):
+    """Convert raw log(IC50) and probability to multiple human-readable columns"""
+    ic50_um = 10 ** pred_log_ic50
+    pIC50 = 6 - pred_log_ic50
+    deltaG = (6 - pred_log_ic50) * 1.364
+    return {
+        "ensemble": model_idx,
+        "pred_IC50_μM": f"{ic50_um:.3g}",
+        "pred_pIC50": f"{pIC50:.2f}",
+        "pred_deltaG": f"{deltaG:.2f}",
+        "prob_binder": f"{prob_binder:.3f}",
+    }
+
+
+def read_affinity_ensembles(directory, runname):
+    """Extract all affinity ensemble predictions"""
+    affinity_json = os.path.join(directory, f'affinity_{runname}.json')
+    if not os.path.exists(affinity_json):
+        return []
+    
+    with open(affinity_json) as f:
+        affinity_data = json.load(f)
+    
+    ensemble_rows = []
+    idx = 0
+    while True:
+        suffix = "" if idx == 0 else str(idx)
+        pred_key = f"affinity_pred_value{suffix}"
+        prob_key = f"affinity_probability_binary{suffix}"
+        if pred_key in affinity_data and prob_key in affinity_data:
+            pred = float(affinity_data[pred_key])
+            prob = float(affinity_data[prob_key])
+            ensemble_rows.append(affinity_ensemble_row(idx, pred, prob))
+            idx += 1
+        else:
+            break
+    return ensemble_rows
+
+def write_pickle_files(directory, runname, output_dir):
+    """Write pLDDT, PAE, and PDE data to pickle files"""
+
+    # Process each data type
+    for matrix_type in ['plddt', 'pae', 'pde']:
+        # Find all npz files of this type
+        npz_files = sorted([f for f in os.listdir(directory) 
+                           if f.startswith(f"{matrix_type}_{runname}") and f.endswith(".npz")])
+        
+        for file_name in npz_files:
+            # Extract model number from filename
+            match = re.search(rf"{matrix_type}_{runname}_model_(\d+)\.npz", file_name)
+            if not match:
+                continue
+            model_num = int(match.group(1))
+            
+            file_path = os.path.join(directory, file_name)
+            if not os.path.exists(file_path):
+                continue
+                
+            # Load and process data
+            data = np.load(file_path)
+            data = data[matrix_type]
+
+            # Write to pickle file in ChimeraX-compatible format
+            pkl_filename = f"{runname}_{matrix_type}_model_{model_num}.pkl"
+            pkl_filepath = os.path.join(output_dir, pkl_filename)
+            
+            # **KEY FIX**: Wrap in dictionary with expected key for ChimeraX compatibility
+            if matrix_type in ['pae', 'pde']:
+                # For PAE and PDE matrices, use 'predicted_aligned_error' key
+                pickle_data = {'predicted_aligned_error': data}
             else:
-                plt.text(j, i, 'N/A', ha='center', va='center', color='grey', fontsize=8, style='italic')
-    plt.title(f"Protein Interface Confidence - Model {model_num}")
-    plt.xlabel("Interacting Chain")
-    plt.ylabel("Interacting Chain")
-    explanation = (
-        "ipTM scores estimate interface prediction confidence (0-1).\n"
-        "Values show mutual interface quality between chain pairs.\n"
-        "Higher scores indicate more reliable interactions."
-        )
-    plt.figtext(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=9,
-                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8), wrap=True)
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.18)
-    plt.savefig(os.path.join(output_dir, f'{runname}_iptm_model_{model_num}.png'), dpi=300, bbox_inches='tight')
-    plt.close()
+                # For pLDDT (1D data), you might want a different key or structure
+                # ChimeraX may not have specific support for pLDDT pickle files
+                pickle_data = {'plddt': data}
+            
+            with open(pkl_filepath, 'wb') as pkl_file:
+                pickle.dump(pickle_data, pkl_file)
+            
+            print(f"Saved {matrix_type} data to {pkl_filepath}")
+    
+    print(f"All pickle files saved to {output_dir}")
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Boltz-2 analysis plots')
     parser.add_argument('input_dir', help='Path to directory containing Boltz-2 results')
     parser.add_argument('-o', '--output', default='plots', help='Output directory')
+    parser.add_argument('--write-pkl', action='store_true', 
+                       help='Write data to pickle files for external analysis')
     args = parser.parse_args()
     
     os.makedirs(args.output, exist_ok=True)
     runname = detect_runname(args.input_dir)
     chains, residues = load_chains_data(args.input_dir, runname)
-    chain_ranges, non_standard_ranges, total_length = parse_chain_ranges_with_residues(chains, residues)
     
-    # Create chain ID mapping
-    chain_id_map = {}
-    for idx, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
-        chain_data = next(c for c in chains if c['name'].item() == chain_id)
-        chain_id_map[chain_data['asym_id'].item()] = {
-            'id': chain_id,
-            'type': mol_label,
-            'index': idx
-        }
+    # Write  pickle files if requested
+    if args.write_pkl:
+        print("Writing pickle files...")
+        write_pickle_files(args.input_dir, runname, args.output)
+    
+    # Get processed chain ranges for metadata
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
     
     # CSV metadata collection
     all_metadata = []
+    ordered_fieldnames = None
     
-    # Plot summary pLDDT plot (only once, outside model loop)
-    plot_all_models_plddt(args.input_dir, runname, args.output, chain_ranges, non_standard_ranges, total_length)
+    # Plot summary pLDDT plot
+    plot_all_models_plddt(args.input_dir, runname, args.output, chains, residues)
     
     # Find number of models
     num_models = len(glob(os.path.join(args.input_dir, f'plddt_{runname}_model_*.npz')))
     
     for model_num in range(num_models):
         # Per-model pLDDT plot
-        plot_single_model_plddt(args.input_dir, runname, args.output, chain_ranges, non_standard_ranges, total_length, model_num)
+        plot_single_model_plddt(args.input_dir, runname, args.output, chains, residues, model_num)
         
-        # PAE and PDE plots (if files exist)
-        if os.path.exists(os.path.join(args.input_dir, f'pae_{runname}_model_{model_num}.npz')):
-            plot_2d_matrix(args.input_dir, runname, args.output, 'pae', model_num, chain_ranges, non_standard_ranges, total_length)
-        if os.path.exists(os.path.join(args.input_dir, f'pde_{runname}_model_{model_num}.npz')):
-            plot_2d_matrix(args.input_dir, runname, args.output, 'pde', model_num, chain_ranges, non_standard_ranges, total_length)
+        # PAE and PDE plots with averaging
+        plot_2d_matrix(args.input_dir, runname, args.output, 'pae', model_num, chains, residues)
+        plot_2d_matrix(args.input_dir, runname, args.output, 'pde', model_num, chains, residues)
         
         # Process confidence data and ipTM plot
-        metadata, iptm_matrix = process_confidence_data(args.input_dir, runname, model_num, chain_id_map)
+        metadata, iptm_matrix = process_confidence_data(args.input_dir, runname, model_num, chains)
         if metadata and iptm_matrix is not None:
+            # Extract ordered fieldnames from first metadata entry
+            if ordered_fieldnames is None:
+                ordered_fieldnames = metadata.pop('_ordered_fieldnames', None)
+            else:
+                metadata.pop('_ordered_fieldnames', None)  # Remove from subsequent entries
+            
             all_metadata.append(metadata)
             plot_iptm_matrix(args.input_dir, runname, args.output, model_num, chain_ranges, iptm_matrix)
     
-    # Write CSV metadata
+    # Write CSV metadata with proper ordering
     if all_metadata:
         csv_path = os.path.join(args.output, f'{runname}_metadata.csv')
-        # Collect all unique fieldnames
-        fieldnames = set()
-        for md in all_metadata:
-            fieldnames.update(md.keys())
-
+        
+        if ordered_fieldnames:
+            # Use the ordered fieldnames we defined
+            fieldnames = ordered_fieldnames
+        else:
+            # Fallback to the old method if something goes wrong
+            fieldnames = sorted(set(key for md in all_metadata for key in d.keys()))
+        
         with open(csv_path, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(all_metadata)
     
-    # Write separate affinity CSV (if present)
+    # Write affinity CSV (unchanged)
     affinity_ensembles = read_affinity_ensembles(args.input_dir, runname)
     if affinity_ensembles:
         affinity_csv_path = os.path.join(args.output, f'{runname}_affinity.csv')
