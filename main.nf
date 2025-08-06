@@ -176,7 +176,7 @@ process AnalyseBoltz {
     eval "\$(micromamba shell hook --shell bash)"
     micromamba activate pyrosetta
 
-    # Generate plots and metadata for Boltz-1 prediction 
+    # Generate plots and metadata for Boltz-2 prediction 
     python /generate_metadata.py "./" -o "./"
 
     """

@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/your-org/nf-boltz/master/nextflow_schema.json",
     "title": "nf-boltz pipeline parameters",
-    "description": "Nextflow pipeline for protein structure prediction using Boltz-1",
+    "description": "Nextflow pipeline for protein structure prediction using Boltz-2",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -35,10 +35,10 @@
             }
         },
         "prediction_options": {
-            "title": "Boltz-1 prediction options",
+            "title": "Boltz-2 prediction options",
             "type": "object",
             "fa_icon": "fas fa-cogs",
-            "description": "Configure Boltz-1 prediction parameters",
+            "description": "Configure Boltz-2 prediction parameters",
             "properties": {
                 "diffusion_samples": {
                     "type": "integer", 
@@ -94,9 +94,9 @@
                 },
                 "extra_config": {
                     "type": "string",
-                    "description": "Additional Boltz-1 configuration",
+                    "description": "Additional Boltz-2 configuration",
                     "hidden": true,
-                    "help_text": "Extra command-line arguments for Boltz-1 (e.g., '--msa_pairing_strategy complete --confidence_threshold 0.7')"
+                    "help_text": "Extra command-line arguments for Boltz-2 (e.g., '--msa_pairing_strategy complete --confidence_threshold 0.7')"
                 }
             }
         },

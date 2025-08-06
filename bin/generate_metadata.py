@@ -405,8 +405,8 @@ def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, ip
     plt.close()
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate Boltz-1 analysis plots')
-    parser.add_argument('input_dir', help='Path to directory containing Boltz-1 results')
+    parser = argparse.ArgumentParser(description='Generate Boltz-2 analysis plots')
+    parser.add_argument('input_dir', help='Path to directory containing Boltz-2 results')
     parser.add_argument('-o', '--output', default='plots', help='Output directory')
     args = parser.parse_args()
     
