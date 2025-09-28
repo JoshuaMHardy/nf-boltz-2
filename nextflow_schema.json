@@ -137,43 +137,37 @@
             "dna",
             "rna"
           ],
-          "description": "Sequence 1: type",
-          "help_text": "Choose one: protein, dna, or rna."
+          "description": "Sequence 1: type"
         },
         "seq1_seq": {
           "type": "string",
-          "description": "Sequence 1: amino acid/nucleotide sequence",
+          "description": "Sequence 1: amino acid/nucleotide sequence e.g., 'MDYK...' or 'ATGGTT...'",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq1_chain_id": {
           "type": "string",
-          "description": "Sequence 1: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
+          "description": "Sequence 1: unique chain ID(s). Single alphanumeric id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "seq1_mod": {
           "type": "string",
           "hidden": true,
-          "description": "Sequence 1: modifications (optional)",
-          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
-        },
-        "seq1_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 1 cyclic?",
-          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Sequence 1: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
         },
         "seq1_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 1 (if protein)?",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
+          "description": "Generate MSA for sequence 1 (only applies to protein sequences).",
+          "default": true
+        },
+        "seq1_cyclic": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Is sequence 1 cyclic? Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         }
       }
     },
@@ -190,43 +184,37 @@
             "dna",
             "rna"
           ],
-          "description": "Sequence 2: type",
-          "help_text": "Choose one: protein, dna, or rna."
+          "description": "Sequence 2: type"
         },
         "seq2_seq": {
           "type": "string",
-          "description": "Sequence 2: amino acid/nucleotide sequence",
+          "description": "Sequence 2: amino acid/nucleotide sequence e.g., 'MDYK...' or 'ATGGTT...'",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq2_chain_id": {
           "type": "string",
-          "description": "Sequence 2: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
+          "description": "Sequence 2: unique chain ID(s). Single alphanumeric id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "seq2_mod": {
           "type": "string",
           "hidden": true,
-          "description": "Sequence 2: modifications (optional)",
-          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
-        },
-        "seq2_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 2 cyclic?",
-          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Sequence 2: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
         },
         "seq2_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 2 (if protein)?",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
+          "description": "Generate MSA for sequence 2 (only applies to protein sequences).",
+          "default": true
+        },
+        "seq2_cyclic": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Is sequence 2 cyclic? Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         }
       }
     },
@@ -243,43 +231,37 @@
             "dna",
             "rna"
           ],
-          "description": "Sequence 3: type",
-          "help_text": "Choose one: protein, dna, or rna."
+          "description": "Sequence 3: type"
         },
         "seq3_seq": {
           "type": "string",
-          "description": "Sequence 3: amino acid/nucleotide sequence",
+          "description": "Sequence 3: amino acid/nucleotide sequence e.g., 'MDYK...' or 'ATGGTT...'",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq3_chain_id": {
           "type": "string",
-          "description": "Sequence 3: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
+          "description": "Sequence 3: unique chain ID(s). Single alphanumeric id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "seq3_mod": {
           "type": "string",
           "hidden": true,
-          "description": "Sequence 3: modifications (optional)",
-          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
-        },
-        "seq3_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 3 cyclic?",
-          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Sequence 3: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
         },
         "seq3_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 3 (if protein)?",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
+          "description": "Generate MSA for sequence 3 (only applies to protein sequences).",
+          "default": true
+        },
+        "seq3_cyclic": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Is sequence 3 cyclic? Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         }
       }
     },
@@ -296,43 +278,37 @@
             "dna",
             "rna"
           ],
-          "description": "Sequence 4: type",
-          "help_text": "Choose one: protein, dna, or rna."
+          "description": "Sequence 4: type"
         },
         "seq4_seq": {
           "type": "string",
-          "description": "Sequence 4: amino acid/nucleotide sequence",
+          "description": "Sequence 4: amino acid/nucleotide sequence e.g., 'MDYK...' or 'ATGGTT...'",
           "minLength": 1,
           "maxLength": 5000,
-          "help_text": "Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'",
           "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         "seq4_chain_id": {
           "type": "string",
-          "description": "Sequence 4: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Unique single chain id ('A') or comma-separated list for multiple copies ('A,B,C')."
+          "description": "Sequence 4: unique chain ID(s). Single alphanumeric id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "seq4_mod": {
           "type": "string",
           "hidden": true,
-          "description": "Sequence 4: modifications (optional)",
-          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-          "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
-        },
-        "seq4_cyclic": {
-          "type": "boolean",
-          "hidden": true,
-          "description": "Is sequence 4 cyclic?",
-          "help_text": "Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Sequence 4: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
+          "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
         },
         "seq4_genmsa": {
           "type": "boolean",
           "hidden": true,
-          "description": "Generate MSA for sequence 4 (if protein)?",
-          "default": true,
-          "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
+          "description": "Generate MSA for sequence 4 (only applies to protein sequences).",
+          "default": true
+        },
+        "seq4_cyclic": {
+          "type": "boolean",
+          "hidden": true,
+          "description": "Is sequence 4 cyclic? Set to true for cyclic peptides/DNA/RNA.",
+          "default": false
         }
       }
     },
@@ -346,8 +322,8 @@
           "type": "string",
           "default": null,
           "description": "Extra sequences block-string",
-          "pattern": "^(\\[[A-Za-z0-9_,]+\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
-          "help_text": "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... IDs = comma separated for multi-chain. Sequence type is auto-detected. Example: '[E][MAAAD] [F,G][ACTGACTG]'. No modifications or cyclic/msa control.",
+          "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
+          "help_text": "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). Example: '[E][MAAAD] [F,G][ACTGACTG]'. No modifications or cyclic sequences. MSA will be automatically generated for protein sequences",
           "hidden": true
         }
       }
@@ -360,19 +336,16 @@
       "properties": {
         "lig1_chain_id": {
           "type": "string",
-          "description": "Ligand 1: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Single id ('D') or comma-separated ('G,H')."
+          "description": "Ligand 1: unique chain ID(s). Single alphanumeric id (e.g. 'D' or '2') or comma-separated list for multiple copies (e.g. 'G,H').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "lig1_ccd": {
           "type": "string",
-          "description": "Ligand 1: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
+          "description": "Ligand 1: CCD code. E.g. 'ZN', 'ATP'. Ignored if SMILES is provided."
         },
         "lig1_smiles": {
           "type": "string",
-          "description": "Ligand 1: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
+          "description": "Ligand 1: SMILES string e.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -384,19 +357,16 @@
       "properties": {
         "lig2_chain_id": {
           "type": "string",
-          "description": "Ligand 2: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Single id ('D') or comma-separated ('G,H')."
+          "description": "Ligand 2: unique chain ID(s). Single alphanumeric id (e.g. 'D' or '2') or comma-separated list for multiple copies (e.g. 'G,H').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "lig2_ccd": {
           "type": "string",
-          "description": "Ligand 2: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
+          "description": "Ligand 2: CCD code. E.g. 'ZN', 'ATP'. Ignored if SMILES is provided."
         },
         "lig2_smiles": {
           "type": "string",
-          "description": "Ligand 2: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
+          "description": "Ligand 2: SMILES string e.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -408,19 +378,16 @@
       "properties": {
         "lig3_chain_id": {
           "type": "string",
-          "description": "Ligand 3: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Single id ('D') or comma-separated ('G,H')."
+          "description": "Ligand 3: unique chain ID(s). Single alphanumeric id (e.g. 'D' or '2') or comma-separated list for multiple copies (e.g. 'G,H').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "lig3_ccd": {
           "type": "string",
-          "description": "Ligand 3: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
+          "description": "Ligand 3: CCD code. E.g. 'ZN', 'ATP'. Ignored if SMILES is provided."
         },
         "lig3_smiles": {
           "type": "string",
-          "description": "Ligand 3: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
+          "description": "Ligand 3: SMILES string e.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -432,19 +399,16 @@
       "properties": {
         "lig4_chain_id": {
           "type": "string",
-          "description": "Ligand 4: unique chain ID(s)",
-          "pattern": "^[A-Za-z0-9_]+(,[A-Za-z0-9_]+)*$",
-          "help_text": "Single id ('D') or comma-separated ('G,H')."
+          "description": "Ligand 4: unique chain ID(s). Single alphanumeric id (e.g. 'D' or '2') or comma-separated list for multiple copies (e.g. 'G,H').",
+          "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         "lig4_ccd": {
           "type": "string",
-          "description": "Ligand 4: CCD code",
-          "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
+          "description": "Ligand 4: CCD code. E.g. 'ZN', 'ATP'. Ignored if SMILES is provided."
         },
         "lig4_smiles": {
           "type": "string",
-          "description": "Ligand 4: SMILES string",
-          "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
+          "description": "Ligand 4: SMILES string e.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
       }
     },
@@ -458,7 +422,7 @@
           "type": "string",
           "default": null,
           "description": "Extra ligands block-string",
-          "pattern": "^(\\[[A-Za-z0-9_,]+\\]\\[[A-Za-z0-9\\-+]*\\]\\[[^\\[\\]]*\\]\\s*)*$",
+          "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z0-9\\-+]*\\]\\[[^\\[\\]]*\\]\\s*)*$",
           "help_text": "Extra ligands: space separated blocks: [IDs][CCD][SMILES]. IDs: comma-separated for multiple copies. For SMILES only, leave CCD blank '[E][][C1CCCCC1]'; for CCD only, leave SMILES blank. Example: '[H][ZN][] [I][][N[C@@H](Cc1ccc(O)cc1)C(=O)O]'",
           "hidden": true
         }

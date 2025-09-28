@@ -17,43 +17,37 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
         f"seq{num}_type": {
             "type": "string",
             "enum": ["protein", "dna", "rna"],
-            "description": f"Sequence {num}: type",
-            "help_text": "Choose one: protein, dna, or rna."
+            "description": f"Sequence {num}: type"
         },
         f"seq{num}_seq": {
             "type": "string",
-            "description": f"Sequence {num}: amino acid/nucleotide sequence",
+            "description": f"Sequence {num}: amino acid/nucleotide sequence e.g., 'MDYK...' or 'ATGGTT...'",
             "minLength": 1,
             "maxLength": 5000,
-            "help_text": ("Sequence using single-letter amino acid codes for proteins, bases for DNA/RNA. E.g., 'MDYK...' or 'ATGGTT...'"),
             "pattern": "^[A-Za-z*.,\\-\\s]+$"
         },
         f"seq{num}_chain_id": {
             "type": "string",
-            "description": f"Sequence {num}: unique chain ID(s)",
-            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$",
-            "help_text": "Unique single alphanumeric chain id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C')."
+            "description": f"Sequence {num}: unique chain ID(s). Single alphanumeric id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C').",
+            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         f"seq{num}_mod": {
             "type": "string",
             "hidden": True,
-            "description": f"Sequence {num}: modifications (optional)",
-            "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$",
-            "help_text": "Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]'), or leave blank if none."
-        },
-        f"seq{num}_cyclic": {
-            "type": "boolean",
-            "hidden": True,
-            "description": f"Is sequence {num} cyclic?",
-            "help_text": "Set to true for cyclic peptides/DNA/RNA.",
-            "default": False
+            "description": f"Sequence {num}: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
+            "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
         },
         f"seq{num}_genmsa": {
             "type": "boolean",
             "hidden": True,
-            "description": f"Generate MSA for sequence {num} (if protein)?",
-            "default": True,
-            "help_text": "Generate multiple sequence alignment to improve accuracy (protein only)"
+            "description": f"Generate MSA for sequence {num} (only applies to protein sequences).",
+            "default": True
+        },
+        f"seq{num}_cyclic": {
+            "type": "boolean",
+            "hidden": True,
+            "description": f"Is sequence {num} cyclic? Set to true for cyclic peptides/DNA/RNA.",
+            "default": False
         }
     }
 
@@ -61,19 +55,16 @@ def generate_ligand_properties(num: int) -> Dict[str, Any]:
     return {
         f"lig{num}_chain_id": {
             "type": "string",
-            "description": f"Ligand {num}: unique chain ID(s)",
-            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$",
-            "help_text": "Single alphanumeric id (e.g. 'D' or '2') or comma-separated (e.g. 'G,H')."
+            "description": f"Ligand {num}: unique chain ID(s). Single alphanumeric id (e.g. 'D' or '2') or comma-separated list for multiple copies (e.g. 'G,H').",
+            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         f"lig{num}_ccd": {
             "type": "string",
-            "description": f"Ligand {num}: CCD code",
-            "help_text": "E.g. 'ZN', 'ATP'. Leave blank if using only SMILES."
+            "description": f"Ligand {num}: CCD code. E.g. 'ZN', 'ATP'. Ignored if SMILES is provided.",
         },
         f"lig{num}_smiles": {
             "type": "string",
-            "description": f"Ligand {num}: SMILES string",
-            "help_text": "E.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
+            "description": f"Ligand {num}: SMILES string e.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
     }
 
@@ -111,8 +102,8 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
                 "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
                 "help_text": (
                     "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... "
-                    "IDs = comma separated for multi-chain. Sequence type is auto-detected. Example: '[E][MAAAD] [F,G][ACTGACTG]'. "
-                    "No modifications or cyclic/msa control."
+                    "IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). Example: '[E][MAAAD] [F,G][ACTGACTG]'. "
+                    "No modifications or cyclic sequences. MSA will be automatically generated for protein sequences"
                 ),
                 "hidden": True  # Hide from default UI
             }
