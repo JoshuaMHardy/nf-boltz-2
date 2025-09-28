@@ -241,8 +241,8 @@ def plot_single_model_plddt(directory, runname, output_dir, chains, residues, mo
         left=0.06, right=0.95, top=0.85, bottom=0.25, wspace=0.05
     )
     
-    plt.savefig(os.path.join(output_dir, f'{runname}_plddt_model_{model_num}.png'),
-                dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(os.path.join(output_dir, f'{runname}_model_{model_num}_plddt.png'),
+                dpi=150, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
 
@@ -352,8 +352,8 @@ def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
         left=0.06, right=0.95, top=0.85, bottom=0.25, wspace=0.05
     )
     
-    plt.savefig(os.path.join(output_dir, f'{runname}_plddt_all_models.png'), 
-               dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(os.path.join(output_dir, f'{runname}_all_models_plddt.png'), 
+               dpi=150, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
 
@@ -372,7 +372,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
     chain_ranges, _ = get_processed_chain_ranges(chains, residues)
     
     # Create figure with optimized size - made it square to reduce whitespace
-    fig, ax = plt.subplots(figsize=(7, 8))
+    fig, ax = plt.subplots(figsize=(8, 8))
     
     if matrix_type == 'pae':
         im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower', vmin=0, vmax=30, 
@@ -444,14 +444,14 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
         bottom=0.12     # Reduced bottom margin
     )
     
-    plt.savefig(os.path.join(output_dir, f'{runname}_{matrix_type}_model_{model_num}.png'), 
-               dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(os.path.join(output_dir, f'{runname}_model_{model_num}_{matrix_type}.png'), 
+               dpi=150, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
 
 def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, iptm_matrix):
     """Plot chain interaction ipTM matrix"""
-    plt.figure(figsize=(8, 7))
+    plt.figure(figsize=(8, 8))
     chain_ids = [f"{chain_id}\n{mol_label}" for chain_id, mol_label, _, _ in chain_ranges]
     num_chains = len(chain_ids)
     symmetric_matrix = np.maximum(iptm_matrix, iptm_matrix.T)
@@ -460,7 +460,7 @@ def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, ip
     im = plt.imshow(masked_matrix, cmap=cmap, origin='lower', vmin=0, vmax=1, aspect='equal')
     plt.xticks(range(num_chains), chain_ids, fontsize=10)
     plt.yticks(range(num_chains), chain_ids, fontsize=10)
-    cbar = plt.colorbar(im, label='Interface Confidence (ipTM)', shrink=0.8)
+    cbar = plt.colorbar(im, label='Interface Confidence (ipTM)', shrink=0.8, pad=0.12, fraction=0.05, aspect=35, orientation='horizontal')
     cbar.set_ticks(np.arange(0, 1.1, 0.2))
     
     for i in range(num_chains):
@@ -473,8 +473,8 @@ def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, ip
                 plt.text(j, i, 'N/A', ha='center', va='center', color='grey', style='italic')
     
     plt.title(f"Interface Confidence - Model {model_num}")
-    plt.xlabel("Interacting Chain")
-    plt.ylabel("Interacting Chain")
+    plt.xlabel("Interacting Chain", fontsize=12)
+    plt.ylabel("Interacting Chain", fontsize=12)
     
     explanation = (
         "ipTM scores estimate interface prediction confidence (0-1).\n"
@@ -484,8 +484,8 @@ def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, ip
     plt.figtext(0.5, 0.01, explanation, ha='center', va='bottom', fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8))
     plt.tight_layout()
-    plt.subplots_adjust(bottom=0.18)
-    plt.savefig(os.path.join(output_dir, f'{runname}_iptm_model_{model_num}.png'), dpi=300, bbox_inches='tight')
+    plt.subplots_adjust(bottom=0.12)
+    plt.savefig(os.path.join(output_dir, f'{runname}_model_{model_num}_iptm.png'), dpi=150, bbox_inches='tight')
     plt.close()
 
 
