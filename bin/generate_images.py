@@ -41,6 +41,10 @@ for model in session.models.list():
 
     run(session, f'show #{id} models')
     
+    # Select and highlight binder if present
+    if binder_id:
+        run(session, f'select #{id}/{binder_id}')
+
     # Front image
     run(session, f'view #{id}')
     run(session, f'2dlabels text "{model_name}" xpos 0.3 ypos 0.95 size 12 color black')
