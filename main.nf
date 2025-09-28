@@ -65,6 +65,12 @@ workflow {
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results)
 
+    // Generate ChimeraX plots
+    VisualiseBoltz(RunBoltz.out.boltz_models)
+
+    // Generate PDF of plots
+    GeneratePDF(AnalyseBoltz.out.plots,VisualiseBoltz.out)
+
     // Save log file on completion
     def out_pred_name = params.pred_name
     def outputDir = file(params.outdir)
@@ -128,6 +134,7 @@ process RunBoltz {
     output:
     path "${pred_name}"
     tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), val(pred_name), emit: boltz_results
+    tuple path("${pred_name}/*"), val(pred_name), emit: boltz_models
 
     script:
     """
@@ -178,7 +185,7 @@ process AnalyseBoltz {
     tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
 
     output:
-    path "*.png"
+    path "*.png", emit: plots
     path "*.csv"
 
     script:
@@ -189,6 +196,78 @@ process AnalyseBoltz {
     # Generate plots and metadata for Boltz-2 prediction 
     python /generate_metadata.py "./" -o "./"
 
+    """
+}
+
+process VisualiseBoltz {
+    cpus 4
+    memory '8G'
+    executor 'slurm'
+
+    publishDir "${params.outdir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
+
+    input:
+    tuple path(pred_files), val(pred_name)
+
+    output:
+    tuple path("*.png"), val(pred_name)
+
+    script:
+    """
+    # Prepare files to remove soft-links incompatible with ChimeraX
+    cp ${projectDir}/bin/generate_images.py .
+    mkdir inputs
+    cp -f *.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} inputs/.
+
+    module load chimerax
+    
+    # Extract file extension for script
+    extension="${params.output_format == 'mmcif' ? 'cif' : 'pdb'}"
+    
+    # Check for binder in YAML and extract chain ID
+    binder_arg=""
+    if grep -q "affinity:" *.yaml && grep -q "binder:" *.yaml; then
+        binder=\$(awk '/binder:/ {gsub(/^[[:space:]]*/, "", \$2); gsub(/[[:space:]]*\$/, "", \$2); print \$2}' *.yaml)
+        if [[ -n "\$binder" ]]; then
+            echo "Found binder chain ID: \$binder"
+            binder_arg="--binder \$binder"
+        fi
+    else
+        echo "No binder found in YAML file"
+    fi
+
+    # Run ChimeraX with appropriate arguments
+    chimerax --nogui --offscreen --script "generate_images.py --extension \$extension \$binder_arg"
+    
+    # List generated images
+    ls -la *.png
+    """
+}
+
+
+process GeneratePDF {
+    cpus 4
+    memory '8G'
+    executor 'slurm'
+    
+    publishDir "${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
+
+    input:
+    path(plots)
+    tuple path(images), val(pred_name)
+
+    output:
+    path "*.pdf"
+
+    script:
+    """
+    module load ImageMagick
+    model_numbers=\$(ls *_model_*.png | sed 's/.*_model_\\([0-9]\\+\\)_.*/\\1/' | sort -u)
+    for model in \$model_numbers; do
+        echo "Processing model \$model..."
+        magick *_\${model}_plddt.png *_\${model}_pae.png *_\${model}_pde.png *_\${model}_iptm.png -background white ${pred_name}_model_\${model}_plots.pdf
+        montage *_\${model}_overview*.png *_\${model}_binder*.png -tile 2x2 -geometry 512x512+32+32 -border 2 -background white ${pred_name}_model_\${model}_images.pdf
+    done
     """
 }
 
