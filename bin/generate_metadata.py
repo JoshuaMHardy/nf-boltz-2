@@ -589,10 +589,10 @@ def affinity_ensemble_row(model_idx, pred_log_ic50, prob_binder):
     deltaG = (6 - pred_log_ic50) * 1.364
     return {
         "ensemble": model_idx,
+        "prob_binder": f"{prob_binder:.3f}",
         "pred_IC50_μM": f"{ic50_um:.3g}",
         "pred_pIC50": f"{pIC50:.2f}",
         "pred_deltaG": f"{deltaG:.2f}",
-        "prob_binder": f"{prob_binder:.3f}",
     }
 
 
