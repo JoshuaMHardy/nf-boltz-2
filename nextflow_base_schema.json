@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/your-org/nf-boltz/master/nextflow_schema.json",
     "title": "nf-boltz pipeline parameters",
-    "description": "Nextflow pipeline for protein structure prediction using Boltz-1",
+    "description": "Nextflow pipeline for protein structure prediction using Boltz-2",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -29,65 +29,123 @@
                 "input_yaml": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints parameters below.",
+                    "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints etc. parameters below.",
                     "help_text": "e.g. '/path/to/input.yml'. The name of each yaml file will be used for the prediction name."
                 }
             }
         },
-        "sequence_template": {
-            "type": "string",
-            "description": "Sequence {num} type",
-            "enum": ["protein", "dna", "rna"],
-            "help_text": "Choose the biomolecule type for sequence {num}"
+        "prediction_options": {
+            "title": "Boltz-2 prediction options",
+            "type": "object",
+            "fa_icon": "fas fa-cogs",
+            "description": "Configure Boltz-2 prediction parameters",
+            "properties": {
+                "diffusion_samples": {
+                    "type": "integer", 
+                    "description": "Number of independent diffusion samples (predictions)",
+                    "minimum": 1,
+                    "default": 1,
+                    "help_text": "More samples improve quality but increase computation time. Default: 1"
+                },
+                "use_potentials": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to use potentials to improve the physical quality of the predictions (a.k.a. Boltz-2x)",
+                    "hidden": true
+                },
+                "method": {
+                    "type": "string",
+                    "enum": ["afdb", "boltz-1", "md", "electron microscopy", "solution-nmr", "x-ray diffraction", "other"],
+                    "description": "Method conditioning to use for prediction.",
+                    "hidden": true,
+                    "help_text": "Choose from: 'afdb', 'boltz-1', 'md', 'electron microscopy', 'solution-nmr', 'x-ray diffraction', or 'other'. 'Other' includes methods that are treated equivalently such as electron crystallography, epr, fiber diffraction, fluorescence transfer, infrared spectroscopy, neutron diffraction, powder diffraction, solution scattering, solid-state nmr, theoretical model"
+                },
+                "recycling_steps": {
+                    "type": "integer",
+                    "description": "Number of recycling steps",
+                    "minimum": 1,
+                    "default": 3,
+                    "hidden": true,
+                    "help_text": "More steps generally improve accuracy but increase computation time. Default = 3."
+                },
+                "sampling_steps": {
+                    "type": "integer",
+                    "description": "Number of sampling steps",
+                    "minimum": 1,
+                    "default": 200,
+                    "hidden": true,
+                    "help_text": "Number of denoising steps in the diffusion process. Default: 200"
+                },
+                "step_scale": {
+                    "type": "number",
+                    "description": "Number of sampling steps",
+                    "default": 1.638,
+                    "hidden": true,
+                    "help_text": "The step scale is related to the temperature at which the diffusion process samples the distribution. The lower the higher the diversity among samples (recommended between 1 and 2, default=1.638)"
+                },
+                "output_format": {
+                    "type": "string",
+                    "enum": ["pdb", "mmcif"],
+                    "default": "mmcif",
+                    "description": "Output format for structure predictions. Default: mmcif",
+                    "hidden": true
+                },
+                "write_full_pae": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to save the full PAE matrix as a file",
+                    "hidden": true
+                },
+                "write_full_pde": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to save the full PDE matrix as a file",
+                    "hidden": true
+                },
+                "extra_config": {
+                    "type": "string",
+                    "description": "Additional Boltz-2 configuration",
+                    "hidden": true,
+                    "help_text": "Extra command-line arguments for Boltz-2 (e.g., '--msa_pairing_strategy complete --confidence_threshold 0.7')"
+                }
+            }
         },
-        "sequence_id_template": {
-            "type": "string",
-            "description": "Sequence {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-            "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C')"
-        },
-        "sequence_seq_template": {
-            "type": "string",
-            "description": "Sequence {num} amino acid/nucleotide sequence",
-            "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
-            "minLength": 1,
-            "maxLength": 10000,
-            "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA"
-        },
-        "sequence_mod_template": {
-            "type": "string",
-            "description": "Sequence {num} modifications",
-            "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-            "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]' "
-        },
-        "sequence_cyclic_template": {
-            "type": "boolean",
-            "description": "Is sequence {num} cyclic?",
-            "default": false,
-            "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        "sequence_genmsa_template": {
-            "type": "boolean",
-            "description": "Generate MSA for sequence {num}",
-            "default": false,
-            "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
-        },
-        "ligand_id_template": {
-            "type": "string",
-            "description": "Ligand {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-            "help_text": "Chain identifier(s) for the ligand e.g. 'D', 'L1,L2'"
-        },
-        "ligand_type_template": {
-            "type": "string",
-            "description": "Ligand {num} format",
-            "enum": ["CCD", "SMILES"],
-            "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system"
-        },
-        "ligand_chem_template": {
-            "type": "string",
-            "description": "Ligand {num} chemical identifier",
-            "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'ZN', 'ATP', 'CCO', '[Ca+2]', 'CC(=O)Nc1ccc(O)cc1')"
+        "affinity_options": {
+            "title": "Affinity options",
+            "type": "object", 
+            "fa_icon": "fas fa-link",
+            "description": "Affinity prediction options",
+            "properties": {
+                "affinity_ligand_id": {
+                    "type": "string",
+                    "description": "Chain ID of ligand for affinity calculations. If not specified, defaults to ligand 1 ID.",
+                    "pattern": "^[A-Za-z0-9]+$",
+                    "help_text": "e.g. 'E', 'L1', 'D'"
+                },
+                "affinity_mw_correction": {
+                    "type": "boolean",
+                    "description": "Whether to add the Molecular Weight correction to the affinity value head.",
+                    "default": "false",
+                    "hidden": true
+                },
+                "diffusion_samples_affinity": {
+                    "type": "integer", 
+                    "description": "The number of diffusion samples to use for affinity prediction.",
+                    "minimum": 1,
+                    "default": 5,
+                    "help_text": "More samples improve quality but increase computation time. Default: 5",
+                    "hidden": true
+                },
+                "sampling_steps_affinity": {
+                    "type": "integer",
+                    "description": "Number of sampling steps for affinity prediction",
+                    "minimum": 1,
+                    "default": 200,
+                    "help_text": "Default: 200",
+                    "hidden": true
+                }
+            },
+            "hidden": true
         },
         "constraint_options": {
             "title": "Constraint options",
@@ -97,75 +155,170 @@
             "properties": {
                 "constraints_bond": {
                     "type": "string",
-                    "description": "Bond constraints between atoms",
+                    "description": "Bond constraints. Each bond constraint is provided as a pair of atoms. Multiple bonds can be specified, seperated by spaces.",
                     "pattern": "^(\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])(\\s+\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])*$",
-                    "help_text": "Format: [chain,residue,atom][chain,residue,atom]. Separate multiple bonds with spaces. e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' "
+                    "help_text": "For both atoms that form each bond, provide the chain ID, res number, and atom name. Format: '[CHAIN_ID, RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME] [CHAIN_ID,RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME]...' e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' ",
+                    "hidden": true
                 },
-                "pocket_binder_id": {
+                "constraints_contacts": {
                     "type": "string",
-                    "description": "Pocket binder chain ID",
-                    "pattern": "^[A-Za-z0-9]+$",
-                    "help_text": "Chain ID of the molecule that should bind to the specified pocket e.g.'E', 'L1', 'D' "
+                    "description": "Contact constraints provided as pairs of residues or atoms. Multiple contacts can be specified, separated by spaces.",
+                    "pattern": "^(\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)(\\s+\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)*$",
+                    "help_text": "Multiple contacts as pairs of atoms/residues: '[CHAIN_ID,RES_IDX/ATOM][CHAIN_ID,RES_IDX/ATOM][DIST][FORCE]'. E.g. '[A,53][A,57] [A,101][A,130][5][true]'. Max distance (Angstroms, default: 6) and force (default: false) are optional.",
+                    "hidden": true
                 },
-                "pocket_contacts": {
+                "constraints_pocket1_binder": {
                     "type": "string",
-                    "description": "Pocket contact residues",
-                    "pattern": "^(\\[[A-Za-z0-9]+,\\d+\\])(\\[[A-Za-z0-9]+,\\d+\\])*$",
-                    "help_text": "Format: [chain,residue]. Define residues that form the binding pocket. e.g. '[A,10][A,15][B,20][B,25]'"
-                }
-            }
-        },
-        "boltz_options": {
-            "title": "Boltz-1 prediction options",
-            "type": "object",
-            "fa_icon": "fas fa-cogs",
-            "description": "Configure Boltz-1 prediction parameters",
-            "properties": {
-                "boltz_diffusion_samples": {
-                    "type": "integer", 
-                    "description": "Number of diffusion samples",
-                    "minimum": 1,
-                    "maximum": 25,
-                    "default": 1,
-                    "help_text": "Number of independent diffusion samples to generate. More samples improve quality but increase computation time."
+                    "pattern": "^[A-Za-z0-9_]+$",
+                    "description": "Binder chain ID for pocket 1",
+                    "help_text": "Chain ID of ligand or binder for pocket 1. E.g. 'B'.",
+                    "hidden": true
                 },
-                "boltz_recycling_steps": {
-                    "type": "integer",
-                    "description": "Number of recycling steps",
+                "constraints_pocket1_contacts": {
+                    "type": "string",
+                    "pattern": "^((\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])(,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])*)$",
+                    "description": "Contacts (residues or atoms) for pocket 1",
+                    "help_text": "Comma-separated. [CHAIN_ID,RES_IDX/ATOM_NAME],[CHAIN_ID,RES_IDX/ATOM_NAME],... E.g. '[A,53],[A,57],[A,61]'",
+                    "hidden": true
+                },
+                "constraints_pocket1_max_distance": {
+                    "type": "number",
                     "minimum": 1,
                     "maximum": 20,
-                    "default": 10,
-                    "hidden": true,
-                    "help_text": "More steps generally improve accuracy but increase computation time. Default = 10, same as AlphaFold3."
-                },
-                "boltz_sampling_steps": {
-                    "type": "integer",
-                    "description": "Number of sampling steps",
-                    "minimum": 50,
-                    "maximum": 1000,
-                    "default": 200,
-                    "hidden": true,
-                    "help_text": "Number of denoising steps in the diffusion process"
-                },
-                "boltz_write_full_pae": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether to save the full PAE matrix as a file",
+                    "description": "Max distance (Å) for pocket 1",
+                    "help_text": "Maximum distance in Å between binder and contact sites. Default 6.0 if omitted.",
                     "hidden": true
                 },
-                "boltz_write_full_pde": {
+                "constraints_pocket1_force": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Whether to save the full PDE matrix as a file",
+                    "description": "Force potential for pocket 1 (true/false)",
+                    "help_text": "Whether to enforce a restraint potential for pocket 1.",
                     "hidden": true
                 },
-                "boltz_extra_config": {
+                "constraints_pocket2_binder": {
                     "type": "string",
-                    "description": "Additional Boltz-1 configuration",
-                    "hidden": true,
-                    "help_text": "Extra command-line arguments for Boltz-1 (e.g., '--msa_pairing_strategy complete --confidence_threshold 0.7')"
+                    "pattern": "^[A-Za-z0-9_]+$",
+                    "description": "Binder chain ID for pocket 2",
+                    "help_text": "Chain ID of ligand or binder for pocket 2. E.g. 'C'.",
+                    "hidden": true
+                },
+                "constraints_pocket2_contacts": {
+                    "type": "string",
+                    "pattern": "^((\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])(,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\])*)$",
+                    "description": "Contacts (residues or atoms) for pocket 2",
+                    "help_text": "Comma-separated. E.g. '[A,77],[B,12]'.",
+                    "hidden": true
+                },
+                "constraints_pocket2_max_distance": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Max distance (Å) for pocket 2",
+                    "help_text": "Maximum distance in Å between binder and contact sites. Default 6.0 if omitted.",
+                    "hidden": true
+                },
+                "constraints_pocket2_force": {
+                    "type": "boolean",
+                    "description": "Force potential for pocket 2 (true/false)",
+                    "help_text": "Whether to enforce a restraint potential for pocket 2.",
+                    "hidden": true
+                },
+
+                "constraints_pocket_extra": {
+                    "type": "string",
+                    "description": "Advanced or extra pocket constraints (block format)",
+                    "help_text": "For advanced use, specify additional pockets with space-separated '[BINDER][[CONTACTS]][DIST][FORCE]'. Example: '[D][[A,5],[B,12]] [E][[B,99],[C,1]][4][true]'. Usually not required unless >2 pockets needed.",
+                    "hidden": true
                 }
-            }
+            },
+            "hidden": true
+        },
+        "template_options": {
+            "title": "Template options",
+            "type": "object",
+            "fa_icon": "fas fa-link",
+            "description": "Structural templates (protein chains only)",
+            "properties": {
+                "template1_pdb_code": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Za-z]{4}$",
+                    "description": "PDB code for template 1 (auto-download CIF from RCSB)",
+                    "help_text": "Specify a 4-character PDB code to download the template structure automatically."
+                },
+                "template1_path": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": ".*\\.cif$",
+                    "description": "Path to template 1 CIF file. Alternative to PDB code.",
+                    "help_text": "e.g. '/home/users/josh/mytemplate.cif'",
+                    "hidden": true
+                },
+                "template1_prediction_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Prediction chain IDs for template 1",
+                    "help_text": "Comma-separated. E.g. 'A,B'. Leave blank to use all chains.",
+                    "hidden": true
+                },
+                "template1_template_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Template chain IDs for template 1",
+                    "help_text": "Comma-separated. E.g. 'X,Y'. Leave blank to use all template chains.",
+                    "hidden": true
+                },
+                "template1_threshold": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "RMSD threshold (Angstroms) for template 1",
+                    "help_text": "If provided, enables potential to keep prediction close to template #1 within N Å.",
+                    "hidden": true
+                },
+                "template2_pdb_code": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Za-z]{4}$",
+                    "description": "PDB code for template 2 (auto-download CIF from RCSB)",
+                    "help_text": "Specify a 4-character PDB code to download the template structure automatically."
+                },
+                "template2_path": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": ".*\\.cif$",
+                    "description": "Path to template 2 CIF file. Alternative to PDB code.",
+                    "help_text": "e.g. '/home/users/josh/mytemplate.cif'",
+                    "hidden": true
+                },
+                "template2_prediction_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Prediction chain IDs for template 2",
+                    "help_text": "Comma-separated. E.g. 'A,B'. Leave blank to use all chains.",
+                    "hidden": true
+                },
+                "template2_template_id": {
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9_]+)(,[A-Za-z0-9_]+)*$",
+                    "description": "Template chain IDs for template 2",
+                    "help_text": "Comma-separated. E.g. 'X,Y'. Leave blank to use all template chains.",
+                    "hidden": true
+                },
+                "template2_threshold": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "RMSD threshold (Angstroms) for template 2",
+                    "help_text": "If provided, enables potential to keep prediction close to template #2 within N Å.",
+                    "hidden": true
+                },
+                "template_extra": {
+                    "type": "string",
+                    "description": "Advanced/extra template block(s)",
+                    "help_text": "Specify additional templates as blocks: '[PDBCODE][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[1ATP][A][X][5] [4HHB][B][Y][4]'. Only 4-character PDB codes (no file paths) are accepted in template_extra; CIF will be auto-downloaded and staged.",
+                    "hidden": true
+                }
+            },
+            "hidden": true
         },
         "compute_options": {
             "title": "Compute options",
@@ -178,8 +331,8 @@
                     "description": "GPU model requested",
                     "enum": ["A30", "A100"],
                     "default": "A30",
-                    "hidden": true,
-                    "help_text": "Choose GPU model based on availability and computational requirements"
+                    "help_text": "Choose GPU model based on availability and computational requirements",
+                    "hidden": true
                 },
                 "n_cpus": {
                     "type": "integer",
@@ -187,18 +340,33 @@
                     "minimum": 1,
                     "maximum": 128,
                     "default": 24,
-                    "hidden": true,
-                    "help_text": "Number of CPU cores to allocate"
+                    "help_text": "Number of CPU cores to allocate",
+                    "hidden": true
                 },
                 "memory": {
                     "type": "string",
                     "description": "Memory allocation",
                     "pattern": "^\\d+(G|M)$",
                     "default": "48G",
-                    "hidden": true,
-                    "help_text": "Memory allocation (e.g., '48G')"
+                    "help_text": "Memory allocation (e.g., '48G')",
+                    "hidden": true
+                },
+                "container_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/boltz2.sif",
+                    "description": "Path to Boltz-2 container",
+                    "hidden": true
+                },
+                "models_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/boltzmodels",
+                    "description": "Path to Boltz-2 model checkpoints",
+                    "hidden": true
                 }
-            }
+            },
+            "hidden": true
         }
     }
 }

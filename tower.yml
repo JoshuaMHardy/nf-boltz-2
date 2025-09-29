@@ -2,9 +2,5 @@ reports:
   "**/*.yaml":
     display: "Input yaml"
     mimeType: "txt"
-  "**/*.pdb":
-    display: "Predicted Structure (PDB)"
-    mimeType: "txt"
-  "*.log":
-    display: "Boltz Execution Log"
-    mimeType: "txt"
+  "**/*.csv":
+    display: "Prediction Metadata"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Generate complete Nextflow schema with 12 sequences and 12 ligands
-for Seqera Platform integration - Each sequence and ligand as separate groups
+Generate Nextflow schema for nf-boltz with 4 sequences, 4 ligands,
+plus 'extra' blocks for sequences and ligands (in string 'block' format).
 """
 
 import json
@@ -9,211 +9,163 @@ import copy
 from typing import Dict, Any
 
 def load_base_schema(filename: str) -> Dict[str, Any]:
-    """Load the base schema template"""
     with open(filename, 'r') as f:
         return json.load(f)
 
-def generate_sequence_properties(num: int, is_first: bool = False) -> Dict[str, Any]:
-    """Generate properties for a sequence (seq1, seq2, etc.)"""
-    
-    # Base properties for all sequences
-    properties = {
+def generate_sequence_properties(num: int) -> Dict[str, Any]:
+    return {
         f"seq{num}_type": {
             "type": "string",
-            "description": f"Sequence {num} type",
             "enum": ["protein", "dna", "rna"],
-            "help_text": f"Choose the biomolecule type for sequence {num}. Examples: protein, dna, rna"
-        },
-        f"seq{num}_id": {
-            "type": "string", 
-            "description": f"Sequence {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
-            "help_text": "Single chain ID (e.g., 'A') or multiple IDs separated by commas (e.g., 'A,B,C'). Examples: A, B,C, H,L"
+            "description": f"Sequence {num}: type"
         },
         f"seq{num}_seq": {
             "type": "string",
-            "description": f"Sequence {num} amino acid/nucleotide sequence", 
-            "pattern": "^[ACDEFGHIKLMNPQRSTVWYXZ*-]+$",
+            "description": f"Sequence {num}: amino acid/nucleotide sequence e.g., 'MDYK...' or 'ATGGTT...'",
             "minLength": 1,
-            "maxLength": 10000,
-            "help_text": "Single-letter amino acid codes for proteins, ATCG for DNA, AUCG for RNA. Example: ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
+            "maxLength": 5000,
+            "pattern": "^[A-Za-z*.,\\-\\s]+$"
+        },
+        f"seq{num}_chain_id": {
+            "type": "string",
+            "description": f"Sequence {num}: unique chain ID(s). Single alphanumeric id (e.g. 'A' or '1') or comma-separated list for multiple copies (e.g. 'A,B,C').",
+            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
         f"seq{num}_mod": {
             "type": "string",
-            "description": f"Sequence {num} modifications",
-            "pattern": "^(\\[\\d+,[A-Z0-9]{3}\\])+$",
-            "help_text": "Format: [position,CCD_code][position,CCD_code]... e.g. '[33,SEP]', '[10,PTR][25,TPO]', '[1,ACE][50,NH2]'"
+            "hidden": True,
+            "description": f"Sequence {num}: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
+            "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
+        },
+        f"seq{num}_genmsa": {
+            "type": "boolean",
+            "hidden": True,
+            "description": f"Generate MSA for sequence {num} (only applies to protein sequences).",
+            "default": True
         },
         f"seq{num}_cyclic": {
             "type": "boolean",
             "hidden": True,
-            "description": f"Is sequence {num} cyclic?",
-            "help_text": "Set to true for cyclic peptides or circular DNA/RNA"
-        },
-        f"seq{num}_genmsa": {
-            "type": "boolean",
-            "hidden": True, 
-            "description": f"Generate MSA for sequence {num}",
-            "default": True,
-            "help_text": "Generate multiple sequence alignment to improve prediction accuracy"
+            "description": f"Is sequence {num} cyclic? Set to true for cyclic peptides/DNA/RNA.",
+            "default": False
         }
     }
-    
-    # First sequence specific settings
-    if is_first:
-        properties[f"seq{num}_type"]["default"] = "protein"
-        properties[f"seq{num}_id"]["default"] = "A"
-        properties[f"seq{num}_seq"]["default"] = "ADNKFNKEQQNAFYEILHLPNLTEEQRNGFIQSLKDDPSVSKEILAEAKKLNDAQAPK"
-        properties[f"seq{num}_mod"]["default"] = "[33,SEP][42,SEP]"
-        properties[f"seq{num}_genmsa"]["default"] = True
-    
-    # Hide individual parameters for sequences 3-12
-    if num > 2:
-        for key in properties:
-            properties[key]["hidden"] = True
-            
-    return properties
 
 def generate_ligand_properties(num: int) -> Dict[str, Any]:
-    """Generate properties for a ligand (lig1, lig2, etc.)"""
-    
-    properties = {
-        f"lig{num}_id": {
+    return {
+        f"lig{num}_chain_id": {
             "type": "string",
-            "description": f"Ligand {num} chain ID(s)",
-            "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$", 
-            "default": None,
-            "help_text": "Chain identifier(s) for the ligand. Examples: D, L1,L2"
+            "description": f"Ligand {num}: unique chain ID(s). Single alphanumeric id (e.g. 'D' or '2') or comma-separated list for multiple copies (e.g. 'G,H').",
+            "pattern": "^[A-Za-z0-9](,[A-Za-z0-9])*$"
         },
-        f"lig{num}_type": {
+        f"lig{num}_ccd": {
             "type": "string",
-            "description": f"Ligand {num} format",
-            "enum": ["CCD", "SMILES"],
-            "help_text": "CCD: Chemical Component Dictionary code. SMILES: Simplified molecular-input line-entry system. Examples: CCD, SMILES"
+            "description": f"Ligand {num}: CCD code. E.g. 'ZN', 'ATP'. Ignored if SMILES is provided.",
         },
-        f"lig{num}_chem": {
-            "type": "string", 
-            "description": f"Ligand {num} chemical identifier",
-            "help_text": "CCD code (e.g., 'ATP', 'ZN') or SMILES string (e.g., 'CCO', '[Ca+2]'). Examples: ZN, ATP, CCO, [Ca+2], CC(=O)Nc1ccc(O)cc1"
+        f"lig{num}_smiles": {
+            "type": "string",
+            "description": f"Ligand {num}: SMILES string e.g. '[Ca+2]', 'CCO', 'C1CCCCC1'. If provided, CCD is ignored."
         }
     }
-    
-    # Hide individual parameters for ligands 3-12
-    if num > 2:
-        for key in properties:
-            properties[key]["hidden"] = True
-            
-    return properties
 
 def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate the complete schema with all sequences and ligands"""
-    
     schema = copy.deepcopy(base_schema)
-    
-    # Start with base definitions
-    new_definitions = {
-        "input_output_options": schema["definitions"]["input_output_options"],
-        "boltz_options": schema["definitions"]["boltz_options"]
-    }
-    
-    # Create individual sequence groups
-    sequence_refs = []
-    for i in range(1, 13):
-        seq_props = generate_sequence_properties(i, is_first=(i==1))
-        
-        group_definition = {
+    new_defs = {}
+    allof_refs = []
+
+    # Always add core sections
+    for sec in ["input_output_options", "prediction_options"]:
+        new_defs[sec] = schema["definitions"][sec]
+        allof_refs.append({"$ref": f"#/definitions/{sec}"})
+
+    # 4 explicit sequence blocks
+    for i in range(1, 5):
+        new_defs[f"sequence_{i}_options"] = {
             "title": f"Sequence {i} options",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": f"Configure sequence {i} (protein, DNA, or RNA)",
-            "properties": seq_props
+            "description": f"Configure sequence {i} (protein, DNA or RNA chain)",
+            "properties": generate_sequence_properties(i)
         }
-        
-        # Add required fields for sequence 1
-        if i == 1:
-            group_definition["required"] = ["seq1_type", "seq1_id", "seq1_seq"]
-        
-        # Hide sequences 3-12
-        if i > 2:
-            group_definition["hidden"] = True
-            
-        new_definitions[f"sequence_{i}_options"] = group_definition
-        sequence_refs.append({"$ref": f"#/definitions/sequence_{i}_options"})
-    
-    # Create individual ligand groups
-    ligand_refs = []
-    for i in range(1, 13):
-        lig_props = generate_ligand_properties(i)
-        
-        group_definition = {
+        allof_refs.append({"$ref": f"#/definitions/sequence_{i}_options"})
+    # --- sequences_extra ---
+    new_defs["sequences_extra_options"] = {
+        "title": "Extra sequences (advanced)",
+        "type": "object",
+        "fa_icon": "fas fa-plus-square",
+        "description": "Add additional input sequences here. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
+        "properties": {
+            "sequences_extra": {
+                "type": "string",
+                "default": None,
+                "description": "Extra sequences block-string",
+                "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
+                "help_text": (
+                    "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... "
+                    "IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). Example: '[E][MAAAD] [F,G][ACTGACTG]'. "
+                    "No modifications or cyclic sequences. MSA will be automatically generated for protein sequences"
+                ),
+                "hidden": True  # Hide from default UI
+            }
+        }
+    }
+    allof_refs.append({"$ref": "#/definitions/sequences_extra_options"})
+
+    # 4 explicit ligand blocks
+    for i in range(1, 5):
+        new_defs[f"ligand_{i}_options"] = {
             "title": f"Ligand {i} options",
             "type": "object",
             "fa_icon": "fas fa-prescription-bottle",
-            "description": f"Configure ligand {i} (small molecules, ions, etc.)",
-            "properties": lig_props
+            "description": f"Configure ligand {i} (small molecule/ion)",
+            "properties": generate_ligand_properties(i)
         }
-        
-        # Hide ligands 3-12
-        if i > 2:
-            group_definition["hidden"] = True
-            
-        new_definitions[f"ligand_{i}_options"] = group_definition
-        ligand_refs.append({"$ref": f"#/definitions/ligand_{i}_options"})
-    
-    # Add constraint and compute options
-    constraint_options = copy.deepcopy(schema["definitions"]["constraint_options"])
-    constraint_options["hidden"] = True
-    
-    new_definitions["constraint_options"] = constraint_options
-    new_definitions["compute_options"] = schema["definitions"]["compute_options"]
-    
-    # Update schema with new definitions
-    schema["definitions"] = new_definitions
-    
-    # Set up allOf references in the desired order
-    allof_refs = [
-        {"$ref": "#/definitions/input_output_options"},
-        {"$ref": "#/definitions/boltz_options"}
-    ]
-    
-    # Add sequence references
-    allof_refs.extend(sequence_refs)
-    
-    # Add ligand references  
-    allof_refs.extend(ligand_refs)
-    
-    # Add constraint and compute
-    allof_refs.extend([
-        {"$ref": "#/definitions/constraint_options"},
-        {"$ref": "#/definitions/compute_options"}
-    ])
-    
+        allof_refs.append({"$ref": f"#/definitions/ligand_{i}_options"})
+
+
+    # --- ligands_extra ---
+    new_defs["ligands_extra_options"] = {
+        "title": "Extra ligands (advanced)",
+        "type": "object",
+        "fa_icon": "fas fa-plus-square",
+        "description": "Add additional ligands here. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
+        "properties": {
+            "ligands_extra": {
+                "type": "string",
+                "default": None,
+                "description": "Extra ligands block-string",
+                "pattern": (
+                    r"^(\[[A-Za-z0-9](,[A-Za-z0-9])*\]"    # IDs, comma
+                    r"\[[A-Za-z0-9\-+]*\]"                 # CCD (may be blank)
+                    r"\[[^\[\]]*\]\s*)*$"                  # SMILES (may be blank, allow anything but brackets inside)
+                ),
+                "help_text": (
+                    "Extra ligands: space separated blocks: [IDs][CCD][SMILES]. "
+                    "IDs: comma-separated for multiple copies. For SMILES only, leave CCD blank '[E][][C1CCCCC1]'; for CCD only, leave SMILES blank. "
+                    "Example: '[H][ZN][] [I][][N[C@@H](Cc1ccc(O)cc1)C(=O)O]'"
+                ),
+                "hidden": True  # Hide from UI
+            }
+        }
+    }
+    allof_refs.append({"$ref": "#/definitions/ligands_extra_options"})
+
+    # Add other sections (constraints, templates, affinity, compute)
+    for sec in ["affinity_options", "constraint_options", "template_options", "compute_options"]:
+        if sec in schema["definitions"]:
+            new_defs[sec] = schema["definitions"][sec]
+            allof_refs.append({"$ref": f"#/definitions/{sec}"})
+
+    schema["definitions"] = new_defs
     schema["allOf"] = allof_refs
-    
     return schema
 
 def main():
-    """Main function"""
-    print("Loading base schema...")
     base_schema = load_base_schema("nextflow_base_schema.json")
-    
-    print("Generating full schema with 12 individual sequence and ligand groups...")
     full_schema = generate_full_schema(base_schema)
-    
-    print("Writing output schema...")
     with open("nextflow_schema.json", "w") as f:
         json.dump(full_schema, f, indent=2)
-    
-    print("✅ Schema generated successfully!")
-    print("📋 Configuration:")
-    print("   - 12 individual sequence groups (Sequence 1-12 options)")
-    print("   - 12 individual ligand groups (Ligand 1-12 options)")
-    print("   - seq1 is required with defaults")
-    print("   - Sequences 3-12 groups AND individual parameters are hidden")
-    print("   - Ligands 3-12 groups AND individual parameters are hidden")
-    print("   - Constraint options are hidden")
-    print("   - Only boltz_diffusion_samples is visible in Boltz options")
-    print("   - All compute options are hidden")
+    print("✅ Nextflow schema with 4 sequences/ligands + extra fields generated successfully!")
 
 if __name__ == "__main__":
     main()
