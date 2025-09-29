@@ -266,7 +266,14 @@ process GeneratePDF {
     for model in \$model_numbers; do
         echo "Processing model \$model..."
         magick *_\${model}_plddt.png *_\${model}_pae.png *_\${model}_pde.png *_\${model}_iptm.png -background white ${pred_name}_model_\${model}_plots.pdf
-        montage *_\${model}_overview*.png *_\${model}_binder*.png -tile 2x2 -geometry 512x512+32+32 -border 2 -background white ${pred_name}_model_\${model}_images.pdf
+        
+        # Check if binder images exist
+        binder_images=\$(ls *_\${model}_binder*.png 2>/dev/null)
+        if [ -n "\$binder_images" ] ; then
+            montage *_\${model}_overview*.png \$binder_images -tile 2x2 -geometry 512x512+32+32 -border 2 -background white ${pred_name}_model_\${model}_images.pdf
+        else
+            montage *_\${model}_overview*.png -tile 2x1 -geometry 512x512+32+32 -border 2 -background white ${pred_name}_model_\${model}_images.pdf
+        fi
     done
     """
 }
