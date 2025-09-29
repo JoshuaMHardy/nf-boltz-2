@@ -436,9 +436,8 @@
       "properties": {
         "affinity_ligand_id": {
           "type": "string",
-          "description": "Chain ID of ligand for affinity calculations. If not specified, defaults to ligand 1 ID.",
-          "pattern": "^[A-Za-z0-9]+$",
-          "help_text": "e.g. 'E', 'L1', 'D'"
+          "description": "Single chain ID of ligand for affinity calculations. If not specified, defaults to ligand 1 ID. e.g. 'E', 'L1', 'D'",
+          "pattern": "^[A-Za-z0-9]+$"
         },
         "affinity_mw_correction": {
           "type": "boolean",
@@ -650,7 +649,7 @@
             "A30",
             "A100"
           ],
-          "default": "A100",
+          "default": "A30",
           "help_text": "Choose GPU model based on availability and computational requirements",
           "hidden": true
         },

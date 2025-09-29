@@ -487,8 +487,13 @@ if __name__ == "__main__":
         if not cleaned_params.get("affinity_ligand_id"):
             lig1 = cleaned_params.get("lig1_chain_id")
             if lig1:
-                # Only use the *first* chain id from lig1_chain_id, even if comma-separated list
-                cleaned_params["affinity_ligand_id"] = lig1.split(",")[0].strip()
+                # Check if ligand has multiple chain IDs (comma-separated)
+                chain_ids = [x.strip() for x in lig1.split(",") if x.strip()]
+                if len(chain_ids) > 1:
+                    sys.stderr.write("Error: Cannot compute affinity for a ligand that has multiple copies!")
+                    sys.exit(1)
+                # Only use the chain id from lig1_chain_id
+                cleaned_params["affinity_ligand_id"] = chain_ids[0]
 
         # Validation
         validate_no_duplicate_chain_ids_within_field(cleaned_params)
