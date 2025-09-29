@@ -650,7 +650,7 @@
             "A30",
             "A100"
           ],
-          "default": "A100",
+          "default": "A30",
           "help_text": "Choose GPU model based on availability and computational requirements",
           "hidden": true
         },
