@@ -247,7 +247,7 @@ process VisualiseBoltz {
 
 process GeneratePDF {
     cpus 4
-    memory '8G'
+    memory '12G'
     executor 'slurm'
     
     publishDir "${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
