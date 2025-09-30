@@ -17,23 +17,21 @@
       "properties": {
         "pred_name": {
           "type": "string",
-          "description": "Prediction run name",
-          "help_text": "Only letters, numbers, underscores, and dashes allowed. Used as prefix for output files. e.g. protein_complex', 'antibody_design', 'my_prediction'",
+          "description": "Prediction run name. Only letters, numbers, underscores, and dashes allowed. Used as prefix for output files. e.g. protein_complex', 'antibody_design', 'my_prediction'",
           "pattern": "^[a-zA-Z0-9_-]+$",
           "default": "test"
         },
         "outdir": {
           "type": "string",
           "format": "directory-path",
-          "description": "Output directory path",
-          "help_text": "The output directory where the results will be saved. Existing results with the same prediction name will be overwritten.",
-          "default": "/vast/scratch/users/hardy.j/boltztest"
+          "description": "The output directory where the results will be saved in /vast/scratch/users/$USERNAME/ e.g. 'boltz2'='/vast/scratch/users/josh/boltz2'. Existing results with the same prediction name will be overwritten.",
+          "default": "boltz2"
         },
         "input_yaml": {
           "type": "string",
           "format": "file-path",
-          "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints etc. parameters below.",
-          "help_text": "e.g. '/path/to/input.yml'. The name of each yaml file will be used for the prediction name."
+          "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints, and template parameters below but will still respect affinity, prediction and compute options.",
+          "help_text": "e.g. '/path/to/input.yaml' '/path/to/inputdir'. The name of each yaml file will be used for the prediction name."
         }
       }
     },

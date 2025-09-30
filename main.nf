@@ -9,7 +9,7 @@ nextflow.enable.dsl = 2
 
 workflow {
     validateInputs()
-
+    full_outdir = file("${params.outdir_prefix}${params.outdir}")
     if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
 
@@ -69,16 +69,15 @@ workflow {
     VisualiseBoltz(RunBoltz.out.boltz_models)
 
     // Generate PDF of plots
-    GeneratePDF(AnalyseBoltz.out.plots,VisualiseBoltz.out)
+    //GeneratePDF(AnalyseBoltz.out.plots,VisualiseBoltz.out)
 
     // Save log file on completion
     def out_pred_name = params.pred_name
-    def outputDir = file(params.outdir)
 
     workflow.onComplete {
         def logFile = file('.nextflow.log')
         if (logFile.exists()) {
-            logFile.copyTo(outputDir.resolve("${out_pred_name}/nextflow.log"))
+            logFile.copyTo(full_outdir.resolve("${out_pred_name}/nextflow.log"))
         }
     }
 }
@@ -125,7 +124,7 @@ process RunBoltz {
     memory params.memory
     executor 'slurm'
 
-    publishDir "${params.outdir}", mode: 'copy', pattern: "${pred_name}"
+    publishDir "${params.outdir_prefix}${params.outdir}", mode: 'copy', pattern: "${pred_name}"
 
     input:
     tuple path(yaml), val(pred_name)
@@ -178,8 +177,8 @@ process AnalyseBoltz {
     memory '8G'
     executor 'slurm'
 
-    publishDir "${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
-    publishDir "${params.outdir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
+    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
 
     input:
     tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
@@ -204,7 +203,7 @@ process VisualiseBoltz {
     memory '8G'
     executor 'slurm'
 
-    publishDir "${params.outdir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
+    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
 
     input:
     tuple path(pred_files), val(pred_name)
@@ -247,10 +246,11 @@ process VisualiseBoltz {
 
 process GeneratePDF {
     cpus 4
-    memory '12G'
+    memory '8G'
     executor 'slurm'
-    
-    publishDir "${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
+    maxRetries 2
+
+    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
 
     input:
     path(plots)

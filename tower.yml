@@ -2,5 +2,7 @@ reports:
   "**/*.yaml":
     display: "Input yaml"
     mimeType: "txt"
-  "**/*.csv":
-    display: "Prediction Metadata"
+  "**/*metadata.csv":
+    display: "Structure Prediction Metadata"
+  "**/*affinity.csv":
+    display: "Affinity Prediction Metadata"
