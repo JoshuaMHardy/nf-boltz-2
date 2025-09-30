@@ -23,13 +23,13 @@
                     "type": "string",
                     "format": "directory-path",
                     "description": "Output directory path",
-                    "help_text": "The output directory where the results will be saved. Existing results with the same prediction name will be overwritten.",
-                    "default": "/vast/scratch/users/${env('USER')}/boltz"
+                    "help_text": "The output directory where the results will be saved in /vast/scratch/users/$USERNAME/ e.g. 'boltz2'='/vast/scratch/users/josh/boltz2'. Existing results with the same prediction name will be overwritten.",
+                    "default": "boltz2"
                 },
                 "input_yaml": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints etc. parameters below.",
+                    "description": "Path to input YAML files or directory of YAML files. If provided, this will ignore all sequence, ligand, constraints, and template parameters below but will still respect affinity, prediction and compute options.",
                     "help_text": "e.g. '/path/to/input.yml'. The name of each yaml file will be used for the prediction name."
                 }
             }
