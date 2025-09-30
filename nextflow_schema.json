@@ -27,7 +27,7 @@
           "format": "directory-path",
           "description": "Output directory path",
           "help_text": "The output directory where the results will be saved. Existing results with the same prediction name will be overwritten.",
-          "default": "/vast/scratch/users/hardy.j/boltztest"
+          "default": "/vast/scratch/users/${env('USER')}/boltz"
         },
         "input_yaml": {
           "type": "string",
