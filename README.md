@@ -1,10 +1,10 @@
-# nf-boltz
+# nf-boltz-2
 
-A robust, scalable pipeline to run **Boltz-2** or **Boltz-2** structure predictions with advanced complex modeling, ligand support, and structural constraints, all configured using [Nextflow](https://www.nextflow.io/).
+A robust, scalable pipeline to run **Boltz-2** structure predictions with advanced complex modeling, ligand support, and structural constraints, all configured using [Nextflow](https://www.nextflow.io/).
 
 ## Introduction
 
-**nf-boltz** orchestrates Boltz structure prediction, handling input preparation, resource management, sequences/ligands complexity, and advanced configuration for constraints and templates.
+**nf-boltz-2** orchestrates Boltz structure prediction, handling input preparation, resource management, sequences/ligands complexity, and advanced configuration for constraints and templates.
 
 - Fast setup of complex protein, DNA, and RNA systems.
 - Simple parameter specification; flexible for power users via "extra" fields.
@@ -179,4 +179,4 @@ https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md
 
 ## Credits
 
-**nf-boltz** was originally written by [Joshua Hardy](mailto:hardy.j@wehi.edu.au).
+**nf-boltz-2** was originally written by [Joshua Hardy](mailto:hardy.j@wehi.edu.au).
