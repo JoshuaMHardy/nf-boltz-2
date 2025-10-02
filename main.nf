@@ -199,8 +199,11 @@ process AnalyseBoltz {
 }
 
 process VisualiseBoltz {
+    container "/stornext/System/data/software/rhel/9/base/structbio/chimerax/1.10.1/chimerax-1.10.1.sif"
+    containerOptions "--writable-tmpfs -B /home -B ${projectDir}/bin/generate_images.py:/generate_images.py"
+    
     cpus 4
-    memory '8G'
+    memory '24G'
     executor 'slurm'
 
     publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
@@ -213,13 +216,6 @@ process VisualiseBoltz {
 
     script:
     """
-    # Prepare files to remove soft-links incompatible with ChimeraX
-    cp ${projectDir}/bin/generate_images.py .
-    mkdir inputs
-    cp -f *.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} inputs/.
-
-    module load chimerax
-    
     # Extract file extension for script
     extension="${params.output_format == 'mmcif' ? 'cif' : 'pdb'}"
     
@@ -236,7 +232,7 @@ process VisualiseBoltz {
     fi
 
     # Run ChimeraX with appropriate arguments
-    chimerax --nogui --offscreen --script "generate_images.py --extension \$extension \$binder_arg"
+    chimerax --nogui --offscreen --script "/generate_images.py --extension \$extension \$binder_arg"
     
     # List generated images
     ls -la *.png

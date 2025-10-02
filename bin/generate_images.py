@@ -14,7 +14,7 @@ binder_id = args.binder
 extension = args.extension
 
 # Open structure files
-run(session, f'open inputs/*.{extension}')
+run(session, f'open *.{extension}')
 
 # Set up graphics
 run(session, 'window 512 512')
