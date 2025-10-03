@@ -46,8 +46,7 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
         f"seq{num}_cyclic": {
             "type": "boolean",
             "hidden": True,
-            "description": f"Is sequence {num} cyclic? Set to true for cyclic peptides/DNA/RNA.",
-            "default": False
+            "description": f"Is sequence {num} cyclic? Set to true for cyclic peptides/DNA/RNA."
         }
     }
 
