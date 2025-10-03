@@ -200,7 +200,7 @@ process AnalyseBoltz {
 
 process VisualiseBoltz {
     container "/stornext/System/data/software/rhel/9/base/structbio/chimerax/1.10.1/chimerax-1.10.1.sif"
-    containerOptions "--writable-tmpfs -B /home -B ${projectDir}/bin/generate_images.py:/generate_images.py -B /bin/ps -B /lib64/libprocps.so.8"
+    containerOptions "--writable-tmpfs -B /home -B ${projectDir}/bin/generate_images.py:/generate_images.py"
     
     cpus 4
     memory '24G'
