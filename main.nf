@@ -9,7 +9,17 @@ nextflow.enable.dsl = 2
 
 workflow {
     validateInputs()
-    full_outdir = file("${params.outdir_prefix}${params.outdir}")
+    
+    // Calculate output directory once - outdir can be relative or absolute path
+    def output_dir = params.use_outdir_prefix ? joinPaths(params.outdir_prefix, params.outdir) : params.outdir
+    full_outdir = file(output_dir)
+    
+    // Log the output directory configuration
+    if (params.use_outdir_prefix) {
+        println "Outdir_prefix: '${params.outdir_prefix}'"
+    }
+    println "Output directory: '${output_dir}'"
+    
     if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
 
@@ -60,13 +70,13 @@ workflow {
         }
     }
     // Run Boltz for each YAML file
-    RunBoltz(yaml_files, template_files_ch)
+    RunBoltz(yaml_files, template_files_ch, output_dir)
 
     // Generate metadata and plots
-    AnalyseBoltz(RunBoltz.out.boltz_results)
+    AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
 
     // Generate ChimeraX plots
-    VisualiseBoltz(RunBoltz.out.boltz_models)
+    VisualiseBoltz(RunBoltz.out.boltz_models, output_dir)
 
     // Generate PDF of plots
     //GeneratePDF(AnalyseBoltz.out.plots,VisualiseBoltz.out)
@@ -124,11 +134,12 @@ process RunBoltz {
     memory params.memory
     executor 'slurm'
 
-    publishDir "${params.outdir_prefix}${params.outdir}", mode: 'copy', pattern: "${pred_name}"
+    publishDir "${output_dir}", mode: 'copy', pattern: "${pred_name}"
 
     input:
     tuple path(yaml), val(pred_name)
     path template_files
+    val output_dir
 
     output:
     path "${pred_name}"
@@ -177,11 +188,12 @@ process AnalyseBoltz {
     memory '8G'
     executor 'slurm'
 
-    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
-    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${output_dir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
+    publishDir "${output_dir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
 
     input:
     tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
+    val output_dir
 
     output:
     path "*.png", emit: plots
@@ -206,10 +218,11 @@ process VisualiseBoltz {
     memory '24G'
     executor 'slurm'
 
-    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
+    publishDir "${output_dir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
 
     input:
     tuple path(pred_files), val(pred_name)
+    val output_dir
 
     output:
     tuple path("*.png"), val(pred_name)
@@ -246,11 +259,12 @@ process GeneratePDF {
     executor 'slurm'
     maxRetries 2
 
-    publishDir "${params.outdir_prefix}${params.outdir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
+    publishDir "${output_dir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
 
     input:
     path(plots)
     tuple path(images), val(pred_name)
+    val output_dir
 
     output:
     path "*.pdf"
@@ -305,6 +319,25 @@ def validateInputs() {
     if (!params.pred_name.matches(/^[a-zA-Z0-9_-]+$/)) {
         exit(1, "ERROR: pred_name can only contain letters, numbers, underscores, and dashes")
     }
+
+}
+
+def joinPaths(prefix, suffix) {
+    // Smart path joining that handles slashes correctly
+    if (!prefix || prefix.isEmpty()) {
+        return suffix
+    }
+    if (!suffix || suffix.isEmpty()) {
+        return prefix
+    }
+    
+    // Remove trailing slash from prefix if present
+    def cleanPrefix = prefix.endsWith('/') ? prefix[0..-2] : prefix
+    // Remove leading slash from suffix if present
+    def cleanSuffix = suffix.startsWith('/') ? suffix[1..-1] : suffix
+    
+    // Join with single slash
+    return "${cleanPrefix}/${cleanSuffix}"
 }
 
 def collectTemplateFilesAndPDBs(params) {

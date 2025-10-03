@@ -24,6 +24,12 @@
                     "description": "The output directory where the results will be saved in /vast/scratch/users/$USERNAME/ e.g. 'boltz2'='/vast/scratch/users/josh/boltz2'. Existing results with the same prediction name will be overwritten.",
                     "default": "boltz2"
                 },
+                "use_outdir_prefix": {
+                    "type": "boolean",
+                    "description": "Whether to use the outdir_prefix /vast/scratch/users/$USERNAME/. Set to false for absolute paths in --outdir.",
+                    "default": true,
+                    "hidden": true
+                },
                 "input_yaml": {
                     "type": "string",
                     "format": "file-path",
@@ -122,7 +128,6 @@
                 "affinity_mw_correction": {
                     "type": "boolean",
                     "description": "Whether to add the Molecular Weight correction to the affinity value head.",
-                    "default": "false",
                     "hidden": true
                 },
                 "diffusion_samples_affinity": {

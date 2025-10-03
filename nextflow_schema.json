@@ -27,6 +27,12 @@
           "description": "The output directory where the results will be saved in /vast/scratch/users/$USERNAME/ e.g. 'boltz2'='/vast/scratch/users/josh/boltz2'. Existing results with the same prediction name will be overwritten.",
           "default": "boltz2"
         },
+        "use_outdir_prefix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to use the outdir_prefix /vast/scratch/users/$USERNAME/. Set to false for absolute paths in --outdir.",
+          "hidden": true
+        },
         "input_yaml": {
           "type": "string",
           "format": "file-path",
@@ -164,8 +170,7 @@
         "seq1_cyclic": {
           "type": "boolean",
           "hidden": true,
-          "description": "Is sequence 1 cyclic? Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Is sequence 1 cyclic? Set to true for cyclic peptides/DNA/RNA."
         }
       }
     },
@@ -211,8 +216,7 @@
         "seq2_cyclic": {
           "type": "boolean",
           "hidden": true,
-          "description": "Is sequence 2 cyclic? Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Is sequence 2 cyclic? Set to true for cyclic peptides/DNA/RNA."
         }
       }
     },
@@ -258,8 +262,7 @@
         "seq3_cyclic": {
           "type": "boolean",
           "hidden": true,
-          "description": "Is sequence 3 cyclic? Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Is sequence 3 cyclic? Set to true for cyclic peptides/DNA/RNA."
         }
       }
     },
@@ -305,8 +308,7 @@
         "seq4_cyclic": {
           "type": "boolean",
           "hidden": true,
-          "description": "Is sequence 4 cyclic? Set to true for cyclic peptides/DNA/RNA.",
-          "default": false
+          "description": "Is sequence 4 cyclic? Set to true for cyclic peptides/DNA/RNA."
         }
       }
     },
@@ -440,7 +442,6 @@
         "affinity_mw_correction": {
           "type": "boolean",
           "description": "Whether to add the Molecular Weight correction to the affinity value head.",
-          "default": "false",
           "hidden": true
         },
         "diffusion_samples_affinity": {
