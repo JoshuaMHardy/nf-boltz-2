@@ -35,6 +35,8 @@ workflow {
                 }
 
             yaml_files.view { "Found YAML: ${it[1]}" }
+
+            template_files_ch = []
         }
         else if (input_yaml_path.isFile()) {
             println("Using single YAML file: ${params.input_yaml}")
@@ -42,6 +44,8 @@ workflow {
 
             // Create channel with single file
             yaml_files = Channel.of([input_yaml_path, pred_name])
+
+            template_files_ch = []
         }
         else {
             error("Input YAML path does not exist: ${params.input_yaml}")
