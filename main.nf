@@ -155,7 +155,7 @@ process RunBoltz {
     # We specify a tmp directory as some python packages try to write to the user home directory outside the container
     mkdir tmp
     export HOME=tmp
-
+    
     # Create prediction directory to copy results into
     mkdir ${pred_name}
 
@@ -175,6 +175,13 @@ process RunBoltz {
         ${params.output_format == "pdb" ? "--output_format pdb " : ''} \
         ${params.write_full_pae ? '--write_full_pae ' : ''} \
         ${params.write_full_pde ? '--write_full_pde ' : ''} \
+        ${params.chunk_size_transition_z ? "--chunk_size_transition_z ${params.chunk_size_transition_z}" : ''} \
+        ${params.chunk_size_transition_msa ? "--chunk_size_transition_msa ${params.chunk_size_transition_msa}" : ''} \
+        ${params.chunk_size_tri_attn ? "--chunk_size_tri_attn ${params.chunk_size_tri_attn}" : ''} \
+        ${params.triangle_mult_gate_nchunks ? "--triangle_mult_gate_nchunks ${params.triangle_mult_gate_nchunks}" : ''} \
+        ${params.chunk_size_outer_product ? "--chunk_size_outer_product ${params.chunk_size_outer_product}" : ''} \
+        ${params.chunk_size_threshold ? "--chunk_size_threshold ${params.chunk_size_threshold}" : ''} \
+        ${params.use_bfloat16 ? '--use_bfloat16' : ''} \
         ${params.extra_config ? "'${params.extra_config}'" : ''} \
         2>&1 | tee ${pred_name}/boltz.log
    
