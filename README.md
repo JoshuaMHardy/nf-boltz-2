@@ -173,7 +173,8 @@ https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md
 
 ## References
 
-- [Main Boltz repository](https://github.com/jwohlwend/boltz)
+- [Main Boltz repository](https://github.com/jwohlwend/boltz) [bioRxiv](https://doi.org/10.1101/2025.06.14.659707)
+- [Low-memory Boltz-2 implementation](https://github.com/tlitfin/lmi4boltz) [bioRxiv](https://doi.org/10.1101/2025.10.29.684571)
 - [Boltz prediction input format](https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md)
 - [Nextflow documentation](https://www.nextflow.io/)
 
