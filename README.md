@@ -116,7 +116,7 @@ For 5 or more ligands, use ligands_extra:
 
 ### Compute and Advanced
 
-- Resources (gpu_model, n_cpus, memory, etc.)
+- Resources (boltz2_gpu_model, boltz2_cpus, memory, etc.)
 - Output format (output_format = 'mmcif' by default).
 - Extra Boltz args (extra_config) if needed.
 

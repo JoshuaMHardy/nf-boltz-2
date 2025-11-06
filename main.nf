@@ -9,17 +9,17 @@ nextflow.enable.dsl = 2
 
 workflow {
     validateInputs()
-    
+
     // Calculate output directory once - outdir can be relative or absolute path
     def output_dir = params.use_outdir_prefix ? joinPaths(params.outdir_prefix, params.outdir) : params.outdir
     full_outdir = file(output_dir)
-    
+
     // Log the output directory configuration
     if (params.use_outdir_prefix) {
-        println "Outdir_prefix: '${params.outdir_prefix}'"
+        println("Outdir_prefix: '${params.outdir_prefix}'")
     }
-    println "Output directory: '${output_dir}'"
-    
+    println("Output directory: '${output_dir}'")
+
     if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
 
@@ -27,7 +27,7 @@ workflow {
             println("Using existing YAMLs from: ${params.input_yaml}")
 
             // Create channel from YAML files in directory
-            yaml_files = Channel
+            yaml_files = channel
                 .fromPath("${params.input_yaml}/*.yaml")
                 .map { yaml_file ->
                     def pred_name = yaml_file.getSimpleName()
@@ -43,7 +43,7 @@ workflow {
             pred_name = input_yaml_path.getSimpleName()
 
             // Create channel with single file
-            yaml_files = Channel.of([input_yaml_path, pred_name])
+            yaml_files = channel.of([input_yaml_path, pred_name])
 
             template_files_ch = []
         }
@@ -55,8 +55,8 @@ workflow {
         // Check for templates
         def (template_files_list, pdb_codes_list) = collectTemplateFilesAndPDBs(params)
 
-        files_ch = Channel.fromList(template_files_list)
-        cif_files_ch = Channel.empty()
+        files_ch = channel.fromList(template_files_list)
+        cif_files_ch = channel.empty()
 
         if (pdb_codes_list.size() > 0) {
             println("Downloading templates")
@@ -73,8 +73,33 @@ workflow {
             [yaml_file, params.pred_name]
         }
     }
+    // Check if we need to run ColabFold for MSA
+    PrepColabFold(yaml_files)
+    
+    // Collect any pre-existing MSA files referenced in YAMLs
+    CollectPreexistingMSAs(yaml_files)
+
+    // Combine CSV files from PrepColabFold, keeping only one header
+    PrepColabFold.out
+        .collectFile(
+            name: 'combined_msa.csv',
+            keepHeader: true,
+            skip: 1,
+        )
+        .set { seqs_for_msa }
+    PrepColabFold.out.ifEmpty { log.info("Skipping ColabFold - no MSAs to generate") }
+
+    // Run ColabFold only if there are CSV files
+    RunColabFold(seqs_for_msa, output_dir)
+
+    // Combine generated MSAs from ColabFold with pre-existing MSAs from YAML
+    msa_files_ch = RunColabFold.out.csv
+        .mix(CollectPreexistingMSAs.out.msa_files.flatten())
+        .collect()
+        .ifEmpty([])
+
     // Run Boltz for each YAML file
-    RunBoltz(yaml_files, template_files_ch, output_dir)
+    RunBoltz(yaml_files, template_files_ch, msa_files_ch, output_dir)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
@@ -101,6 +126,19 @@ workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process GenerateYAML {
+    input:
+    val params
+
+    output:
+    path "*.yaml", emit: yaml
+
+    script:
+    """
+    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
+    """
+}
+
 process DownloadTemplates {
     input:
     val pdb_codes_tuples
@@ -128,21 +166,158 @@ process DownloadTemplates {
     """
 }
 
+process CollectPreexistingMSAs {
+    // Scan YAML files for pre-existing MSA file paths
+    input:
+    tuple path(yaml), val(pred_name)
+
+    output:
+    path ("msa_files/*"), optional: true, emit: msa_files
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import yaml
+    import os
+    import shutil
+    
+    # Read and parse the YAML file
+    with open('${yaml}', 'r') as f:
+        data = yaml.safe_load(f)
+    
+    # Create output directory
+    os.makedirs('msa_files', exist_ok=True)
+    
+    # Collect any MSA file paths from the YAML
+    for block in data.get('sequences', []):
+        if 'protein' in block:
+            protein = block['protein']
+            msa = protein.get('msa')
+            
+            # Check if msa is a file path (not True, False, or "empty")
+            if msa and isinstance(msa, str) and msa not in ['empty', 'true', 'false']:
+                # This is a file path - check if it exists and copy it
+                if os.path.exists(msa):
+                    basename = os.path.basename(msa)
+                    shutil.copy(msa, f'msa_files/{basename}')
+                    print(f"Found pre-existing MSA: {msa}")
+                else:
+                    print(f"Warning: MSA file specified but not found: {msa}")
+    """
+}
+
+process PrepColabFold {
+    // Check YAML files to see if we need to generate MSA(s)
+    input:
+    tuple path(yaml), val(pred_name)
+
+    output:
+    path ("*.csv"), optional: true, emit: csv
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import yaml
+    
+    # Read and parse the YAML file
+    with open('${yaml}', 'r') as f:
+        data = yaml.safe_load(f)
+    
+    sequences = []
+    
+    # Process each protein block
+    for block in data.get('sequences', []):
+        if 'protein' in block:
+            protein = block['protein']
+            sequence = protein.get('sequence')
+            msa = protein.get('msa')
+            
+            # Check if we need to generate MSA for this sequence
+            # Skip if: msa is "empty", or msa is a PRE-EXISTING file path
+            # Include if: msa is a future filename (no path separator) or True
+            needs_generation = False
+            
+            if msa == 'empty':
+                # Explicitly no MSA
+                needs_generation = False
+            elif isinstance(msa, str) and '/' in msa:
+                # Has path separator - this is a pre-existing file path, skip generation
+                needs_generation = False
+            elif msa:
+                # msa is True or a filename we need to generate (no path separator)
+                needs_generation = True
+            
+            if needs_generation and sequence:
+                # Add one copy per chain ID
+                chain_ids = protein.get('id', [])
+                if isinstance(chain_ids, str):
+                    chain_ids = [chain_ids]
+                for chain_id in chain_ids:
+                    sequences.append(sequence)
+    
+    # Write CSV if we have sequences
+    if sequences:
+        seq_string = ':'.join(sequences)
+        csv_content = f"id,sequence\\n${pred_name},{seq_string}\\n"
+        
+        with open('${pred_name}.csv', 'w') as f:
+            f.write(csv_content)
+    """
+}
+
+
+
+process RunColabFold {
+    container "${params.colabfold_container}"
+    containerOptions "--nv --bind ${params.colabfold_dbs}:/colabfold_dbs --bind ${projectDir}/bin/split_msa.py:/split_msa.py"
+
+    cpus params.colabfold_cpus
+    memory params.colabfold_memory
+    queue 'gpuq'
+    clusterOptions '--gres=gpu:' + params.colabfold_gpu_model + ':1'
+
+    publishDir "${output_dir}/msas", mode: 'copy'
+
+    input:
+    path csv
+    val output_dir
+
+    output:
+    path ("split_msas/*.csv"), emit: csv
+
+    script:
+
+    """
+    # Run ColabFold on combined CSV file to generate MSA per row
+    colabfold_search \
+        --db-load-mode 2 \
+        --gpu 1 \
+        --prefilter-mode 1 \
+        --threads ${task.cpus} \
+        ${csv} \
+        /colabfold_dbs \
+        "results/"
+
+    # Split each MSA by unique query sequence for Boltz-2 input
+    python /split_msa.py -i results/ -o split_msas
+    """
+}
+
 process RunBoltz {
-    container "${params.container_path}"
-    containerOptions "--nv --bind ${params.models_path}:/boltzcache"
+    container "${params.boltz2_container}"
+    containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache"
 
     queue 'gpuq'
-    clusterOptions '--gres=gpu:' + params.gpu_model + ':1'
-    cpus params.n_cpus
-    memory params.memory
-    executor 'slurm'
+    clusterOptions '--gres=gpu:' + params.boltz2_gpu_model + ':1'
+    cpus params.boltz2_cpus
+    memory params.boltz2_memory
 
     publishDir "${output_dir}", mode: 'copy', pattern: "${pred_name}"
 
     input:
     tuple path(yaml), val(pred_name)
     path template_files
+    path msa_files
     val output_dir
 
     output:
@@ -162,7 +337,6 @@ process RunBoltz {
     boltz predict \
         ${yaml} \
         --cache /boltzcache \
-        --use_msa_server \
         ${params.diffusion_samples ? "--diffusion_samples ${params.diffusion_samples}" : ''} \
         ${params.method ? "--method '${params.method}'" : ''} \
         ${params.use_potentials ? '--use_potentials' : ''} \
@@ -188,6 +362,12 @@ process RunBoltz {
     # Copy predictions and input yaml to prediction directory. Use .cif if mmcif format.
     cp boltz_results_*/predictions/*/*.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} ${pred_name}/.
     cp ${yaml} ${pred_name}/.
+    # Copy MSA files if they exist
+    for file in *.csv; do
+        [ -e "\$file" ] || continue
+        cp "\$file" ${pred_name}/.
+    done
+
     """
 }
 
@@ -197,7 +377,6 @@ process AnalyseBoltz {
 
     cpus 4
     memory '8G'
-    executor 'slurm'
 
     publishDir "${output_dir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
     publishDir "${output_dir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
@@ -224,10 +403,9 @@ process AnalyseBoltz {
 process VisualiseBoltz {
     container "/stornext/System/data/software/rhel/9/base/structbio/chimerax/1.10.1/chimerax-1.10.1.sif"
     containerOptions "--writable-tmpfs -B /home -B ${projectDir}/bin/generate_images.py:/generate_images.py"
-    
+
     cpus 4
     memory '24G'
-    executor 'slurm'
 
     publishDir "${output_dir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
 
@@ -267,13 +445,12 @@ process VisualiseBoltz {
 process GeneratePDF {
     cpus 4
     memory '8G'
-    executor 'slurm'
     maxRetries 2
 
     publishDir "${output_dir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
 
     input:
-    path(plots)
+    path plots
     tuple path(images), val(pred_name)
     val output_dir
 
@@ -299,18 +476,7 @@ process GeneratePDF {
     """
 }
 
-process GenerateYAML {
-    input:
-    val params
 
-    output:
-    path "*.yaml", emit: yaml
-
-    script:
-    """
-    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
-    """
-}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -330,7 +496,6 @@ def validateInputs() {
     if (!params.pred_name.matches(/^[a-zA-Z0-9_-]+$/)) {
         exit(1, "ERROR: pred_name can only contain letters, numbers, underscores, and dashes")
     }
-
 }
 
 def joinPaths(prefix, suffix) {
@@ -341,12 +506,12 @@ def joinPaths(prefix, suffix) {
     if (!suffix || suffix.isEmpty()) {
         return prefix
     }
-    
+
     // Remove trailing slash from prefix if present
     def cleanPrefix = prefix.endsWith('/') ? prefix[0..-2] : prefix
     // Remove leading slash from suffix if present
     def cleanSuffix = suffix.startsWith('/') ? suffix[1..-1] : suffix
-    
+
     // Join with single slash
     return "${cleanPrefix}/${cleanSuffix}"
 }

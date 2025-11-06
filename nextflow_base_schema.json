@@ -328,7 +328,7 @@
             "fa_icon": "fas fa-server",
             "description": "Configure computational resources",
             "properties": {
-                "gpu_model": {
+                "boltz2_gpu_model": {
                     "type": "string",
                     "description": "GPU model requested",
                     "enum": ["A30", "A100"],
@@ -336,7 +336,7 @@
                     "help_text": "Choose GPU model based on availability and computational requirements",
                     "hidden": true
                 },
-                "n_cpus": {
+                "boltz2_cpus": {
                     "type": "integer",
                     "description": "Number of CPUs",
                     "minimum": 1,
@@ -353,14 +353,14 @@
                     "help_text": "Memory allocation (e.g., '48G')",
                     "hidden": true
                 },
-                "container_path": {
+                "boltz2_container": {
                     "type": "string",
                     "format": "directory-path",
                     "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/boltz2.sif",
                     "description": "Path to Boltz-2 container",
                     "hidden": true
                 },
-                "models_path": {
+                "boltz2_models": {
                     "type": "string",
                     "format": "directory-path",
                     "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/boltzmodels",

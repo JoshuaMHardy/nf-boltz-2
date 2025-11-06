@@ -402,7 +402,7 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
 
 def build_yaml_structure(params: Dict) -> Dict:
     yaml_data = {'sequences': []}
-
+    msa_idx = 0
     # Explicit sequences
     for i in range(1, 5):
         seq_key = f'seq{i}'
@@ -424,8 +424,16 @@ def build_yaml_structure(params: Dict) -> Dict:
             seq_entry[seq_type]['modifications'] = mods
         # MSA only for protein
         if seq_type == "protein":
-            if params.get(f'{seq_key}_genmsa') in [None, True]:
-                pass
+            # Check if pre-existing MSA CSV path is provided
+            msa_csv_path = params.get(f'{seq_key}_msa_csv')
+            if msa_csv_path:
+                # Use the provided MSA file path
+                seq_entry[seq_type]['msa'] = msa_csv_path
+            elif params.get(f'{seq_key}_genmsa') in [None, True]:
+                # Generate MSA - reference expected output filename
+                pred_name = params.get('pred_name')
+                seq_entry[seq_type]['msa'] = f"{pred_name}_msa_{msa_idx}.csv"
+                msa_idx += 1
             else:
                 seq_entry[seq_type]['msa'] = "empty"
         yaml_data["sequences"].append(seq_entry)
