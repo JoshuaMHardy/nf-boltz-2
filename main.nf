@@ -73,33 +73,32 @@ workflow {
             [yaml_file, params.pred_name]
         }
     }
-    // Check if we need to run ColabFold for MSA
-    PrepColabFold(yaml_files)
     
-    // Collect any pre-existing MSA files referenced in YAMLs
-    CollectPreexistingMSAs(yaml_files)
-
-    // Combine CSV files from PrepColabFold, keeping only one header
-    PrepColabFold.out
+    // Check MSA cache and prepare for ColabFold
+    CheckMSACache(yaml_files, params.msa_cache_dir, params.use_msa_cache)
+    
+    // Combine CSV files from CheckMSACache (sequences needing generation)
+    CheckMSACache.out.csv
         .collectFile(
             name: 'combined_msa.csv',
             keepHeader: true,
             skip: 1,
         )
         .set { seqs_for_msa }
-    PrepColabFold.out.ifEmpty { log.info("Skipping ColabFold - no MSAs to generate") }
 
-    // Run ColabFold only if there are CSV files
+    // Run ColabFold only if there are sequences to process
     RunColabFold(seqs_for_msa, output_dir)
 
-    // Combine generated MSAs from ColabFold with pre-existing MSAs from YAML
-    msa_files_ch = RunColabFold.out.csv
-        .mix(CollectPreexistingMSAs.out.msa_files.flatten())
-        .collect()
-        .ifEmpty([])
+    // Store generated A3M files in cache
+    if (params.use_msa_cache) {
+        StoreMSACache(RunColabFold.out.a3m.flatten(), params.msa_cache_dir)
+    }
+
+    // Split A3M files (both from cache and newly generated) into CSVs for Boltz
+    SplitMSA(CheckMSACache.out.a3m.mix(RunColabFold.out.a3m.flatten()).collect())
 
     // Run Boltz for each YAML file
-    RunBoltz(yaml_files, template_files_ch, msa_files_ch, output_dir)
+    RunBoltz(CheckMSACache.out.yaml, template_files_ch, SplitMSA.out.csv, output_dir)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
@@ -166,127 +165,151 @@ process DownloadTemplates {
     """
 }
 
-process CollectPreexistingMSAs {
-    // Scan YAML files for pre-existing MSA file paths
+process CheckMSACache {
+    // Check if MSA exists in cache based on hash of all sequences
+    // Output: updated YAML, CSV for sequences needing generation, cached A3M files
     input:
     tuple path(yaml), val(pred_name)
+    val msa_cache_dir
+    val use_msa_cache
 
     output:
-    path ("msa_files/*"), optional: true, emit: msa_files
+    tuple path("${pred_name}.yaml"), val(pred_name), emit: yaml
+    path("*.csv"), optional: true, emit: csv
+    path("*.a3m"), optional: true, emit: a3m
 
     script:
     """
     #!/usr/bin/env python3
     import yaml
     import os
+    import hashlib
+    import gzip
     import shutil
     
     # Read and parse the YAML file
     with open('${yaml}', 'r') as f:
         data = yaml.safe_load(f)
     
-    # Create output directory
-    os.makedirs('msa_files', exist_ok=True)
+    use_cache = '${use_msa_cache}' == 'true'
+    cache_dir = '${msa_cache_dir}'
     
-    # Collect any MSA file paths from the YAML
-    for block in data.get('sequences', []):
-        if 'protein' in block:
-            protein = block['protein']
-            msa = protein.get('msa')
-            
-            # Check if msa is a file path (not True, False, or "empty")
-            if msa and isinstance(msa, str) and msa not in ['empty', 'true', 'false']:
-                # This is a file path - check if it exists and copy it
-                if os.path.exists(msa):
-                    basename = os.path.basename(msa)
-                    shutil.copy(msa, f'msa_files/{basename}')
-                    print(f"Found pre-existing MSA: {msa}")
-                else:
-                    print(f"Warning: MSA file specified but not found: {msa}")
-    """
-}
-
-process PrepColabFold {
-    // Check YAML files to see if we need to generate MSA(s)
-    input:
-    tuple path(yaml), val(pred_name)
-
-    output:
-    path ("*.csv"), optional: true, emit: csv
-
-    script:
-    """
-    #!/usr/bin/env python3
-    import yaml
+    if use_cache:
+        os.makedirs(cache_dir, exist_ok=True)
+        print(f"Using MSA cache: {cache_dir}")
+    else:
+        print("MSA cache disabled")
     
-    # Read and parse the YAML file
-    with open('${yaml}', 'r') as f:
-        data = yaml.safe_load(f)
+    # Collect all sequences that need MSA (not 'empty', not pre-existing file paths)
+    sequences_for_msa = []
+    has_msa_requirement = False
     
-    sequences = []
-    
-    # Process each protein block
     for block in data.get('sequences', []):
         if 'protein' in block:
             protein = block['protein']
             sequence = protein.get('sequence')
             msa = protein.get('msa')
             
-            # Check if we need to generate MSA for this sequence
-            # Skip if: msa is "empty", or msa is a PRE-EXISTING file path
-            # Include if: msa is a future filename (no path separator) or True
-            needs_generation = False
-            
-            if msa == 'empty':
-                # Explicitly no MSA
-                needs_generation = False
-            elif isinstance(msa, str) and '/' in msa:
-                # Has path separator - this is a pre-existing file path, skip generation
-                needs_generation = False
-            elif msa:
-                # msa is True or a filename we need to generate (no path separator)
-                needs_generation = True
-            
-            if needs_generation and sequence:
-                # Add one copy per chain ID
+            # Check if this protein needs MSA
+            if msa and msa != 'empty' and sequence:
+                # If it's an absolute path, skip (pre-existing MSA)
+                if isinstance(msa, str) and '/' in msa:
+                    print(f"Pre-existing MSA path: {msa}")
+                    continue
+                
+                has_msa_requirement = True
+                # Add sequence for each chain (ColabFold needs one per chain for pairing)
                 chain_ids = protein.get('id', [])
                 if isinstance(chain_ids, str):
                     chain_ids = [chain_ids]
                 for chain_id in chain_ids:
-                    sequences.append(sequence)
+                    sequences_for_msa.append(sequence)
     
-    # Write CSV if we have sequences
-    if sequences:
-        seq_string = ':'.join(sequences)
-        csv_content = f"id,sequence\\n${pred_name},{seq_string}\\n"
+    cache_hit = False
+    msa_hash = None
+    
+    if has_msa_requirement and sequences_for_msa:
+        # Calculate hash from ALL sequences (this is the paired MSA identifier)
+        combined_seq = '|'.join(sequences_for_msa)
+        msa_hash = hashlib.sha256(combined_seq.encode()).hexdigest()[:16]
+        cache_file_gz = f"{cache_dir}/{msa_hash}.a3m.gz"
         
-        with open('${pred_name}.csv', 'w') as f:
-            f.write(csv_content)
+        print(f"MSA hash for this combination: {msa_hash}")
+        print(f"Number of sequences: {len(sequences_for_msa)}")
+        
+        # Check cache if enabled (look for gzipped file)
+        if use_cache and os.path.exists(cache_file_gz):
+            print(f"Cache HIT: Found {cache_file_gz}")
+            cache_hit = True
+            # Decompress cached A3M to work directory for splitting
+            with gzip.open(cache_file_gz, 'rb') as f_in:
+                with open(f"{msa_hash}.a3m", 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            print(f"Decompressed cached A3M: {msa_hash}.a3m")
+            
+            # Update YAML to reference the CSV files that will be generated from this A3M
+            seq_index = 0
+            for block in data.get('sequences', []):
+                if 'protein' in block:
+                    protein = block['protein']
+                    msa = protein.get('msa')
+                    if msa and msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                        # This will be generated from split
+                        protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
+                        seq_index += 1
+        else:
+            if use_cache:
+                print(f"Cache MISS: {msa_hash}")
+            
+            # Generate CSV for ColabFold
+            seq_string = ':'.join(sequences_for_msa)
+            csv_content = f"id,sequence\\n{msa_hash},{seq_string}\\n"
+            
+            with open(f'{msa_hash}.csv', 'w') as f:
+                f.write(csv_content)
+            
+            # Update YAML to reference the CSV files that will be generated
+            seq_index = 0
+            for block in data.get('sequences', []):
+                if 'protein' in block:
+                    protein = block['protein']
+                    msa = protein.get('msa')
+                    if msa and msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                        protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
+                        seq_index += 1
+    
+    # Write updated YAML
+    with open('${pred_name}.yaml', 'w') as f:
+        yaml.dump(data, f, sort_keys=False, default_flow_style=False)
+    
+    if cache_hit:
+        print("Using cached MSA - no generation needed")
+    elif has_msa_requirement:
+        print(f"MSA generation required for hash: {msa_hash}")
+    else:
+        print("No MSA generation required (all marked as 'empty' or pre-existing)")
     """
 }
 
-
-
 process RunColabFold {
     container "${params.colabfold_container}"
-    containerOptions "--nv --bind ${params.colabfold_dbs}:/colabfold_dbs --bind ${projectDir}/bin/split_msa.py:/split_msa.py"
+    containerOptions "--nv --bind ${params.colabfold_dbs}:/colabfold_dbs"
 
     cpus params.colabfold_cpus
     memory params.colabfold_memory
     queue 'gpuq'
     clusterOptions '--gres=gpu:' + params.colabfold_gpu_model + ':1'
 
-    publishDir "${output_dir}/msas", mode: 'copy'
+    publishDir "${output_dir}/msas", mode: 'copy', pattern: "*.a3m"
 
     input:
     path csv
     val output_dir
 
     output:
-    path ("split_msas/*.csv"), emit: csv
+    path ("*.a3m"), emit: a3m
 
     script:
-
     """
     # Run ColabFold on combined CSV file to generate MSA per row
     colabfold_search \
@@ -297,9 +320,70 @@ process RunColabFold {
         ${csv} \
         /colabfold_dbs \
         "results/"
+    
+    # Extract only the paired MSA files (those with hash names, not 1.a3m, 2.a3m, etc.)
+    # Hash names are 16 characters of hex
+    for f in results/*.a3m; do
+        basename=\$(basename "\$f" .a3m)
+        # Check if filename matches hash pattern (16 hex chars)
+        if [[ \$basename =~ ^[0-9a-f]{16}\$ ]]; then
+            echo "Found paired MSA: \$f"
+            cp "\$f" "\${basename}.a3m"
+        fi
+    done
+    """
+}
 
-    # Split each MSA by unique query sequence for Boltz-2 input
-    python /split_msa.py -i results/ -o split_msas
+process StoreMSACache {
+    // Store generated A3M files in cache (compress during storage)
+    input:
+    path a3m_file
+    val msa_cache_dir
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import os
+    import gzip
+    import shutil
+    
+    cache_dir = '${msa_cache_dir}'
+    os.makedirs(cache_dir, exist_ok=True)
+    
+    a3m_file = '${a3m_file}'
+    
+    if not os.path.exists(a3m_file):
+        print(f"Warning: A3M file not found: {a3m_file}")
+        exit(0)
+    
+    # Get basename and create compressed cache file
+    basename = os.path.basename(a3m_file)
+    cache_file_gz = os.path.join(cache_dir, f"{basename}.gz")
+    
+    # Compress and copy to cache
+    with open(a3m_file, 'rb') as f_in:
+        with gzip.open(cache_file_gz, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    
+    print(f"Stored compressed A3M in cache: {basename}.gz")
+
+    """
+}
+
+process SplitMSA {
+    container "${params.colabfold_container}"
+    containerOptions "--bind ${projectDir}/bin/split_msa.py:/split_msa.py"
+
+    input:
+    path a3m_files
+
+    output:
+    path ("split_msas/*.csv"), emit: csv
+
+    script:
+    """    
+    # Split all A3M files into CSV format for Boltz
+    python /split_msa.py -i ./ -o split_msas
     """
 }
 
