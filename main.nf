@@ -211,7 +211,7 @@ process CheckMSACache {
             msa = protein.get('msa')
             
             # Check if this protein needs MSA
-            if msa and msa != 'empty' and sequence:
+            if msa != 'empty' and sequence:
                 # If it's an absolute path, skip (pre-existing MSA)
                 if isinstance(msa, str) and '/' in msa:
                     print(f"Pre-existing MSA path: {msa}")
@@ -253,7 +253,7 @@ process CheckMSACache {
                 if 'protein' in block:
                     protein = block['protein']
                     msa = protein.get('msa')
-                    if msa and msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                    if msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
                         # This will be generated from split
                         protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
                         seq_index += 1
@@ -274,11 +274,7 @@ process CheckMSACache {
                 if 'protein' in block:
                     protein = block['protein']
                     msa = protein.get('msa')
-                    if not msa:
-                        # Add MSA key with future CSV path 
-                        protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
-                        seq_index += 1
-                    elif msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                    if msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
                         # Replace MSA key with future CSV path
                         protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
                         seq_index += 1
