@@ -375,7 +375,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
     fig, ax = plt.subplots(figsize=(8, 8))
     
     if matrix_type == 'pae':
-        im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower', vmin=0, vmax=30, 
+        im = ax.imshow(processed_matrix, cmap='GnBu_r', vmin=0, vmax=30, 
                       extent=[-0.5, total_residues-0.5, -0.5, total_residues-0.5])
         cbar_label = 'Expected position error (Å)'
         explanation = (
@@ -383,7 +383,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
             "Dark blue = high confidence, light colors = uncertainty. Non-standard residues averaged."
         )
     else:  # PDE
-        im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower', 
+        im = ax.imshow(processed_matrix, cmap='GnBu_r', 
                       extent=[-0.5, total_residues-0.5, -0.5, total_residues-0.5])
         cbar_label = 'Expected distance error (Å)'
         explanation = (
