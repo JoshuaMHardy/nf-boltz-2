@@ -274,7 +274,7 @@ process CheckMSACache {
                 if 'protein' in block:
                     protein = block['protein']
                     msa = protein.get('msa')
-                    if !msa:
+                    if not msa:
                         # Add MSA key with future CSV path 
                         protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
                         seq_index += 1
