@@ -94,8 +94,16 @@ workflow {
         StoreMSACache(RunColabFold.out.a3m.flatten(), params.msa_cache_dir)
     }
 
-    // Split A3M files (both from cache and newly generated) into CSVs for Boltz
-    SplitMSA(CheckMSACache.out.a3m.mix(RunColabFold.out.a3m.flatten()).collect())
+    // Combine MSAs from cache (if any) with generated MSAs
+    // Keep unique files since there can be duplicate MSAs and this results in a collision
+    CheckMSACache.out.a3m
+        .mix(RunColabFold.out.a3m.flatten())
+        .unique { it.name }
+        .collect()
+        .set { MSAs }
+
+    // Split A3M files into CSVs for Boltz
+    SplitMSA(MSAs)
 
     // Run Boltz for each YAML file
     RunBoltz(CheckMSACache.out.yaml, template_files_ch, SplitMSA.out.csv, output_dir)
