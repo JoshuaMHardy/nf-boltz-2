@@ -8,12 +8,9 @@ From: nvidia/cuda:12.8.0-base-ubuntu24.04
     apt-get -q update
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         git \
-        wget \
-        python-dev-is-python3 \
         python3-venv \
         python3-pip \
-        build-essential \
-        software-properties-common
+        build-essential
 
     # create and activate virtual environment
     python3 -m venv /opt/venv
