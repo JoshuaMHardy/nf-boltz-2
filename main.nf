@@ -274,7 +274,12 @@ process CheckMSACache {
                 if 'protein' in block:
                     protein = block['protein']
                     msa = protein.get('msa')
-                    if msa and msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                    if !msa:
+                        # Add MSA key with future CSV path 
+                        protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
+                        seq_index += 1
+                    elif msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                        # Replace MSA key with future CSV path
                         protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
                         seq_index += 1
     
