@@ -79,10 +79,11 @@ workflow {
     
     // Combine CSV files from CheckMSACache (sequences needing generation)
     CheckMSACache.out.csv
+        .splitCsv(header: true)
+        .unique { it.id }  // Deduplicate by hash ID
         .collectFile(
             name: 'combined_msa.csv',
-            keepHeader: true,
-            skip: 1,
+            keepHeader: true
         )
         .set { seqs_for_msa }
 
@@ -226,12 +227,7 @@ process CheckMSACache {
                     continue
                 
                 has_msa_requirement = True
-                # Add sequence for each chain (ColabFold needs one per chain for pairing)
-                chain_ids = protein.get('id', [])
-                if isinstance(chain_ids, str):
-                    chain_ids = [chain_ids]
-                for chain_id in chain_ids:
-                    sequences_for_msa.append(sequence)
+                sequences_for_msa.append(sequence)
     
     cache_hit = False
     msa_hash = None
