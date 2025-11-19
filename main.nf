@@ -403,6 +403,8 @@ process RunBoltz {
 
     publishDir "${output_dir}", mode: 'copy', pattern: "${pred_name}"
 
+    errorStrategy 'ignore'
+
     input:
     tuple path(yaml), val(pred_name)
     path template_files
