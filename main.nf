@@ -80,12 +80,13 @@ workflow {
     // Combine CSV files from CheckMSACache (sequences needing generation)
     CheckMSACache.out.csv
         .splitCsv(header: true)
-        .unique { it.id }  // Deduplicate by hash ID
+        .unique { it.id }
         .collectFile(
             name: 'combined_msa.csv',
-            skip: 1,
-            keepHeader: true
-        )
+            seed: "id,sequence\n"
+        ) { row ->
+            "${row.id},${row.sequence}\n"
+        }
         .set { seqs_for_msa }
 
     // Run ColabFold only if there are sequences to process
