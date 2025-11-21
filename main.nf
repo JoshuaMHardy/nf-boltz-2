@@ -83,6 +83,7 @@ workflow {
         .unique { it.id }  // Deduplicate by hash ID
         .collectFile(
             name: 'combined_msa.csv',
+            skip: 1,
             keepHeader: true
         )
         .set { seqs_for_msa }
