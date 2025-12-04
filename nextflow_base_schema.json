@@ -333,8 +333,7 @@
                     "description": "GPU model requested",
                     "enum": ["A30", "A100"],
                     "default": "A30",
-                    "help_text": "Choose GPU model based on availability and computational requirements",
-                    "hidden": true
+                    "help_text": "Choose GPU model based on availability and computational requirements"
                 },
                 "boltz2_cpus": {
                     "type": "integer",
