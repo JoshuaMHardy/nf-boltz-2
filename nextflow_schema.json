@@ -434,6 +434,11 @@
       "fa_icon": "fas fa-link",
       "description": "Affinity prediction options",
       "properties": {
+        "compute_affinity": {
+          "type": "boolean",
+          "description": "Whether to compute affinity prediction for ligands. Set to false to skip affinity calculations.",
+          "default": true
+        },
         "affinity_ligand_id": {
           "type": "string",
           "description": "Single chain ID of ligand for affinity calculations. If not specified, defaults to ligand 1 ID. e.g. 'E', 'L1', 'D'",

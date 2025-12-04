@@ -370,8 +370,9 @@ def build_properties(params: Dict) -> Optional[list]:
     Returns a list, or None if nothing to set.
     """
     props = []
+    compute_affinity = params.get('compute_affinity', True)
     binder_id = params.get('affinity_ligand_id')
-    if binder_id:
+    if compute_affinity and binder_id:
         props.append({'affinity': {'binder': binder_id}})
     return props if props else None
 
@@ -492,7 +493,9 @@ if __name__ == "__main__":
             cleaned_params[k] = v
 
         # If affinity_ligand_id is not provided, default to lig1_chain_id if available
-        if not cleaned_params.get("affinity_ligand_id"):
+        # Only do this if compute_affinity is enabled (default: true)
+        compute_affinity = cleaned_params.get("compute_affinity", True)
+        if compute_affinity and not cleaned_params.get("affinity_ligand_id"):
             lig1 = cleaned_params.get("lig1_chain_id")
             if lig1:
                 # Check if ligand has multiple chain IDs (comma-separated)
@@ -506,7 +509,9 @@ if __name__ == "__main__":
         # Validation
         validate_no_duplicate_chain_ids_within_field(cleaned_params)
         validate_unique_chain_ids(cleaned_params)
-        validate_affinity_ligand_id(cleaned_params)
+        # Only validate affinity if compute_affinity is enabled
+        if cleaned_params.get("compute_affinity", True):
+            validate_affinity_ligand_id(cleaned_params)
         # Per-sequence validation
         for i in range(1, 5):
             validate_explicit_sequence(i, cleaned_params)
