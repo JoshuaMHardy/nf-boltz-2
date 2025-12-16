@@ -20,11 +20,15 @@ workflow {
     }
     println("Output directory: '${output_dir}'")
 
+    // Track if we're in batch mode (directory of YAMLs) for error handling
+    def batch_mode = false
+
     if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
 
         if (input_yaml_path.isDirectory()) {
             println("Using existing YAMLs from: ${params.input_yaml}")
+            batch_mode = true
 
             // Create channel from YAML files in directory
             yaml_files = channel
@@ -109,7 +113,7 @@ workflow {
     SplitMSA(MSAs)
 
     // Run Boltz for each YAML file
-    RunBoltz(CheckMSACache.out.yaml, template_files_ch, SplitMSA.out.csv, output_dir)
+    RunBoltz(CheckMSACache.out.yaml, template_files_ch, SplitMSA.out.csv, output_dir, batch_mode)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
@@ -405,13 +409,15 @@ process RunBoltz {
 
     publishDir "${output_dir}", mode: 'copy', pattern: "${pred_name}"
 
-    errorStrategy 'ignore'
+    // Ignore errors when running batch jobs
+    errorStrategy { batch_mode ? 'ignore' : 'terminate' }
 
     input:
     tuple path(yaml), val(pred_name)
     path template_files
     path msa_files
     val output_dir
+    val batch_mode
 
     output:
     path "${pred_name}"
