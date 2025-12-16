@@ -395,7 +395,7 @@ process SplitMSA {
 }
 
 process RunBoltz {
-    container "${params.boltz2_container}"
+    container params.use_lowmem_container ? "${params.boltz2_lowmem_container}" : "${params.boltz2_container}"
     containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache"
 
     queue 'gpuq'
@@ -442,13 +442,13 @@ process RunBoltz {
         ${params.output_format == "pdb" ? "--output_format pdb " : ''} \
         ${params.write_full_pae ? '--write_full_pae ' : ''} \
         ${params.write_full_pde ? '--write_full_pde ' : ''} \
-        ${params.chunk_size_transition_z ? "--chunk_size_transition_z ${params.chunk_size_transition_z}" : ''} \
-        ${params.chunk_size_transition_msa ? "--chunk_size_transition_msa ${params.chunk_size_transition_msa}" : ''} \
-        ${params.chunk_size_tri_attn ? "--chunk_size_tri_attn ${params.chunk_size_tri_attn}" : ''} \
-        ${params.triangle_mult_gate_nchunks ? "--triangle_mult_gate_nchunks ${params.triangle_mult_gate_nchunks}" : ''} \
-        ${params.chunk_size_outer_product ? "--chunk_size_outer_product ${params.chunk_size_outer_product}" : ''} \
-        ${params.chunk_size_threshold ? "--chunk_size_threshold ${params.chunk_size_threshold}" : ''} \
-        ${params.use_bfloat16 ? '--use_bfloat16' : ''} \
+        ${params.use_lowmem_container && params.chunk_size_transition_z ? "--chunk_size_transition_z ${params.chunk_size_transition_z}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_transition_msa ? "--chunk_size_transition_msa ${params.chunk_size_transition_msa}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_tri_attn ? "--chunk_size_tri_attn ${params.chunk_size_tri_attn}" : ''} \
+        ${params.use_lowmem_container && params.triangle_mult_gate_nchunks ? "--triangle_mult_gate_nchunks ${params.triangle_mult_gate_nchunks}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_outer_product ? "--chunk_size_outer_product ${params.chunk_size_outer_product}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_threshold ? "--chunk_size_threshold ${params.chunk_size_threshold}" : ''} \
+        ${params.use_lowmem_container && params.use_bfloat16 ? '--use_bfloat16' : ''} \
         ${params.extra_config ? "'${params.extra_config}'" : ''} \
         2>&1 | tee ${pred_name}/boltz.log
    

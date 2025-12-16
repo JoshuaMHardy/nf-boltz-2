@@ -57,6 +57,12 @@
                     "description": "Whether to use potentials to improve the physical quality of the predictions (a.k.a. Boltz-2x)",
                     "hidden": true
                 },
+                "use_lowmem_container": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to use the low-memory Boltz-2 container (LMI4Boltz, default: false, uses normal container). Uses chunking to reduce memory requirements at the cost of slightly longer runtimes.",
+                    "hidden": true
+                },
                 "method": {
                     "type": "string",
                     "enum": ["afdb", "boltz-1", "md", "electron microscopy", "solution-nmr", "x-ray diffraction", "other"],
@@ -355,20 +361,6 @@
                     "pattern": "^\\d+(G|M)$",
                     "default": "48G",
                     "help_text": "Memory allocation (e.g., '48G')",
-                    "hidden": true
-                },
-                "boltz2_container": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/boltz2.sif",
-                    "description": "Path to Boltz-2 container",
-                    "hidden": true
-                },
-                "boltz2_models": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/boltzmodels",
-                    "description": "Path to Boltz-2 model checkpoints",
                     "hidden": true
                 }
             },
