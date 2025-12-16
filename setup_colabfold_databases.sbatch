@@ -20,10 +20,10 @@
 module load apptainer
 
 # Set working directory where databases will be stored
-WORK_DIR="./colabfolddbs"
+WORK_DIR="/vast/scratch/users/hardy.j/colabfolddbs/colabfolddbs_gpu"
 
 # Path to the Apptainer container with ColabFold/MMseqs2 (installed from apptainer/colabfold.def)
-CONTAINER="./colabfold.sif"
+CONTAINER="/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/nf-boltz/colabfold.sif"
 
 # Set number of threads to use (default: SBATCH --cpus-per-task)
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
