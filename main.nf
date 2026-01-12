@@ -78,6 +78,18 @@ workflow {
         }
     }
     
+    // Parse seed parameter into channel
+    if (params.seed != null) {
+        // Split comma-separated seeds and create channel
+        def seed_list = params.seed.toString().split(',').collect { it.trim().toInteger() }
+        seed_ch = channel.fromList(seed_list)
+        println("Using seed(s): ${seed_list}")
+    } else {
+        // No seed specified - create channel with single null value
+        seed_ch = channel.of(null)
+        println("No seed specified - predictions will be non-deterministic")
+    }
+
     // Check MSA cache and prepare for ColabFold
     CheckMSACache(yaml_files, params.msa_cache_dir, params.use_msa_cache)
     
@@ -112,8 +124,19 @@ workflow {
     // Split A3M files into CSVs for Boltz
     SplitMSA(MSAs)
 
-    // Run Boltz for each YAML file
-    RunBoltz(CheckMSACache.out.yaml, template_files_ch, SplitMSA.out.csv, output_dir, batch_mode)
+    // Combine YAML files with seeds to run each YAML with each seed
+    // Output: [yaml_file, pred_name, seed]
+    CheckMSACache.out.yaml
+        .combine(seed_ch)
+        .map { yaml_file, pred_name, seed ->
+            // Append seed suffix to prediction name if seed is provided
+            def final_pred_name = seed != null ? "${pred_name}_s${seed}" : pred_name
+            [yaml_file, final_pred_name, seed]
+        }
+        .set { yaml_with_seeds }
+
+    // Run Boltz for each (YAML, seed) combination
+    RunBoltz(yaml_with_seeds, template_files_ch, SplitMSA.out.csv, output_dir, batch_mode)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
@@ -413,7 +436,7 @@ process RunBoltz {
     errorStrategy { batch_mode ? 'ignore' : 'terminate' }
 
     input:
-    tuple path(yaml), val(pred_name)
+    tuple path(yaml), val(pred_name), val(seed)
     path template_files
     path msa_files
     val output_dir
@@ -436,6 +459,7 @@ process RunBoltz {
     boltz predict \
         ${yaml} \
         --cache /boltzcache \
+        ${seed != null ? "--seed ${seed}" : ''} \
         ${params.diffusion_samples ? "--diffusion_samples ${params.diffusion_samples}" : ''} \
         ${params.method ? "--method '${params.method}'" : ''} \
         ${params.use_potentials ? '--use_potentials' : ''} \

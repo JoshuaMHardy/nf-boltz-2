@@ -86,6 +86,17 @@
                     "default": 1.638,
                     "hidden": true,
                     "help_text": "The step scale is related to the temperature at which the diffusion process samples the distribution. The lower the higher the diversity among samples (recommended between 1 and 2, default=1.638)"
+                },        
+                "seed": {
+                "type": "string",
+                "description": "Random seed(s) for reproducible predictions",
+                "pattern": "^[0-9]+(,[0-9]+)*$",
+                "help_text": "Provide a single integer (e.g., '42'), comma-separated list (e.g., '1,2,3'), or leave empty for non-deterministic runs. Each seed generates a separate prediction with suffix '_s<N>'.",
+                "examples": [
+                    "42",
+                    "1,2,3",
+                    "12345"
+                ]
                 },
                 "output_format": {
                     "type": "string",
