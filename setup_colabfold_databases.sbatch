@@ -38,6 +38,8 @@ cd "${WORK_DIR}"
 cat > setup_databases.sh << 'SETUP_SCRIPT'
 #!/bin/bash -e
 # Setup everything for using mmseqs locally
+mkdir -p tmp
+cd tmp
 
 if [ ! -f DOWNLOADS_READY ]; then
     aria2c --max-connection-per-server=8 --allow-overwrite=true "https://opendata.mmseqs.org/colabfold/uniref30_2302.db.tar.gz"
@@ -49,6 +51,7 @@ fi
 if [ ! -f ALL_FILES_EXTRACTED ]; then
   tar -xzvf "uniref30_2302.db.tar.gz"
   tar -xzvf "uniref30_2302_newtaxonomy.tar.gz"
+  # contains replacement uniref30_2302_db_mapping, uniref30_2302_db_taxonomy, see https://github.com/sokrypton/ColabFold/wiki/MSA-Server-Database-History#2025-08-04-updated-uniref100_2302-taxonomypairing-files
   tar -xzvf "colabfold_envdb_202108.db.tar.gz"
   touch ALL_FILES_EXTRACTED
 fi
@@ -59,11 +62,12 @@ export MMSEQS_FORCE_MERGE=1
 if [ ! -f UNIREF30_READY ]; then
   mmseqs createindex "uniref30_2302_db" tmp1 --remove-tmp-files 1 ${INDEX_PAR} --split 1 --index-subset 2
 
-  # replace mapping and taxonomy with rebuilt versions
+  # Convert mapping to binary
   mmseqs createbintaxmapping "uniref30_2302_db_mapping" "uniref30_2302_db_mapping.bin"
-  mv -f -- "uniref30_2302_db_mapping.bin" "uniref30_2302_db_mapping"
-  ln -sf uniref30_2302_db_mapping uniref30_2302_db.idx_mapping
-  ln -sf uniref30_2302_db_taxonomy uniref30_2302_db.idx_taxonomy
+  mv -f "uniref30_2302_db_mapping.bin" "uniref30_2302_db_mapping"
+  # Create hardlinks (with new taxonomy)
+  ln -f uniref30_2302_db_mapping uniref30_2302_db.idx_mapping
+  ln -f uniref30_2302_db_taxonomy uniref30_2302_db.idx_taxonomy
   touch UNIREF30_READY
 fi
 
@@ -72,7 +76,18 @@ if [ ! -f COLABDB_READY ]; then
     touch COLABDB_READY
 fi
 
-echo "Database setup complete!"
+# Move index files and other necessary database files to main directory
+cd ..
+mv tmp/*.idx .
+# These files are needed for ColabFold to work
+cp tmp/uniref30_2302_db_mapping .
+cp tmp/uniref30_2302_db_taxonomy .
+cp tmp/colabfold_envdb_202108_db.dbtype .
+cp tmp/uniref30_2302_db.dbtype .
+# Other files in tmp are not needed after indexing
+#rm -rf tmp
+
+echo "Database setup complete! You can remove temporary files in ${WORK_DIR}/tmp if needed."
 SETUP_SCRIPT
 
 chmod +x setup_databases.sh
