@@ -512,7 +512,8 @@ def process_confidence_data(directory, runname, model_num, chains):
     
     # Define ordered fieldnames following JSON structure
     ordered_fieldnames = [
-        'model',  # Put model first for clarity
+        'pred_name',
+        'model',
         'confidence_score',
         'ptm',
         'iptm',
@@ -538,6 +539,7 @@ def process_confidence_data(directory, runname, model_num, chains):
     metadata = {}
     
     # Main metrics (in order)
+    metadata['pred_name'] = runname
     metadata['model'] = model_num
     metadata['confidence_score'] = round(data.get('confidence_score', 0), 3)
     metadata['ptm'] = round(data.get('ptm', 0), 3)
