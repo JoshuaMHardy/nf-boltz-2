@@ -122,7 +122,7 @@ workflow {
         .set { MSAs }
 
     // Split A3M files into CSVs for Boltz
-    SplitMSA(MSAs)
+    SplitMSA(MSAs, output_dir)
 
     // Combine YAML files with seeds to run each YAML with each seed
     // Output: [yaml_file, pred_name, seed]
@@ -334,8 +334,6 @@ process RunColabFold {
     queue 'gpuq'
     clusterOptions '--gres=gpu:' + params.colabfold_gpu_model + ':1'
 
-    publishDir "${output_dir}/msas", mode: 'copy', pattern: "*.a3m"
-
     input:
     path csv
     val output_dir
@@ -408,16 +406,23 @@ process SplitMSA {
     container "${params.colabfold_container}"
     containerOptions "--bind ${projectDir}/bin/split_msa.py:/split_msa.py"
 
+    publishDir "${output_dir}/msas", mode: 'copy', pattern: "split_msas/*.csv"
+    publishDir "${output_dir}/msas", mode: 'copy', pattern: "colabfold_msas/*.a3m"
+
     input:
     path a3m_files
+    val output_dir
 
     output:
     path ("split_msas/*.csv"), emit: csv
+    path ("colabfold_msas/*.a3m"), emit: a3m
 
     script:
     """    
+    mkdir -p colabfold_msas
+    mv ${a3m_files} colabfold_msas/.
     # Split all A3M files into CSV format for Boltz
-    python /split_msa.py -i ./ -o split_msas
+    python /split_msa.py -i ./colabfold_msas -o split_msas
     """
 }
 
@@ -485,11 +490,6 @@ process RunBoltz {
     # Copy predictions and input yaml to prediction directory. Use .cif if mmcif format.
     cp boltz_results_*/predictions/*/*.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} ${pred_name}/.
     cp ${yaml} ${pred_name}/.
-    # Copy MSA files if they exist
-    for file in *.csv; do
-        [ -e "\$file" ] || continue
-        cp "\$file" ${pred_name}/.
-    done
 
     """
 }
