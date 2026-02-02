@@ -105,10 +105,14 @@ workflow {
         }
         .set { seqs_for_msa }
 
-    // Run ColabFold only if there are sequences to process
-    RunColabFold(seqs_for_msa, output_dir)
+    // Filter: only run ColabFold if there are sequences to process
+    seqs_for_msa
+        .filter { it.size() > 0 }
+        .set { seqs_for_colabfold }
 
-    // Store generated A3M files in cache
+    RunColabFold(seqs_for_colabfold, output_dir)
+
+    // Store generated A3M files in cache (only if ColabFold ran)
     if (params.use_msa_cache) {
         StoreMSACache(RunColabFold.out.a3m.flatten(), params.msa_cache_dir)
     }
@@ -119,10 +123,19 @@ workflow {
         .mix(RunColabFold.out.a3m.flatten())
         .unique { it.name }
         .collect()
-        .set { MSAs }
+        .set { collected_msas }
 
-    // Split A3M files into CSVs for Boltz
-    SplitMSA(MSAs, output_dir)
+    // Filter: only run SplitMSA if there are A3M files to process
+    collected_msas
+        .filter { it.size() > 0 }
+        .set { msas_to_split }
+
+    SplitMSA(msas_to_split, output_dir)
+
+    // Use SplitMSA CSV output if available, otherwise provide empty list for no-MSA runs
+    SplitMSA.out.csv
+        .ifEmpty([])
+        .set { msa_csv_files }
 
     // Combine YAML files with seeds to run each YAML with each seed
     // Output: [yaml_file, pred_name, seed]
@@ -136,7 +149,7 @@ workflow {
         .set { yaml_with_seeds }
 
     // Run Boltz for each (YAML, seed) combination
-    RunBoltz(yaml_with_seeds, template_files_ch, SplitMSA.out.csv, output_dir, batch_mode)
+    RunBoltz(yaml_with_seeds, template_files_ch, msa_csv_files, output_dir, batch_mode)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
