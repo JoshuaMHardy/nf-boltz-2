@@ -1,0 +1,30 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+%labels
+    Author Your Name
+    Version 1.0
+    Description ChimeraX container for headless rendering on HPC nodes
+
+%help
+    UCSF ChimeraX container configured for headless (no GPU) rendering.
+    
+    Run with: apptainer exec chimerax.sif chimerax --offscreen --nogui --cmd "open 1a0s; save output.png; exit"
+
+%files
+    ucsf-chimerax_*ubuntu24.04_amd64.deb /opt/ucsf-chimerax.deb
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    
+    # Install ChimeraX
+    apt-get install -y --no-install-recommends \
+        /opt/ucsf-chimerax.deb
+    
+    rm /opt/ucsf-chimerax.deb
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+%runscript
+    exec chimerax --offscreen "$@"
