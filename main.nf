@@ -508,7 +508,7 @@ process RunBoltz {
 }
 
 process AnalyseBoltz {
-    container "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/pyrosetta_tools.sif"
+    container "${params.python_tools_container}"
     containerOptions "-B ${projectDir}/bin/generate_metadata.py:/generate_metadata.py"
 
     cpus 4
@@ -527,12 +527,8 @@ process AnalyseBoltz {
 
     script:
     """
-    eval "\$(micromamba shell hook --shell bash)"
-    micromamba activate pyrosetta
-
     # Generate plots and metadata for Boltz-2 prediction 
     python /generate_metadata.py "./" -o "./"
-
     """
 }
 
