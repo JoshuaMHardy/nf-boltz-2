@@ -490,8 +490,8 @@ process RunBoltz {
         ${params.diffusion_samples_affinity ? "--diffusion_samples_affinity ${params.diffusion_samples_affinity}" : ''} \
         ${params.sampling_steps_affinity ? "--sampling_steps ${params.sampling_steps_affinity}" : ''} \
         ${params.output_format == "pdb" ? "--output_format pdb " : ''} \
-        ${params.write_full_pae ? '--write_full_pae ' : ''} \
-        ${params.write_full_pde ? '--write_full_pde ' : ''} \
+        --write_full_pae \
+        --write_full_pde \
         ${params.use_lowmem_container && params.chunk_size_transition_z ? "--chunk_size_transition_z ${params.chunk_size_transition_z}" : ''} \
         ${params.use_lowmem_container && params.chunk_size_transition_msa ? "--chunk_size_transition_msa ${params.chunk_size_transition_msa}" : ''} \
         ${params.use_lowmem_container && params.chunk_size_tri_attn ? "--chunk_size_tri_attn ${params.chunk_size_tri_attn}" : ''} \

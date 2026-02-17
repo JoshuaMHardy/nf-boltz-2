@@ -119,18 +119,6 @@
           "description": "Output format for structure predictions. Default: mmcif",
           "hidden": true
         },
-        "write_full_pae": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether to save the full PAE matrix as a file",
-          "hidden": true
-        },
-        "write_full_pde": {
-          "type": "boolean",
-          "default": true,
-          "description": "Whether to save the full PDE matrix as a file",
-          "hidden": true
-        },
         "enable_visualisation": {
           "type": "boolean",
           "default": true,
