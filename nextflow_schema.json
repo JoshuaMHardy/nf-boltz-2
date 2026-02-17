@@ -131,6 +131,12 @@
           "description": "Whether to save the full PDE matrix as a file",
           "hidden": true
         },
+        "enable_visualisation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to generate ChimeraX visualizations",
+          "hidden": true
+        },
         "extra_config": {
           "type": "string",
           "description": "Additional Boltz-2 configuration",
@@ -687,7 +693,7 @@
         "use_lowmem_container": {
           "type": "boolean",
           "default": false,
-          "description": "Whether to use the low-memory Boltz-2 container (LMI4Boltz, default: false, uses normal container). Uses chunking to reduce memory requirements at the cost of slightly longer runtimes. Has issues with some ligand types.",
+          "description": "Whether to use the low-memory Boltz-2 container (LMI4Boltz, default: false, uses normal container). Uses chunking to reduce memory requirements at the cost of slightly longer runtimes.",
           "hidden": true
         }
       },

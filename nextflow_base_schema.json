@@ -117,6 +117,12 @@
                     "description": "Whether to save the full PDE matrix as a file",
                     "hidden": true
                 },
+                "enable_visualisation": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to generate ChimeraX visualizations",
+                    "hidden": true
+                },
                 "extra_config": {
                     "type": "string",
                     "description": "Additional Boltz-2 configuration",

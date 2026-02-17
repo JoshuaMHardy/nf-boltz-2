@@ -154,8 +154,10 @@ workflow {
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
 
-    // Generate ChimeraX plots
-    VisualiseBoltz(RunBoltz.out.boltz_models, output_dir)
+    // Generate ChimeraX images (if enabled)
+    if (params.enable_visualisation) {
+        VisualiseBoltz(RunBoltz.out.boltz_models, output_dir)
+    }
 
     // Generate PDF of plots
     //GeneratePDF(AnalyseBoltz.out.plots,VisualiseBoltz.out)
