@@ -176,15 +176,56 @@ def parse_sequences_extra(seqstr: Optional[str]) -> List[Dict]:
         seqs.append(entry)
     return seqs
 
+def _read_bracket_field(s: str, pos: int) -> tuple:
+    """
+    Read a single bracket-delimited field from string s starting at pos.
+    Handles nested brackets (e.g. SMILES like [Na+], [Ca+2]).
+    Returns (field_content, next_pos) or (None, pos) if no bracket at pos.
+    """
+    if pos >= len(s) or s[pos] != '[':
+        return None, pos
+    depth = 0
+    start = pos + 1
+    i = pos
+    while i < len(s):
+        if s[i] == '[':
+            depth += 1
+        elif s[i] == ']':
+            depth -= 1
+            if depth == 0:
+                return s[start:i], i + 1
+        i += 1
+    return None, pos  # Unbalanced brackets
+
 def parse_ligands_extra(ligstr: Optional[str]) -> List[Dict]:
+    """Parse ligands_extra string. Uses bracket-depth parsing so SMILES
+    containing brackets (e.g. [Na+], [Ca+2], CC(=O)[O-]) are handled.
+    Format: '[IDs][CCD][SMILES]' per block, space-separated.
+    Example: '[G,H][ZN][] [I][][[Na+]]'
+    """
     if not ligstr: return []
     ligs = []
-    # Block: [IDs][CCD][SMILES]
-    pat = r"\[([A-Za-z0-9_,]+)\]\[([A-Za-z0-9\-+]*)\]\[([^\[\]]*)\]"
-    for ids, ccd, smiles in re.findall(pat, ligstr):
-        ids_list = [x.strip() for x in ids.split(',') if x.strip()]
+    i = 0
+    while i < len(ligstr):
+        # Skip whitespace between blocks
+        if ligstr[i] != '[':
+            i += 1
+            continue
+        # Read three bracket-delimited fields: [IDs][CCD][SMILES]
+        ids_str, i = _read_bracket_field(ligstr, i)
+        if ids_str is None:
+            break
+        ccd, i = _read_bracket_field(ligstr, i)
+        if ccd is None:
+            sys.stderr.write(f"Error: Missing CCD field for ligand ids '{ids_str}' in ligands_extra.")
+            sys.exit(1)
+        smiles, i = _read_bracket_field(ligstr, i)
+        if smiles is None:
+            sys.stderr.write(f"Error: Missing SMILES field for ligand ids '{ids_str}' in ligands_extra.")
+            sys.exit(1)
+        ids_list = [x.strip() for x in ids_str.split(',') if x.strip()]
         if not (ccd or smiles):
-            sys.stderr.write(f"Error: Must supply CCD or SMILES for ligand ids {ids}.")
+            sys.stderr.write(f"Error: Must supply CCD or SMILES for ligand ids {ids_str}.")
             sys.exit(1)
         obj = {"ligand": {"id": ids_list[0] if len(ids_list) == 1 else FlowList(ids_list)}}
         # SMILES takes precedence
@@ -521,9 +562,14 @@ def build_properties(params: Dict) -> Optional[list]:
 def build_constraints(params: Dict) -> Optional[List[Dict]]:
     constraints = []
 
-    # Bond constraints
+    # Bond constraints — match pairs of consecutive [chain,res,atom] groups,
+    # tolerating optional whitespace between the two atoms of a single bond.
     if params.get('constraints_bond'):
-        for bond_pair in params['constraints_bond'].split():
+        pair_pattern = r'(\[[^\]]+\]\s*\[[^\]]+\])'
+        bond_matches = re.findall(pair_pattern, params['constraints_bond'])
+        if not bond_matches:
+            sys.stderr.write(f"Warning: constraints_bond provided but no valid atom pairs found: '{params['constraints_bond']}'\n")
+        for bond_pair in bond_matches:
             atoms = parse_constraint_atoms(bond_pair)
             if len(atoms) == 2:
                 constraints.append({
@@ -584,6 +630,10 @@ def build_yaml_structure(params: Dict) -> Dict:
                 'sequence': seq
             }
         }
+        # Cyclic sequences (Boltz-2 expects 'cyclic: true' inside the sequence type entry)
+        cyclic = params.get(f'{seq_key}_cyclic', False)
+        if cyclic:
+            seq_entry[seq_type]['cyclic'] = True
         # Get start_index for this sequence to adjust modifications
         start_index = int(params.get(f'{seq_key}_start_index', 1) or 1)
         mods = parse_modifications(params.get(f'{seq_key}_mod'))
