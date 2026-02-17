@@ -188,6 +188,13 @@
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 1 cyclic? Set to true for cyclic peptides/DNA/RNA."
+        },
+        "seq1_start_index": {
+          "type": "integer",
+          "hidden": true,
+          "description": "Sequence 1: starting residue index (default: 1). Use when providing a partial sequence that starts at a different position (e.g. 30, -10). Modifications and constraints should use real residue numbers.",
+          "default": 1,
+          "minimum": 1
         }
       }
     },
@@ -234,6 +241,13 @@
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 2 cyclic? Set to true for cyclic peptides/DNA/RNA."
+        },
+        "seq2_start_index": {
+          "type": "integer",
+          "hidden": true,
+          "description": "Sequence 2: starting residue index (default: 1). Use when providing a partial sequence that starts at a different position (e.g. 30, -10). Modifications and constraints should use real residue numbers.",
+          "default": 1,
+          "minimum": 1
         }
       }
     },
@@ -280,6 +294,13 @@
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 3 cyclic? Set to true for cyclic peptides/DNA/RNA."
+        },
+        "seq3_start_index": {
+          "type": "integer",
+          "hidden": true,
+          "description": "Sequence 3: starting residue index (default: 1). Use when providing a partial sequence that starts at a different position (e.g. 30, -10). Modifications and constraints should use real residue numbers.",
+          "default": 1,
+          "minimum": 1
         }
       }
     },
@@ -326,6 +347,13 @@
           "type": "boolean",
           "hidden": true,
           "description": "Is sequence 4 cyclic? Set to true for cyclic peptides/DNA/RNA."
+        },
+        "seq4_start_index": {
+          "type": "integer",
+          "hidden": true,
+          "description": "Sequence 4: starting residue index (default: 1). Use when providing a partial sequence that starts at a different position (e.g. 30, -10). Modifications and constraints should use real residue numbers.",
+          "default": 1,
+          "minimum": 1
         }
       }
     },
@@ -339,8 +367,8 @@
           "type": "string",
           "default": null,
           "description": "Extra sequences block-string",
-          "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
-          "help_text": "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). Example: '[E][MAAAD] [F,G][ACTGACTG]'. No modifications or cyclic sequences. MSA will be automatically generated for protein sequences",
+          "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\](\\[\\d+\\])?\\s*)*$",
+          "help_text": "Extra sequences in block format: [IDs][SEQUENCE] or [IDs][SEQUENCE][START_INDEX]. IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). Optional START_INDEX specifies the starting residue number (default: 1). Example: '[E][MAAAD] [F,G][ACTGACTG][30]'. No modifications or cyclic sequences. MSA will be automatically generated for protein sequences",
           "hidden": true
         }
       }

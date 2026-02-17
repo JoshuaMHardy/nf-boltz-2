@@ -47,6 +47,13 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
             "type": "boolean",
             "hidden": True,
             "description": f"Is sequence {num} cyclic? Set to true for cyclic peptides/DNA/RNA."
+        },
+        f"seq{num}_start_index": {
+            "type": "integer",
+            "hidden": True,
+            "description": f"Sequence {num}: starting residue index (default: 1). Use when providing a partial sequence that starts at a different position (e.g. 30, -10). Modifications and constraints should use real residue numbers.",
+            "default": 1,
+            "minimum": 1
         }
     }
 
@@ -98,10 +105,12 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
                 "type": "string",
                 "default": None,
                 "description": "Extra sequences block-string",
-                "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\]\\s*)*$",
+                "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\](\\[\\d+\\])?\\s*)*$",
                 "help_text": (
-                    "Extra sequences in block format: [IDs][SEQUENCE] [IDs][SEQUENCE] ... "
-                    "IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). Example: '[E][MAAAD] [F,G][ACTGACTG]'. "
+                    "Extra sequences in block format: [IDs][SEQUENCE] or [IDs][SEQUENCE][START_INDEX]. "
+                    "IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). "
+                    "Optional START_INDEX specifies the starting residue number (default: 1). "
+                    "Example: '[E][MAAAD] [F,G][ACTGACTG][30]'. "
                     "No modifications or cyclic sequences. MSA will be automatically generated for protein sequences"
                 ),
                 "hidden": True  # Hide from default UI

@@ -3,7 +3,6 @@ import yaml
 import re
 import json
 import sys
-import ast
 import os
 from typing import List, Dict, Optional
 
@@ -147,9 +146,12 @@ def validate_affinity_ligand_id(params: dict):
 def parse_sequences_extra(seqstr: Optional[str]) -> List[Dict]:
     if not seqstr: return []
     seqs = []
-    # Block: [IDs][SEQUENCE]
-    pat = r"\[([A-Za-z0-9_,]+)\]\[([A-Za-z*.,\-\/\s]+)\]"
-    for ids, sequence in re.findall(pat, seqstr):
+    # Block: [IDs][SEQUENCE] or [IDs][SEQUENCE][START_INDEX]
+    pat = r"\[([A-Za-z0-9_,]+)\]\[([A-Za-z*.,\-\/\s]+)\](?:\[(\d+)\])?"
+    for match in re.finditer(pat, seqstr):
+        ids = match.group(1)
+        sequence = match.group(2)
+        start_index_str = match.group(3)
         ids_list = [x.strip() for x in ids.split(',') if x.strip()]
         seq_type = autodetect_seq_type(sequence)
         if not seq_type:
@@ -168,6 +170,9 @@ def parse_sequences_extra(seqstr: Optional[str]) -> List[Dict]:
                 "msa": True if seq_type == "protein" else "empty"
             }
         }
+        # Store start_index if provided (will be collected later)
+        if start_index_str:
+            entry['_start_index'] = int(start_index_str)
         seqs.append(entry)
     return seqs
 
@@ -314,6 +319,130 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
     """
     templates = []
 
+
+def collect_residue_offsets(params: Dict, sequences: List[Dict]) -> Dict[str, int]:
+    """
+    Collect start_index offsets for each chain ID from explicit params and extra sequences.
+    Returns a dict mapping chain_id -> start_index (only for non-default values, i.e. != 1).
+    """
+    offsets = {}
+    # Explicit sequences (seq1-seq4)
+    for i in range(1, 5):
+        chain_id = params.get(f'seq{i}_chain_id')
+        start_index = params.get(f'seq{i}_start_index')
+        if chain_id and start_index is not None:
+            start_idx = int(start_index)
+            if start_idx != 1:
+                # Apply to all chain IDs (comma-separated for multi-copy)
+                for cid in [x.strip() for x in chain_id.split(',') if x.strip()]:
+                    offsets[cid] = start_idx
+    
+    # Extra sequences (may have _start_index from parsing)
+    for entry in sequences:
+        start_idx = entry.pop('_start_index', None)
+        if start_idx and start_idx != 1:
+            # Find the sequence type key (protein/dna/rna)
+            for key in ('protein', 'dna', 'rna'):
+                if key in entry:
+                    seq_id = entry[key].get('id')
+                    if isinstance(seq_id, list):
+                        for cid in seq_id:
+                            offsets[cid] = start_idx
+                    elif seq_id:
+                        offsets[seq_id] = start_idx
+                    break
+    
+    return offsets
+
+
+def adjust_modification_positions(modifications: List[Dict], start_index: int) -> List[Dict]:
+    """
+    Adjust modification positions from user numbering to Boltz-2 numbering.
+    User provides positions in their real numbering (e.g., residue 35 with start_index=30).
+    Boltz-2 expects 1-based indexing relative to the provided sequence.
+    boltz_pos = user_pos - start_index + 1
+    """
+    adjusted = []
+    for mod in modifications:
+        new_mod = dict(mod)
+        new_mod['position'] = mod['position'] - start_index + 1
+        if new_mod['position'] < 1:
+            sys.stderr.write(
+                f"Error: Modification position {mod['position']} is before the sequence start index {start_index}.")
+            sys.exit(1)
+        adjusted.append(new_mod)
+    return adjusted
+
+
+def adjust_constraint_residue_index(chain_id: str, res_idx: int, offsets: Dict[str, int]) -> int:
+    """
+    Adjust a single constraint residue index from user numbering to Boltz-2 numbering.
+    Returns the adjusted 1-based index for Boltz-2.
+    """
+    start_index = offsets.get(chain_id, 1)
+    if start_index == 1:
+        return res_idx
+    adjusted = res_idx - start_index + 1
+    if adjusted < 1:
+        sys.stderr.write(
+            f"Error: Constraint residue index {res_idx} for chain {chain_id} is before the sequence start index {start_index}.")
+        sys.exit(1)
+    return adjusted
+
+
+def adjust_constraints(constraints: List[Dict], offsets: Dict[str, int]) -> List[Dict]:
+    """
+    Adjust all constraint residue indices from user numbering to Boltz-2 numbering.
+    Handles bond, contact, and pocket constraints.
+    """
+    if not offsets or not constraints:
+        return constraints
+    
+    adjusted = []
+    for constraint in constraints:
+        new_constraint = {}
+        
+        if 'bond' in constraint:
+            bond = constraint['bond']
+            new_bond = dict(bond)
+            # atom1 and atom2 are FlowList [chain_id, res_idx, atom_name]
+            for atom_key in ('atom1', 'atom2'):
+                atom = list(bond[atom_key])
+                if len(atom) >= 2 and isinstance(atom[1], int):
+                    atom[1] = adjust_constraint_residue_index(atom[0], atom[1], offsets)
+                new_bond[atom_key] = FlowList(atom)
+            new_constraint['bond'] = new_bond
+        
+        elif 'contact' in constraint:
+            contact = constraint['contact']
+            new_contact = dict(contact)
+            for token_key in ('token1', 'token2'):
+                token = list(contact[token_key])
+                if len(token) >= 2 and isinstance(token[1], int):
+                    token[1] = adjust_constraint_residue_index(token[0], token[1], offsets)
+                new_contact[token_key] = FlowList(token)
+            new_constraint['contact'] = new_contact
+        
+        elif 'pocket' in constraint:
+            pocket = constraint['pocket']
+            new_pocket = dict(pocket)
+            # Adjust contacts list: each contact is FlowList [chain_id, res_idx]
+            new_contacts = []
+            for contact_atom in pocket.get('contacts', []):
+                atom = list(contact_atom)
+                if len(atom) >= 2 and isinstance(atom[1], int):
+                    atom[1] = adjust_constraint_residue_index(atom[0], atom[1], offsets)
+                new_contacts.append(FlowList(atom))
+            new_pocket['contacts'] = new_contacts
+            new_constraint['pocket'] = new_pocket
+        
+        else:
+            new_constraint = constraint
+        
+        adjusted.append(new_constraint)
+    
+    return adjusted
+
     # Up to 2 explicit templates; prefer pdb_code, then path
     for i in range(1, 3):
         pdb_code = params.get(f'template{i}_pdb_code')
@@ -455,8 +584,12 @@ def build_yaml_structure(params: Dict) -> Dict:
                 'sequence': seq
             }
         }
+        # Get start_index for this sequence to adjust modifications
+        start_index = int(params.get(f'{seq_key}_start_index', 1) or 1)
         mods = parse_modifications(params.get(f'{seq_key}_mod'))
         if mods:
+            if start_index != 1:
+                mods = adjust_modification_positions(mods, start_index)
             seq_entry[seq_type]['modifications'] = mods
         # MSA only for protein
         if seq_type == "protein":
@@ -477,6 +610,10 @@ def build_yaml_structure(params: Dict) -> Dict:
     # Extra sequences
     seqs_extra = parse_sequences_extra(params.get('sequences_extra'))
     yaml_data["sequences"].extend(seqs_extra)
+
+    # Collect residue offsets from explicit params and extra sequences
+    # Note: collect_residue_offsets pops _start_index from seqs_extra entries
+    offsets = collect_residue_offsets(params, seqs_extra)
 
     # Explicit ligands
     for i in range(1, 5):
@@ -502,13 +639,22 @@ def build_yaml_structure(params: Dict) -> Dict:
     yaml_data['sequences'].extend(ligs_extra)
 
     # Constraints, templates, properties
-    if constraints := build_constraints(params):
+    constraints = build_constraints(params)
+    if constraints:
+        # Adjust constraint residue indices if there are offsets
+        if offsets:
+            constraints = adjust_constraints(constraints, offsets)
         yaml_data['constraints'] = constraints
     templates = parse_templates_from_params(params)
     if templates:
         yaml_data['templates'] = templates
     if properties := build_properties(params):
         yaml_data['properties'] = properties
+
+    # Store residue offsets in the YAML (Boltz-2 ignores unknown top-level fields)
+    # This is used by downstream tools (generate_metadata.py, renumber_structures.py)
+    if offsets:
+        yaml_data['residue_offsets'] = offsets
 
     return yaml_data
 

@@ -443,7 +443,7 @@ process SplitMSA {
 
 process RunBoltz {
     container params.use_lowmem_container ? "${params.boltz2_lowmem_container}" : "${params.boltz2_container}"
-    containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache"
+    containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache --bind ${projectDir}/bin/renumber_structures.py:/renumber_structures.py"
 
     queue 'gpuq'
     clusterOptions '--gres=gpu:' + params.boltz2_gpu_model + ':1'
@@ -464,7 +464,7 @@ process RunBoltz {
 
     output:
     path "${pred_name}"
-    tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), val(pred_name), emit: boltz_results
+    tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), path("${pred_name}/*.yaml"), val(pred_name), emit: boltz_results
     tuple path("${pred_name}/*"), val(pred_name), emit: boltz_models
 
     script:
@@ -506,6 +506,9 @@ process RunBoltz {
     cp boltz_results_*/predictions/*/*.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} ${pred_name}/.
     cp ${yaml} ${pred_name}/.
 
+    # Renumber residues in output structures if residue_offsets are defined in YAML
+    python /renumber_structures.py ${pred_name}/
+
     """
 }
 
@@ -520,7 +523,7 @@ process AnalyseBoltz {
     publishDir "${output_dir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
 
     input:
-    tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
+    tuple path(struct_npz_file), path(model_npz_files), path(yaml_file), val(pred_name)
     val output_dir
 
     output:
