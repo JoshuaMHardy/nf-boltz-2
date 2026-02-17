@@ -435,17 +435,15 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
     
     for chain_id, mol_label, start, end, start_index in chain_ranges:
         mid_pos = (start + end) / 2
-        # Show start_index in label if non-default
-        offset_info = f"\n(from {start_index})" if start_index != 1 else ""
         
         # Top labels - closer to plot
-        ax.text(mid_pos, total_residues + label_offset, f"{chain_id}\n{mol_label}{offset_info}", 
+        ax.text(mid_pos, total_residues + label_offset, f"{chain_id}\n{mol_label}", 
                 ha='center', va='bottom', fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", 
                          alpha=0.9, edgecolor='gray'))
         
         # Right labels - closer to plot
-        ax.text(total_residues + label_offset, mid_pos, f"{chain_id} - {mol_label}{offset_info}",
+        ax.text(total_residues + label_offset, mid_pos, f"{chain_id} - {mol_label}",
                 ha='left', va='center', fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.2", facecolor="white", 
                          alpha=0.9, edgecolor='gray'))
