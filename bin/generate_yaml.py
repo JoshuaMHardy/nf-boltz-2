@@ -211,6 +211,20 @@ def parse_constraint_atoms(constraint_str: str) -> List[List[str]]:
         atoms.append(FlowList(parts))  # Use FlowList for atom coordinates
     return atoms
 
+def _parse_contact_pair(pair_str: str) -> list:
+    """
+    Parse a single contact pair string like 'A,53' or 'A,CA' into [chain_id, residue_idx_or_atom].
+    Handles both integer residue indices and string atom names.
+    """
+    parts = [p.strip() for p in pair_str.split(',')]
+    if len(parts) >= 2:
+        try:
+            parts[1] = int(parts[1])
+        except ValueError:
+            pass  # Keep as string (atom name for non-polymers)
+    return parts
+
+
 def parse_pocket_constraint(pocket_str: str):
     """
     Parses a pocket constraint string into components.
@@ -221,22 +235,25 @@ def parse_pocket_constraint(pocket_str: str):
     if not pocket_str:
         return constraints
     # Split multiple pockets on spaces between top-level '[...]' blocks
-    pattern = r'(\[[^\]]+\]\[\[.*?\]\](?:\[\d+\])?(?:\[\w+\])?)'
-    matches = re.findall(pattern, pocket_str)
+    pattern = r'(\[[^\]]+\]\[\[.*?\]\](?:\[\d+(?:\.\d+)?\])?(?:\[(?:true|false)\])?)'
+    matches = re.findall(pattern, pocket_str, re.IGNORECASE)
     for match in matches:
         # Extract binder
         binder = re.findall(r'^\[([^\]]+)\]', match)
-        # Extract contacts
-        contacts = re.findall(r'\[\[([^\]]+)\]\]', match)
-        # Extract max_distance (optional)
-        dist_match = re.search(r'\[(\d+(?:\.\d+)?)\](?![^\[]*\])', match)
+        # Extract contacts block - everything between [[ and ]]
+        contacts_match = re.search(r'\[\[(.*?)\]\]', match)
+        # Extract max_distance (optional) - number after the contacts block
+        dist_match = re.search(r'\]\]\[(\d+(?:\.\d+)?)\]', match)
         max_distance = float(dist_match.group(1)) if dist_match else None
         # Extract force (optional)
-        force_match = re.search(r'\[(true|false)\](?![^\[]*\])', match, re.IGNORECASE)
+        force_match = re.search(r'\[(true|false)\]\s*$', match, re.IGNORECASE)
         force = force_match.group(1).lower() == "true" if force_match else None
 
-        if binder and contacts:
-            contacts_list = [ast.literal_eval(f'[{c.strip()}]') for c in contacts[0].split('],[')]
+        if binder and contacts_match:
+            # Parse contacts: split on ],[  to get individual [chain,idx] pairs
+            contacts_raw = contacts_match.group(1)
+            contact_pairs = contacts_raw.split('],[')
+            contacts_list = [_parse_contact_pair(p.strip('[] ')) for p in contact_pairs]
             constraint = {
                 'pocket': {
                     'binder': binder[0],
@@ -252,9 +269,10 @@ def parse_pocket_constraint(pocket_str: str):
 
 def parse_contact_constraint(contact_str: str):
     """
-    Parses a contact constraint string to extract atom pairs, optional distance, and force.
+    Parses a contact constraint string to extract token pairs, optional distance, and force.
     Format: '[A,53][A,57][5][true] [B,101][A,130][4.5][false]'
     Returns a list of dicts, one per contact block.
+    Note: Boltz-2 uses 'token1'/'token2' field names for contact constraints.
     """
     constraints = []
     if not contact_str:
@@ -264,13 +282,8 @@ def parse_contact_constraint(contact_str: str):
     matches = re.findall(pattern, contact_str, re.IGNORECASE)
     for match in matches:
         atoms = re.findall(r'\[([^\]]+)\]', match)
-        atom1 = [x.strip() for x in atoms[0].split(',')]
-        atom2 = [x.strip() for x in atoms[1].split(',')]
-        for i in [1, 1]:
-            if len(atom1) > 1:
-                atom1[1] = int(atom1[1])
-            if len(atom2) > 1:
-                atom2[1] = int(atom2[1])
+        token1 = _parse_contact_pair(atoms[0])
+        token2 = _parse_contact_pair(atoms[1])
 
         # Optional max_distance
         dist_match = re.search(r'\[(\d+(?:\.\d+)?)\](?![^\[]*\])', match)
@@ -282,8 +295,8 @@ def parse_contact_constraint(contact_str: str):
 
         constraint = {
             'contact': {
-                'atom1': FlowList(atom1),
-                'atom2': FlowList(atom2)
+                'token1': FlowList(token1),
+                'token2': FlowList(token2)
             }
         }
         if max_distance is not None:
@@ -391,13 +404,35 @@ def build_constraints(params: Dict) -> Optional[List[Dict]]:
                     }
                 })
     
-    # Pocket constraints
-    if params.get('constraints_pocket'):
-        constraints.extend(parse_pocket_constraint(params['constraints_pocket']))  # New parser
+    # Explicit pocket constraints (pocket1 and pocket2)
+    for i in range(1, 3):
+        binder = params.get(f'constraints_pocket{i}_binder')
+        contacts_str = params.get(f'constraints_pocket{i}_contacts')
+        if binder and contacts_str:
+            # Parse contacts: '[A,53],[A,57],[A,61]' → list of [chain_id, idx] pairs
+            contact_pairs = re.findall(r'\[([^\]]+)\]', contacts_str)
+            contacts_list = [FlowList(_parse_contact_pair(p)) for p in contact_pairs]
+            pocket = {
+                'pocket': {
+                    'binder': binder,
+                    'contacts': contacts_list
+                }
+            }
+            max_dist = params.get(f'constraints_pocket{i}_max_distance')
+            if max_dist is not None:
+                pocket['pocket']['max_distance'] = float(max_dist)
+            force = params.get(f'constraints_pocket{i}_force')
+            if force is not None:
+                pocket['pocket']['force'] = str(force).lower() == 'true'
+            constraints.append(pocket)
+
+    # Extra pocket constraints (string format)
+    if params.get('constraints_pocket_extra'):
+        constraints.extend(parse_pocket_constraint(params['constraints_pocket_extra']))
 
     # Contact constraints
     if params.get('constraints_contacts'):
-        constraints.extend(parse_contact_constraint(params['constraints_contacts']))  # New parser
+        constraints.extend(parse_contact_constraint(params['constraints_contacts']))
 
     return constraints if constraints else None
 
