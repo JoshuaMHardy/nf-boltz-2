@@ -34,8 +34,8 @@ def generate_sequence_properties(num: int) -> Dict[str, Any]:
         f"seq{num}_mod": {
             "type": "string",
             "hidden": True,
-            "description": f"Sequence {num}: modifications (optional). Format: [pos,CCD][pos,CCD]... (e.g., '[10,SEP][55,PTR]')",
-            "pattern": "^(\\[\\d+,([A-Z0-9]{3})\\])*$"
+            "description": f"Sequence {num}: modifications (optional). Comma-separated. Format: [pos,CCD],[pos,CCD],... (e.g., '[10,SEP],[55,PTR]')",
+            "pattern": "^\\[\\d+,[A-Z0-9]{3}\\](\\s*,\\s*\\[\\d+,[A-Z0-9]{3}\\])*$"
         },
         f"seq{num}_genmsa": {
             "type": "boolean",
@@ -99,18 +99,19 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         "title": "Extra sequences (advanced)",
         "type": "object",
         "fa_icon": "fas fa-plus-square",
-        "description": "Add additional input sequences here. Format: space separated blocks: [ID(s)][SEQUENCE] [ID(s)][SEQUENCE] ...",
+        "description": "Add additional input sequences here. Format: comma-separated blocks: [ID(s)][SEQUENCE],[ID(s)][SEQUENCE],...",
         "properties": {
             "sequences_extra": {
                 "type": "string",
                 "default": None,
                 "description": "Extra sequences block-string",
-                "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\](\\[\\d+\\])?\\s*)*$",
+                "pattern": "^(\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\](\\[\\d+\\])?)(\\s*,\\s*\\[[A-Za-z0-9](,[A-Za-z0-9])*\\]\\[[A-Za-z*.,\\-\\s]+\\](\\[\\d+\\])?)*$",
                 "help_text": (
                     "Extra sequences in block format: [IDs][SEQUENCE] or [IDs][SEQUENCE][START_INDEX]. "
+                    "Multiple blocks separated by commas. Whitespace is ignored. "
                     "IDs = comma separated for multi-chain. Sequence type is auto-detected (DNA>RNA>Protein). "
                     "Optional START_INDEX specifies the starting residue number (default: 1). "
-                    "Example: '[E][MAAAD] [F,G][ACTGACTG][30]'. "
+                    "Example: '[E][MAAAD],[F,G][ACTGACTG][30]'. "
                     "No modifications or cyclic sequences. MSA will be automatically generated for protein sequences"
                 ),
                 "hidden": True  # Hide from default UI
@@ -136,21 +137,17 @@ def generate_full_schema(base_schema: Dict[str, Any]) -> Dict[str, Any]:
         "title": "Extra ligands (advanced)",
         "type": "object",
         "fa_icon": "fas fa-plus-square",
-        "description": "Add additional ligands here. Format: space separated blocks: [ID(s)][CCD][SMILES] [ID(s)][CCD][SMILES] ...",
+        "description": "Add additional ligands here. Format: comma-separated blocks: [ID(s)][CCD][SMILES],[ID(s)][CCD][SMILES],...",
         "properties": {
             "ligands_extra": {
                 "type": "string",
                 "default": None,
                 "description": "Extra ligands block-string",
-                "pattern": (
-                    r"^(\[[A-Za-z0-9](,[A-Za-z0-9])*\]"    # IDs, comma
-                    r"\[[A-Za-z0-9\-+]*\]"                 # CCD (may be blank)
-                    r"\[[^\[\]]*\]\s*)*$"                  # SMILES (may be blank, allow anything but brackets inside)
-                ),
                 "help_text": (
-                    "Extra ligands: space separated blocks: [IDs][CCD][SMILES]. "
-                    "IDs: comma-separated for multiple copies. For SMILES only, leave CCD blank '[E][][C1CCCCC1]'; for CCD only, leave SMILES blank. "
-                    "Example: '[H][ZN][] [I][][N[C@@H](Cc1ccc(O)cc1)C(=O)O]'"
+                    "Extra ligands: comma-separated blocks: [IDs][CCD][SMILES]. Whitespace is ignored. "
+                    "IDs: comma-separated for multiple copies. SMILES with brackets are supported. "
+                    "For SMILES only, leave CCD blank '[E][][C1CCCCC1]'; for CCD only, leave SMILES blank. "
+                    "Example: '[H][ZN][],[I][][N[C@@H](Cc1ccc(O)cc1)C(=O)O]'"
                 ),
                 "hidden": True  # Hide from UI
             }

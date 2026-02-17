@@ -200,8 +200,8 @@ def _read_bracket_field(s: str, pos: int) -> tuple:
 def parse_ligands_extra(ligstr: Optional[str]) -> List[Dict]:
     """Parse ligands_extra string. Uses bracket-depth parsing so SMILES
     containing brackets (e.g. [Na+], [Ca+2], CC(=O)[O-]) are handled.
-    Format: '[IDs][CCD][SMILES]' per block, space-separated.
-    Example: '[G,H][ZN][] [I][][[Na+]]'
+    Format: '[IDs][CCD][SMILES]' per block, comma-separated. Whitespace is ignored.
+    Example: '[G,H][ZN][],[I][][[Na+]]'
     """
     if not ligstr: return []
     ligs = []
@@ -274,7 +274,8 @@ def _parse_contact_pair(pair_str: str) -> list:
 def parse_pocket_constraint(pocket_str: str):
     """
     Parses a pocket constraint string into components.
-    Format: '[B][[A,53],[A,57],[A,61]] [C][[A,101],[A,130]][5][true]'
+    Format: '[B][[A,53],[A,57],[A,61]],[C][[A,101],[A,130]][5][true]'
+    Multiple pockets separated by commas. Whitespace is ignored.
     Returns a list of dicts, one per pocket constraint block.
     """
     constraints = []
@@ -316,7 +317,8 @@ def parse_pocket_constraint(pocket_str: str):
 def parse_contact_constraint(contact_str: str):
     """
     Parses a contact constraint string to extract token pairs, optional distance, and force.
-    Format: '[A,53][A,57][5][true] [B,101][A,130][4.5][false]'
+    Format: '[A,53][A,57],[A,101][A,130][5][true]'
+    Multiple contacts separated by commas. Whitespace is ignored.
     Returns a list of dicts, one per contact block.
     Note: Boltz-2 uses 'token1'/'token2' field names for contact constraints.
     """
@@ -562,8 +564,8 @@ def build_properties(params: Dict) -> Optional[list]:
 def build_constraints(params: Dict) -> Optional[List[Dict]]:
     constraints = []
 
-    # Bond constraints — match pairs of consecutive [chain,res,atom] groups,
-    # tolerating optional whitespace between the two atoms of a single bond.
+    # Bond constraints — match pairs of consecutive [chain,res,atom] groups.
+    # Multiple bonds are separated by commas. Whitespace between atoms of a bond is tolerated.
     if params.get('constraints_bond'):
         pair_pattern = r'(\[[^\]]+\]\s*\[[^\]]+\])'
         bond_matches = re.findall(pair_pattern, params['constraints_bond'])
