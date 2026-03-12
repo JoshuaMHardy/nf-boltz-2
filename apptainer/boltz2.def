@@ -8,18 +8,17 @@ From: nvidia/cuda:12.8.0-base-ubuntu24.04
     apt-get -q update
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         git \
-        python3-venv \
-        python3-pip \
+        curl \
         python-dev-is-python3 \
         build-essential
 
-    # create and activate virtual environment
-    python3 -m venv /opt/venv
-    . /opt/venv/bin/activate
+    # install uv via official standalone installer
+    curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh
 
-    # install boltz with CUDA dependencies
+    # create virtual environment and install boltz with CUDA dependencies
+    uv venv /opt/venv
     git clone https://github.com/jwohlwend/boltz.git && cd /boltz && git checkout cb04aec
-    pip install --no-cache-dir ".[cuda]"
+    uv pip install --python /opt/venv/bin/python --no-cache ".[cuda]"
 
     # cleanup build dependencies
     apt-get autoremove -y
@@ -37,13 +36,11 @@ From: nvidia/cuda:12.8.0-base-ubuntu24.04
     fi
 
 %test
-    . /opt/venv/bin/activate
-    cd /boltz
     export NUMBA_CACHE_DIR=/tmp
     export XDG_CONFIG_HOME=/tmp
     export TRITON_CACHE_DIR=/tmp
-    boltz --help
-    echo "Build tests completed sucessfully"
+    /opt/venv/bin/boltz --help
+    echo "Build tests completed successfully"
 
 %help
     Boltz container with CUDA 12.8 runtime

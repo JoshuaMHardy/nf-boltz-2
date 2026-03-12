@@ -22,7 +22,7 @@ From: ubuntu:24.04
 
     # install python tools
     export PIP_NO_CACHE_DIR=1
-    pip install biopython pandas matplotlib pyyaml
+    pip install biopython pandas matplotlib pyyaml reportlab
     
     # cleanup build dependencies
     apt-get autoremove -y
