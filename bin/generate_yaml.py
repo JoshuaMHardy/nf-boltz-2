@@ -77,18 +77,37 @@ def validate_no_duplicate_chain_ids_within_field(params: dict):
                 if len(cid_list) != len(set(cid_list)):
                     sys.stderr.write(f"Error: Duplicate chain IDs within field {key}: {cid_list}")
                     sys.exit(1)
-    # Extra
-    for field, block_pat in [('sequences_extra', r"\[([A-Za-z0-9_,]+)\]"), ('ligands_extra', r"\[([A-Za-z0-9_,]+)\]")]:
-        extra = params.get(field)
-        if extra:
-            seen = set()
-            for m in re.finditer(block_pat, extra):
-                ids = [i.strip() for i in m.group(1).split(',')]
-                for id_ in ids:
-                    if id_ in seen:
-                        sys.stderr.write(f"Error: Duplicate chain ID '{id_}' found in {field}.")
-                        sys.exit(1)
-                    seen.add(id_)
+    # Extra sequences: first bracket field is chain IDs
+    seqe = params.get('sequences_extra')
+    if seqe:
+        seen = set()
+        for m in re.finditer(r"\[([A-Za-z0-9_,]+)\]\[", seqe):
+            ids = [x.strip() for x in m.group(1).split(',') if x.strip()]
+            for id_ in ids:
+                if id_ in seen:
+                    sys.stderr.write(f"Error: Duplicate chain ID '{id_}' found in sequences_extra.")
+                    sys.exit(1)
+                seen.add(id_)
+    # Extra ligands: use the proper bracket-depth parser to get only chain IDs
+    ligee = params.get('ligands_extra')
+    if ligee:
+        seen = set()
+        pos = 0
+        while pos < len(ligee):
+            if ligee[pos] != '[':
+                pos += 1
+                continue
+            ids_str, pos = _read_bracket_field(ligee, pos)
+            if ids_str is None:
+                break
+            # Skip CCD and SMILES fields
+            _, pos = _read_bracket_field(ligee, pos)
+            _, pos = _read_bracket_field(ligee, pos)
+            for id_ in [x.strip() for x in ids_str.split(',') if x.strip()]:
+                if id_ in seen:
+                    sys.stderr.write(f"Error: Duplicate chain ID '{id_}' found in ligands_extra.")
+                    sys.exit(1)
+                seen.add(id_)
 
 def validate_unique_chain_ids(params: Dict):
     all_chain_ids = []
