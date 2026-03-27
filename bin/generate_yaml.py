@@ -119,17 +119,25 @@ def validate_unique_chain_ids(params: Dict):
         ids = params.get(f'lig{i}_chain_id')
         if ids:
             all_chain_ids.extend(x.strip() for x in ids.split(',') if x.strip())
-    # Extra sequences
+    # Extra sequences: first bracket field per block is chain IDs
     seqe = params.get('sequences_extra')
     if seqe:
-        blocks = re.findall(r"\[([A-Za-z0-9_,]+)\]", seqe)
-        for ids in blocks:
-            all_chain_ids.extend(x.strip() for x in ids.split(','))
+        for m in re.finditer(r"\[([A-Za-z0-9_,]+)\]\[", seqe):
+            all_chain_ids.extend(x.strip() for x in m.group(1).split(',') if x.strip())
+    # Extra ligands: use bracket-depth parser to get only the chain IDs field
     lige = params.get('ligands_extra')
     if lige:
-        blocks = re.findall(r"\[([A-Za-z0-9_,]+)\]", lige)
-        for ids in blocks:
-            all_chain_ids.extend(x.strip() for x in ids.split(','))
+        pos = 0
+        while pos < len(lige):
+            if lige[pos] != '[':
+                pos += 1
+                continue
+            ids_str, pos = _read_bracket_field(lige, pos)
+            if ids_str is None:
+                break
+            _, pos = _read_bracket_field(lige, pos)  # skip CCD
+            _, pos = _read_bracket_field(lige, pos)  # skip SMILES
+            all_chain_ids.extend(x.strip() for x in ids_str.split(',') if x.strip())
     seen = set()
     duplicates = set()
     for cid in all_chain_ids:
