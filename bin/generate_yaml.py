@@ -389,6 +389,68 @@ def parse_templates_from_params(params: Dict) -> Optional[list]:
     """
     templates = []
 
+    # Up to 2 explicit templates; prefer pdb_code, then path
+    for i in range(1, 3):
+        pdb_code = params.get(f'template{i}_pdb_code')
+        path = params.get(f'template{i}_path')
+        if pdb_code:
+            cif_filename = f"{pdb_code.upper()}.cif"
+        elif path:
+            cif_filename = os.path.basename(path)
+        else:
+            continue
+
+        template_entry = {'cif': cif_filename}
+        # Handle the rest: prediction_id, template_id, threshold/force
+        pred_ids = params.get(f'template{i}_prediction_id')
+        if pred_ids:
+            ids = [x.strip() for x in pred_ids.split(',') if x.strip()]
+            template_entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+        templ_ids = params.get(f'template{i}_template_id')
+        if templ_ids:
+            ids = [x.strip() for x in templ_ids.split(',') if x.strip()]
+            template_entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+        thresh = params.get(f'template{i}_threshold')
+        if thresh is not None:
+            try:
+                template_entry['force'] = True
+                template_entry['threshold'] = float(thresh)
+            except Exception:
+                sys.stderr.write(f"Warning: could not parse threshold for template{i}: {thresh}")
+        templates.append(template_entry)
+
+    # template_extra: expect only PDB code (not a file path) in first field
+    extra = params.get('template_extra')
+    if extra:
+        # Block format: [PDB][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD]
+        block_pattern = r'(\[[^\]]+\](?:\[[^\]]*\]){0,3})'  # up to 4 fields
+        blocks = re.findall(block_pattern, extra)
+        for block in blocks:
+            fields = re.findall(r'\[([^\]]*)\]', block)
+            if not fields or not fields[0].strip():
+                continue  # must have a PDB code
+            pdb_code = fields[0].strip()
+            # Only allow 4-character pdb codes (defensive)
+            if not re.match(r'^[0-9A-Za-z]{4}$', pdb_code):
+                sys.stderr.write(f"Warning: Unexpected template_extra code: '{pdb_code}'")
+                continue
+            entry = {'cif': f"{pdb_code.upper()}.cif"}
+            if len(fields) > 1 and fields[1].strip():
+                ids = [x.strip() for x in fields[1].split(',') if x.strip()]
+                entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+            if len(fields) > 2 and fields[2].strip():
+                ids = [x.strip() for x in fields[2].split(',') if x.strip()]
+                entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
+            if len(fields) > 3 and fields[3].strip():
+                try:
+                    entry['force'] = True
+                    entry['threshold'] = float(fields[3])
+                except Exception:
+                    sys.stderr.write(f"Warning: could not parse threshold in template_extra: '{fields[3]}'")
+            templates.append(entry)
+
+    return templates if templates else None
+
 
 def collect_residue_offsets(params: Dict, sequences: List[Dict]) -> Dict[str, int]:
     """
@@ -512,68 +574,6 @@ def adjust_constraints(constraints: List[Dict], offsets: Dict[str, int]) -> List
         adjusted.append(new_constraint)
     
     return adjusted
-
-    # Up to 2 explicit templates; prefer pdb_code, then path
-    for i in range(1, 3):
-        pdb_code = params.get(f'template{i}_pdb_code')
-        path = params.get(f'template{i}_path')
-        if pdb_code:
-            cif_filename = f"{pdb_code.upper()}.cif"
-        elif path:
-            cif_filename = os.path.basename(path)
-        else:
-            continue
-
-        template_entry = {'cif': cif_filename}
-        # Handle the rest: prediction_id, template_id, threshold/force
-        pred_ids = params.get(f'template{i}_prediction_id')
-        if pred_ids:
-            ids = [x.strip() for x in pred_ids.split(',') if x.strip()]
-            template_entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
-        templ_ids = params.get(f'template{i}_template_id')
-        if templ_ids:
-            ids = [x.strip() for x in templ_ids.split(',') if x.strip()]
-            template_entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
-        thresh = params.get(f'template{i}_threshold')
-        if thresh is not None:
-            try:
-                template_entry['force'] = True
-                template_entry['threshold'] = float(thresh)
-            except Exception:
-                sys.stderr.write(f"Warning: could not parse threshold for template{i}: {thresh}")
-        templates.append(template_entry)
-
-    # template_extra: expect only PDB code (not a file path) in first field
-    extra = params.get('template_extra')
-    if extra:
-        # Block format: [PDB][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD]
-        block_pattern = r'(\[[^\]]+\](?:\[[^\]]*\]){0,3})'  # up to 4 fields
-        blocks = re.findall(block_pattern, extra)
-        for block in blocks:
-            fields = re.findall(r'\[([^\]]*)\]', block)
-            if not fields or not fields[0].strip():
-                continue  # must have a PDB code
-            pdb_code = fields[0].strip()
-            # Only allow 4-character pdb codes (defensive)
-            if not re.match(r'^[0-9A-Za-z]{4}$', pdb_code):
-                sys.stderr.write(f"Warning: Unexpected template_extra code: '{pdb_code}'")
-                continue
-            entry = {'cif': f"{pdb_code.upper()}.cif"}
-            if len(fields) > 1 and fields[1].strip():
-                ids = [x.strip() for x in fields[1].split(',') if x.strip()]
-                entry['chain_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
-            if len(fields) > 2 and fields[2].strip():
-                ids = [x.strip() for x in fields[2].split(',') if x.strip()]
-                entry['template_id'] = ids[0] if len(ids) == 1 else FlowList(ids)
-            if len(fields) > 3 and fields[3].strip():
-                try:
-                    entry['force'] = True
-                    entry['threshold'] = float(fields[3])
-                except Exception:
-                    sys.stderr.write(f"Warning: could not parse threshold in template_extra: '{fields[3]}'")
-            templates.append(entry)
-
-    return templates if templates else None
 
 def build_properties(params: Dict) -> Optional[list]:
     """
