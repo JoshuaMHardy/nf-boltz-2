@@ -227,7 +227,7 @@ process CheckMSACache {
     val use_msa_cache
 
     output:
-    tuple path("${pred_name}.yaml"), val(pred_name), emit: yaml
+    tuple path("output/${pred_name}.yaml"), val(pred_name), emit: yaml
     path("*.csv"), optional: true, emit: csv
     path("*.a3m"), optional: true, emit: a3m
 
@@ -239,6 +239,8 @@ process CheckMSACache {
     import hashlib
     import gzip
     import shutil
+
+    os.makedirs('output', exist_ok=True)
     
     # Read and parse the YAML file
     with open('${yaml}', 'r') as f:
@@ -327,8 +329,9 @@ process CheckMSACache {
                         protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
                         seq_index += 1
     
-    # Write updated YAML
-    with open('${pred_name}.yaml', 'w') as f:
+    # Write updated YAML to output subdirectory so the input symlink is never touched,
+    # preserving the upstream work-dir file's checksum for Nextflow resume caching.
+    with open('output/${pred_name}.yaml', 'w') as f:
         yaml.dump(data, f, sort_keys=False, default_flow_style=False)
     
     if cache_hit:
