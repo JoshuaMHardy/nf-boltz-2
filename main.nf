@@ -558,6 +558,10 @@ process VisualiseBoltz {
 
     script:
     """
+    # We specify a tmp directory as some python packages try to write to the user home directory outside the container
+    mkdir tmp
+    export HOME=tmp
+
     # Extract file extension for script
     extension="${params.output_format == 'mmcif' ? 'cif' : 'pdb'}"
     
