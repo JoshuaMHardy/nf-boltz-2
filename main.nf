@@ -9,25 +9,29 @@ nextflow.enable.dsl = 2
 
 workflow {
     validateInputs()
-    
+
     // Calculate output directory once - outdir can be relative or absolute path
     def output_dir = params.use_outdir_prefix ? joinPaths(params.outdir_prefix, params.outdir) : params.outdir
     full_outdir = file(output_dir)
-    
+
     // Log the output directory configuration
     if (params.use_outdir_prefix) {
-        println "Outdir_prefix: '${params.outdir_prefix}'"
+        println("Outdir_prefix: '${params.outdir_prefix}'")
     }
-    println "Output directory: '${output_dir}'"
-    
+    println("Output directory: '${output_dir}'")
+
+    // Track if we're in batch mode (directory of YAMLs) for error handling
+    def batch_mode = false
+
     if (params.input_yaml) {
         input_yaml_path = file(params.input_yaml)
 
         if (input_yaml_path.isDirectory()) {
             println("Using existing YAMLs from: ${params.input_yaml}")
+            batch_mode = true
 
             // Create channel from YAML files in directory
-            yaml_files = Channel
+            yaml_files = channel
                 .fromPath("${params.input_yaml}/*.yaml")
                 .map { yaml_file ->
                     def pred_name = yaml_file.getSimpleName()
@@ -35,13 +39,17 @@ workflow {
                 }
 
             yaml_files.view { "Found YAML: ${it[1]}" }
+
+            template_files_ch = []
         }
         else if (input_yaml_path.isFile()) {
             println("Using single YAML file: ${params.input_yaml}")
             pred_name = input_yaml_path.getSimpleName()
 
             // Create channel with single file
-            yaml_files = Channel.of([input_yaml_path, pred_name])
+            yaml_files = channel.of([input_yaml_path, pred_name])
+
+            template_files_ch = []
         }
         else {
             error("Input YAML path does not exist: ${params.input_yaml}")
@@ -51,8 +59,8 @@ workflow {
         // Check for templates
         def (template_files_list, pdb_codes_list) = collectTemplateFilesAndPDBs(params)
 
-        files_ch = Channel.fromList(template_files_list)
-        cif_files_ch = Channel.empty()
+        files_ch = channel.fromList(template_files_list)
+        cif_files_ch = channel.empty()
 
         if (pdb_codes_list.size() > 0) {
             println("Downloading templates")
@@ -69,14 +77,87 @@ workflow {
             [yaml_file, params.pred_name]
         }
     }
-    // Run Boltz for each YAML file
-    RunBoltz(yaml_files, template_files_ch, output_dir)
+    
+    // Parse seed parameter into channel
+    if (params.seed != null) {
+        // Split comma-separated seeds and create channel
+        def seed_list = params.seed.toString().split(',').collect { it.trim().toInteger() }
+        seed_ch = channel.fromList(seed_list)
+        println("Using seed(s): ${seed_list}")
+    } else {
+        // No seed specified - create channel with single null value
+        seed_ch = channel.of(null)
+        println("No seed specified - predictions will be non-deterministic")
+    }
+
+    // Check MSA cache and prepare for ColabFold
+    CheckMSACache(yaml_files, params.msa_cache_dir, params.use_msa_cache)
+    
+    // Combine CSV files from CheckMSACache (sequences needing generation)
+    CheckMSACache.out.csv
+        .splitCsv(header: true)
+        .unique { it.id }
+        .collectFile(
+            name: 'combined_msa.csv',
+            seed: "id,sequence\n"
+        ) { row ->
+            "${row.id},${row.sequence}\n"
+        }
+        .set { seqs_for_msa }
+
+    // Filter: only run ColabFold if there are sequences to process
+    seqs_for_msa
+        .filter { it.size() > 0 }
+        .set { seqs_for_colabfold }
+
+    RunColabFold(seqs_for_colabfold, output_dir)
+
+    // Store generated A3M files in cache (only if ColabFold ran)
+    if (params.use_msa_cache) {
+        StoreMSACache(RunColabFold.out.a3m.flatten(), params.msa_cache_dir)
+    }
+
+    // Combine MSAs from cache (if any) with generated MSAs
+    // Keep unique files since there can be duplicate MSAs and this results in a collision
+    CheckMSACache.out.a3m
+        .mix(RunColabFold.out.a3m.flatten())
+        .unique { it.name }
+        .collect()
+        .set { collected_msas }
+
+    // Filter: only run SplitMSA if there are A3M files to process
+    collected_msas
+        .filter { it.size() > 0 }
+        .set { msas_to_split }
+
+    SplitMSA(msas_to_split, output_dir)
+
+    // Use SplitMSA CSV output if available, otherwise provide empty list for no-MSA runs
+    SplitMSA.out.csv
+        .ifEmpty([])
+        .set { msa_csv_files }
+
+    // Combine YAML files with seeds to run each YAML with each seed
+    // Output: [yaml_file, pred_name, seed]
+    CheckMSACache.out.yaml
+        .combine(seed_ch)
+        .map { yaml_file, pred_name, seed ->
+            // Append seed suffix to prediction name if seed is provided
+            def final_pred_name = seed != null ? "${pred_name}_s${seed}" : pred_name
+            [yaml_file, final_pred_name, seed]
+        }
+        .set { yaml_with_seeds }
+
+    // Run Boltz for each (YAML, seed) combination
+    RunBoltz(yaml_with_seeds, template_files_ch, msa_csv_files, output_dir, batch_mode)
 
     // Generate metadata and plots
     AnalyseBoltz(RunBoltz.out.boltz_results, output_dir)
 
-    // Generate ChimeraX plots
-    VisualiseBoltz(RunBoltz.out.boltz_models, output_dir)
+    // Generate ChimeraX images (if enabled)
+    if (params.enable_visualisation) {
+        VisualiseBoltz(RunBoltz.out.boltz_models, output_dir)
+    }
 
     // Generate PDF of plots
     //GeneratePDF(AnalyseBoltz.out.plots,VisualiseBoltz.out)
@@ -97,6 +178,19 @@ workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process GenerateYAML {
+    input:
+    val params
+
+    output:
+    path "*.yaml", emit: yaml
+
+    script:
+    """
+    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
+    """
+}
+
 process DownloadTemplates {
     input:
     val pdb_codes_tuples
@@ -124,26 +218,256 @@ process DownloadTemplates {
     """
 }
 
-process RunBoltz {
-    container "${params.container_path}"
-    containerOptions "--nv --bind ${params.models_path}:/boltzcache"
-
-    queue 'gpuq'
-    clusterOptions '--gres=gpu:' + params.gpu_model + ':1'
-    cpus params.n_cpus
-    memory params.memory
-    executor 'slurm'
-
-    publishDir "${output_dir}", mode: 'copy', pattern: "${pred_name}"
-
+process CheckMSACache {
+    // Check if MSA exists in cache based on hash of all sequences
+    // Output: updated YAML, CSV for sequences needing generation, cached A3M files
     input:
     tuple path(yaml), val(pred_name)
-    path template_files
+    val msa_cache_dir
+    val use_msa_cache
+
+    output:
+    tuple path("output/${pred_name}.yaml"), val(pred_name), emit: yaml
+    path("*.csv"), optional: true, emit: csv
+    path("*.a3m"), optional: true, emit: a3m
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import yaml
+    import os
+    import hashlib
+    import gzip
+    import shutil
+
+    os.makedirs('output', exist_ok=True)
+    
+    # Read and parse the YAML file
+    with open('${yaml}', 'r') as f:
+        data = yaml.safe_load(f)
+    
+    use_cache = '${use_msa_cache}' == 'true'
+    cache_dir = '${msa_cache_dir}'
+    
+    if use_cache:
+        os.makedirs(cache_dir, exist_ok=True)
+        print(f"Using MSA cache: {cache_dir}")
+    else:
+        print("MSA cache disabled")
+    
+    # Collect all sequences that need MSA (not 'empty', not pre-existing file paths)
+    sequences_for_msa = []
+    has_msa_requirement = False
+    
+    for block in data.get('sequences', []):
+        if 'protein' in block:
+            protein = block['protein']
+            sequence = protein.get('sequence')
+            msa = protein.get('msa')
+            
+            # Check if this protein needs MSA
+            if msa != 'empty' and sequence:
+                # If it's an absolute path, skip (pre-existing MSA)
+                if isinstance(msa, str) and '/' in msa:
+                    print(f"Pre-existing MSA path: {msa}")
+                    continue
+                
+                has_msa_requirement = True
+                sequences_for_msa.append(sequence)
+    
+    cache_hit = False
+    msa_hash = None
+    
+    if has_msa_requirement and sequences_for_msa:
+        # Calculate hash from ALL sequences (this is the paired MSA identifier)
+        combined_seq = '|'.join(sequences_for_msa)
+        msa_hash = hashlib.sha256(combined_seq.encode()).hexdigest()[:16]
+        cache_file_gz = f"{cache_dir}/{msa_hash}.a3m.gz"
+        
+        print(f"MSA hash for this combination: {msa_hash}")
+        print(f"Number of sequences: {len(sequences_for_msa)}")
+        
+        # Check cache if enabled (look for gzipped file)
+        if use_cache and os.path.exists(cache_file_gz):
+            print(f"Cache HIT: Found {cache_file_gz}")
+            cache_hit = True
+            # Decompress cached A3M to work directory for splitting
+            with gzip.open(cache_file_gz, 'rb') as f_in:
+                with open(f"{msa_hash}.a3m", 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            print(f"Decompressed cached A3M: {msa_hash}.a3m")
+            
+            # Update YAML to reference the CSV files that will be generated from this A3M
+            seq_index = 0
+            for block in data.get('sequences', []):
+                if 'protein' in block:
+                    protein = block['protein']
+                    msa = protein.get('msa')
+                    if msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                        # This will be generated from split
+                        protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
+                        seq_index += 1
+        else:
+            if use_cache:
+                print(f"Cache MISS: {msa_hash}")
+            
+            # Generate CSV for ColabFold
+            seq_string = ':'.join(sequences_for_msa)
+            csv_content = f"id,sequence\\n{msa_hash},{seq_string}\\n"
+            
+            with open(f'{msa_hash}.csv', 'w') as f:
+                f.write(csv_content)
+            
+            # Update YAML to reference the CSV files that will be generated
+            seq_index = 0
+            for block in data.get('sequences', []):
+                if 'protein' in block:
+                    protein = block['protein']
+                    msa = protein.get('msa')
+                    if msa != 'empty' and not (isinstance(msa, str) and '/' in msa):
+                        # Replace MSA key with future CSV path
+                        protein['msa'] = f"{msa_hash}_msa_{seq_index}.csv"
+                        seq_index += 1
+    
+    # Write updated YAML to output subdirectory so the input symlink is never touched,
+    # preserving the upstream work-dir file's checksum for Nextflow resume caching.
+    with open('output/${pred_name}.yaml', 'w') as f:
+        yaml.dump(data, f, sort_keys=False, default_flow_style=False)
+    
+    if cache_hit:
+        print("Using cached MSA - no generation needed")
+    elif has_msa_requirement:
+        print(f"MSA generation required for hash: {msa_hash}")
+    else:
+        print("No MSA generation required (all marked as 'empty' or pre-existing)")
+    """
+}
+
+process RunColabFold {
+    container "${params.colabfold_container}"
+    containerOptions "--nv --bind ${params.colabfold_dbs}:/colabfold_dbs"
+
+    cpus params.colabfold_cpus
+    memory params.colabfold_memory
+    queue 'gpuq'
+    clusterOptions '--gres=gpu:' + params.colabfold_gpu_model + ':1'
+
+    input:
+    path csv
     val output_dir
 
     output:
+    path ("*.a3m"), emit: a3m
+
+    script:
+    """
+    # Run ColabFold on combined CSV file to generate MSA per row
+    colabfold_search \
+        --db-load-mode 2 \
+        --gpu 1 \
+        --prefilter-mode 1 \
+        --threads ${task.cpus} \
+        ${csv} \
+        /colabfold_dbs \
+        "results/"
+    
+    # Extract only the paired MSA files (those with hash names, not 1.a3m, 2.a3m, etc.)
+    # Hash names are 16 characters of hex
+    for f in results/*.a3m; do
+        basename=\$(basename "\$f" .a3m)
+        # Check if filename matches hash pattern (16 hex chars)
+        if [[ \$basename =~ ^[0-9a-f]{16}\$ ]]; then
+            echo "Found paired MSA: \$f"
+            cp "\$f" "\${basename}.a3m"
+        fi
+    done
+    """
+}
+
+process StoreMSACache {
+    // Store generated A3M files in cache (compress during storage)
+    input:
+    path a3m_file
+    val msa_cache_dir
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import os
+    import gzip
+    import shutil
+    
+    cache_dir = '${msa_cache_dir}'
+    os.makedirs(cache_dir, exist_ok=True)
+    
+    a3m_file = '${a3m_file}'
+    
+    if not os.path.exists(a3m_file):
+        print(f"Warning: A3M file not found: {a3m_file}")
+        exit(0)
+    
+    # Get basename and create compressed cache file
+    basename = os.path.basename(a3m_file)
+    cache_file_gz = os.path.join(cache_dir, f"{basename}.gz")
+    
+    # Compress and copy to cache
+    with open(a3m_file, 'rb') as f_in:
+        with gzip.open(cache_file_gz, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    
+    print(f"Stored compressed A3M in cache: {basename}.gz")
+
+    """
+}
+
+process SplitMSA {
+    container "${params.colabfold_container}"
+    containerOptions "--bind ${projectDir}/bin/split_msa.py:/split_msa.py"
+
+    publishDir "${output_dir}/msas", mode: 'copy', pattern: "split_msas/*.csv"
+    publishDir "${output_dir}/msas", mode: 'copy', pattern: "colabfold_msas/*.a3m"
+
+    input:
+    path a3m_files
+    val output_dir
+
+    output:
+    path ("split_msas/*.csv"), emit: csv
+    path ("colabfold_msas/*.a3m"), emit: a3m
+
+    script:
+    """    
+    mkdir -p colabfold_msas
+    mv ${a3m_files} colabfold_msas/.
+    # Split all A3M files into CSV format for Boltz
+    python /split_msa.py -i ./colabfold_msas -o split_msas
+    """
+}
+
+process RunBoltz {
+    container params.use_lowmem_container ? "${params.boltz2_lowmem_container}" : "${params.boltz2_container}"
+    containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache --bind ${projectDir}/bin/renumber_structures.py:/renumber_structures.py"
+
+    queue 'gpuq'
+    clusterOptions '--gres=gpu:' + params.boltz2_gpu_model + ':1'
+    cpus params.boltz2_cpus
+    memory params.boltz2_memory
+
+    publishDir "${output_dir}", mode: 'copy', pattern: "${pred_name}"
+
+    // Ignore errors when running batch jobs
+    errorStrategy { batch_mode ? 'ignore' : 'terminate' }
+
+    input:
+    tuple path(yaml), val(pred_name), val(seed)
+    path template_files
+    path msa_files
+    val output_dir
+    val batch_mode
+
+    output:
     path "${pred_name}"
-    tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), val(pred_name), emit: boltz_results
+    tuple path("boltz_results_*/processed/structures/*.npz"), path("boltz_results_*/predictions/*/*"), path("${pred_name}/*.yaml"), val(pred_name), emit: boltz_results
     tuple path("${pred_name}/*"), val(pred_name), emit: boltz_models
 
     script:
@@ -151,14 +475,14 @@ process RunBoltz {
     # We specify a tmp directory as some python packages try to write to the user home directory outside the container
     mkdir tmp
     export HOME=tmp
-
+    
     # Create prediction directory to copy results into
     mkdir ${pred_name}
 
     boltz predict \
         ${yaml} \
         --cache /boltzcache \
-        --use_msa_server \
+        ${seed != null ? "--seed ${seed}" : ''} \
         ${params.diffusion_samples ? "--diffusion_samples ${params.diffusion_samples}" : ''} \
         ${params.method ? "--method '${params.method}'" : ''} \
         ${params.use_potentials ? '--use_potentials' : ''} \
@@ -169,30 +493,40 @@ process RunBoltz {
         ${params.diffusion_samples_affinity ? "--diffusion_samples_affinity ${params.diffusion_samples_affinity}" : ''} \
         ${params.sampling_steps_affinity ? "--sampling_steps ${params.sampling_steps_affinity}" : ''} \
         ${params.output_format == "pdb" ? "--output_format pdb " : ''} \
-        ${params.write_full_pae ? '--write_full_pae ' : ''} \
-        ${params.write_full_pde ? '--write_full_pde ' : ''} \
+        --write_full_pae \
+        --write_full_pde \
+        ${params.use_lowmem_container && params.chunk_size_transition_z ? "--chunk_size_transition_z ${params.chunk_size_transition_z}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_transition_msa ? "--chunk_size_transition_msa ${params.chunk_size_transition_msa}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_tri_attn ? "--chunk_size_tri_attn ${params.chunk_size_tri_attn}" : ''} \
+        ${params.use_lowmem_container && params.triangle_mult_gate_nchunks ? "--triangle_mult_gate_nchunks ${params.triangle_mult_gate_nchunks}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_outer_product ? "--chunk_size_outer_product ${params.chunk_size_outer_product}" : ''} \
+        ${params.use_lowmem_container && params.chunk_size_threshold ? "--chunk_size_threshold ${params.chunk_size_threshold}" : ''} \
+        ${params.use_lowmem_container && params.use_bfloat16 ? '--use_bfloat16' : ''} \
         ${params.extra_config ? "'${params.extra_config}'" : ''} \
         2>&1 | tee ${pred_name}/boltz.log
    
     # Copy predictions and input yaml to prediction directory. Use .cif if mmcif format.
     cp boltz_results_*/predictions/*/*.${params.output_format == 'mmcif' ? 'cif' : 'pdb'} ${pred_name}/.
     cp ${yaml} ${pred_name}/.
+
+    # Renumber residues in output structures if residue_offsets are defined in YAML
+    python /renumber_structures.py ${pred_name}/
+
     """
 }
 
 process AnalyseBoltz {
-    container "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/pyrosetta_tools.sif"
+    container "${params.python_tools_container}"
     containerOptions "-B ${projectDir}/bin/generate_metadata.py:/generate_metadata.py"
 
     cpus 4
     memory '8G'
-    executor 'slurm'
 
     publishDir "${output_dir}/${pred_name}/", mode: 'copy', pattern: "*.csv"
     publishDir "${output_dir}/${pred_name}/plots", mode: 'copy', pattern: "*.png"
 
     input:
-    tuple path(struct_npz_file), path(model_npz_files), val(pred_name)
+    tuple path(struct_npz_file), path(model_npz_files), path(yaml_file), val(pred_name)
     val output_dir
 
     output:
@@ -201,22 +535,17 @@ process AnalyseBoltz {
 
     script:
     """
-    eval "\$(micromamba shell hook --shell bash)"
-    micromamba activate pyrosetta
-
     # Generate plots and metadata for Boltz-2 prediction 
     python /generate_metadata.py "./" -o "./"
-
     """
 }
 
 process VisualiseBoltz {
-    container "/stornext/System/data/software/rhel/9/base/structbio/chimerax/1.10.1/chimerax-1.10.1.sif"
+    container "${params.chimerax_container}"
     containerOptions "--writable-tmpfs -B /home -B ${projectDir}/bin/generate_images.py:/generate_images.py"
-    
+
     cpus 4
     memory '24G'
-    executor 'slurm'
 
     publishDir "${output_dir}/${pred_name}/images", mode: 'copy', pattern: "*.png"
 
@@ -229,6 +558,10 @@ process VisualiseBoltz {
 
     script:
     """
+    # We specify a tmp directory as some python packages try to write to the user home directory outside the container
+    mkdir tmp
+    export HOME=tmp
+
     # Extract file extension for script
     extension="${params.output_format == 'mmcif' ? 'cif' : 'pdb'}"
     
@@ -256,13 +589,12 @@ process VisualiseBoltz {
 process GeneratePDF {
     cpus 4
     memory '8G'
-    executor 'slurm'
     maxRetries 2
 
     publishDir "${output_dir}/${pred_name}/", mode: 'copy', pattern: "*.pdf"
 
     input:
-    path(plots)
+    path plots
     tuple path(images), val(pred_name)
     val output_dir
 
@@ -288,18 +620,7 @@ process GeneratePDF {
     """
 }
 
-process GenerateYAML {
-    input:
-    val params
 
-    output:
-    path "*.yaml", emit: yaml
-
-    script:
-    """
-    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
-    """
-}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -319,7 +640,6 @@ def validateInputs() {
     if (!params.pred_name.matches(/^[a-zA-Z0-9_-]+$/)) {
         exit(1, "ERROR: pred_name can only contain letters, numbers, underscores, and dashes")
     }
-
 }
 
 def joinPaths(prefix, suffix) {
@@ -330,12 +650,12 @@ def joinPaths(prefix, suffix) {
     if (!suffix || suffix.isEmpty()) {
         return prefix
     }
-    
+
     // Remove trailing slash from prefix if present
     def cleanPrefix = prefix.endsWith('/') ? prefix[0..-2] : prefix
     // Remove leading slash from suffix if present
     def cleanSuffix = suffix.startsWith('/') ? suffix[1..-1] : suffix
-    
+
     // Join with single slash
     return "${cleanPrefix}/${cleanSuffix}"
 }

@@ -1,0 +1,46 @@
+# Build stage - install dependencies and compile
+Bootstrap: docker
+Stage: build
+From: nvidia/cuda:12.8.0-base-ubuntu24.04
+
+%post
+    # install build deps
+    apt-get -q update
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+        git \
+        curl \
+        python-dev-is-python3 \
+        build-essential
+
+    # install uv via official standalone installer
+    curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh
+
+    # create virtual environment and install boltz with CUDA dependencies
+    uv venv /opt/venv
+    git clone https://github.com/jwohlwend/boltz.git && cd /boltz && git checkout cb04aec
+    uv pip install --python /opt/venv/bin/python --no-cache ".[cuda]"
+
+    # cleanup build dependencies
+    apt-get autoremove -y
+    apt-get clean
+    
+    # link venv
+    echo '. /opt/venv/bin/activate' >> $APPTAINER_ENVIRONMENT
+    
+%runscript
+    cd /boltz
+    if [ $# -eq 0 ]; then
+        exec /bin/bash --norc
+    else
+        exec "$@"
+    fi
+
+%test
+    export NUMBA_CACHE_DIR=/tmp
+    export XDG_CONFIG_HOME=/tmp
+    export TRITON_CACHE_DIR=/tmp
+    /opt/venv/bin/boltz --help
+    echo "Build tests completed successfully"
+
+%help
+    Boltz container with CUDA 12.8 runtime

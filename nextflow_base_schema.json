@@ -86,6 +86,17 @@
                     "default": 1.638,
                     "hidden": true,
                     "help_text": "The step scale is related to the temperature at which the diffusion process samples the distribution. The lower the higher the diversity among samples (recommended between 1 and 2, default=1.638)"
+                },        
+                "seed": {
+                "type": "string",
+                "description": "Random seed(s) for reproducible predictions",
+                "pattern": "^[0-9]+(,[0-9]+)*$",
+                "help_text": "Provide a single integer (e.g., '42'), comma-separated list (e.g., '1,2,3'), or leave empty for non-deterministic runs. Each seed generates a separate prediction with suffix '_s<N>'.",
+                "examples": [
+                    "42",
+                    "1,2,3",
+                    "12345"
+                ]
                 },
                 "output_format": {
                     "type": "string",
@@ -94,16 +105,11 @@
                     "description": "Output format for structure predictions. Default: mmcif",
                     "hidden": true
                 },
-                "write_full_pae": {
+
+                "enable_visualisation": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Whether to save the full PAE matrix as a file",
-                    "hidden": true
-                },
-                "write_full_pde": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether to save the full PDE matrix as a file",
+                    "description": "Whether to generate ChimeraX visualizations",
                     "hidden": true
                 },
                 "extra_config": {
@@ -120,6 +126,11 @@
             "fa_icon": "fas fa-link",
             "description": "Affinity prediction options",
             "properties": {
+                "compute_affinity": {
+                    "type": "boolean",
+                    "description": "Whether to compute affinity prediction for ligands. Set to false to skip affinity calculations.",
+                    "default": true
+                },
                 "affinity_ligand_id": {
                     "type": "string",
                     "description": "Single chain ID of ligand for affinity calculations. If not specified, defaults to ligand 1 ID. e.g. 'E', 'L1', 'D'",
@@ -157,16 +168,16 @@
             "properties": {
                 "constraints_bond": {
                     "type": "string",
-                    "description": "Bond constraints. Each bond constraint is provided as a pair of atoms. Multiple bonds can be specified, seperated by spaces.",
-                    "pattern": "^(\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])(\\s+\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])*$",
-                    "help_text": "For both atoms that form each bond, provide the chain ID, res number, and atom name. Format: '[CHAIN_ID, RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME] [CHAIN_ID,RES_IDX, ATOM_NAME][CHAIN_ID, RES_IDX, ATOM_NAME]...' e.g. '[A,33,O][B,1,N] [H,95,SG][L,23,SG]' ",
+                    "description": "Bond constraints. Each bond is a pair of atoms, multiple bonds separated by commas.",
+                    "pattern": "^(\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\s*\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])(\\s*,\\s*\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\]\\s*\\[[A-Za-z0-9]+,\\d+,[A-Za-z0-9]+\\])*$",
+                    "help_text": "For both atoms that form each bond, provide the chain ID, res number, and atom name. Incompatible with SMILES ligands (CCD only). Format: '[CHAIN_ID,RES_IDX,ATOM_NAME][CHAIN_ID,RES_IDX,ATOM_NAME], ...' e.g. Disulphide bonds: '[A,33,SG][B,1,SG],[H,95,SG][L,23,SG]', N-linked Glycan (NAG-NAG ligands G,H): '[A,8,ND2][G,1,C1],[G,1,O4][H,1,C1]'.",
                     "hidden": true
                 },
                 "constraints_contacts": {
                     "type": "string",
-                    "description": "Contact constraints provided as pairs of residues or atoms. Multiple contacts can be specified, separated by spaces.",
-                    "pattern": "^(\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)(\\s+\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)*$",
-                    "help_text": "Multiple contacts as pairs of atoms/residues: '[CHAIN_ID,RES_IDX/ATOM][CHAIN_ID,RES_IDX/ATOM][DIST][FORCE]'. E.g. '[A,53][A,57] [A,101][A,130][5][true]'. Max distance (Angstroms, default: 6) and force (default: false) are optional.",
+                    "description": "Contact constraints: pairs of residues or atoms, multiple contacts separated by commas.",
+                    "pattern": "^(\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)(\\s*,\\s*\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\]\\[[A-Za-z0-9_]+,(\\d+|[A-Za-z0-9_]+)\\](\\[\\d+(\\.\\d+)?\\])?(\\[(true|false)\\])?)*$",
+                    "help_text": "Multiple contacts as pairs of atoms/residues: '[CHAIN_ID,RES_IDX/ATOM][CHAIN_ID,RES_IDX/ATOM][DIST][FORCE]'. E.g. '[A,53][A,57],[A,101][A,130][5][true]'. Max distance (Angstroms, default: 6) and force (default: false) are optional.",
                     "hidden": true
                 },
                 "constraints_pocket1_binder": {
@@ -229,7 +240,7 @@
                 "constraints_pocket_extra": {
                     "type": "string",
                     "description": "Advanced or extra pocket constraints (block format)",
-                    "help_text": "For advanced use, specify additional pockets with space-separated '[BINDER][[CONTACTS]][DIST][FORCE]'. Example: '[D][[A,5],[B,12]] [E][[B,99],[C,1]][4][true]'. Usually not required unless >2 pockets needed.",
+                    "help_text": "For advanced use, specify additional pockets separated by commas: '[BINDER][[CONTACTS]][DIST][FORCE]'. Example: '[D][[A,5],[B,12]],[E][[B,99],[C,1]][4][true]'. Usually not required unless >2 pockets needed.",
                     "hidden": true
                 }
             },
@@ -316,7 +327,7 @@
                 "template_extra": {
                     "type": "string",
                     "description": "Advanced/extra template block(s)",
-                    "help_text": "Specify additional templates as blocks: '[PDBCODE][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[1ATP][A][X][5] [4HHB][B][Y][4]'. Only 4-character PDB codes (no file paths) are accepted in template_extra; CIF will be auto-downloaded and staged.",
+                    "help_text": "Specify additional templates separated by commas: '[PDBCODE][PREDICTION_IDs][TEMPLATE_IDs][THRESHOLD]'. Example: '[1ATP][A][X][5],[4HHB][B][Y][4]'. Only 4-character PDB codes (no file paths) are accepted in template_extra; CIF will be auto-downloaded and staged.",
                     "hidden": true
                 }
             },
@@ -328,15 +339,14 @@
             "fa_icon": "fas fa-server",
             "description": "Configure computational resources",
             "properties": {
-                "gpu_model": {
+                "boltz2_gpu_model": {
                     "type": "string",
                     "description": "GPU model requested",
                     "enum": ["A30", "A100"],
                     "default": "A30",
-                    "help_text": "Choose GPU model based on availability and computational requirements",
-                    "hidden": true
+                    "help_text": "Choose GPU model based on availability and computational requirements"
                 },
-                "n_cpus": {
+                "boltz2_cpus": {
                     "type": "integer",
                     "description": "Number of CPUs",
                     "minimum": 1,
@@ -353,18 +363,10 @@
                     "help_text": "Memory allocation (e.g., '48G')",
                     "hidden": true
                 },
-                "container_path": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/21_05/boltz2.sif",
-                    "description": "Path to Boltz-2 container",
-                    "hidden": true
-                },
-                "models_path": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "default": "/vast/projects/alphafold/databases/predictedDb/containers/proteinDJ/boltzmodels",
-                    "description": "Path to Boltz-2 model checkpoints",
+                "use_lowmem_container": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to use the low-memory Boltz-2 container (LMI4Boltz, default: false, uses normal container). Uses chunking to reduce memory requirements at the cost of slightly longer runtimes.",
                     "hidden": true
                 }
             },

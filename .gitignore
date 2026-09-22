@@ -1,2 +1,7 @@
 .nextflow*
 test
+.github
+boltz2/
+.vscode/
+projects/
+*.deb

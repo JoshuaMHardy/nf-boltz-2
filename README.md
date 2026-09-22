@@ -23,6 +23,14 @@ Clone this repository and run:
 > By default, the system expects sequences/ligands defined via pipeline parameters.
 > Alternatively, you may provide a completed YAML file via `--input_yaml` (see [YAML input mode](#yaml-input-mode) below).
 
+### ChimeraX visualisation
+
+ChimeraX is used to generate images of structure predictions. It is free for non-commercial and academic use. You need to agree to the license agreement and [download ChimeraX (for Ubuntu 24.04)](https://www.cgl.ucsf.edu/chimerax/download.html) to the directory of the git hub. Then use apptainer to build the container:
+```
+apptainer build chimerax.sif apptainer/chimerax.def
+```
+
+
 ## Input Parameters
 
 All parameters can be provided as Nextflow CLI flags (e.g. -params-file, or individually with --X value).
@@ -116,7 +124,7 @@ For 5 or more ligands, use ligands_extra:
 
 ### Compute and Advanced
 
-- Resources (gpu_model, n_cpus, memory, etc.)
+- Resources (boltz2_gpu_model, boltz2_cpus, memory, etc.)
 - Output format (output_format = 'mmcif' by default).
 - Extra Boltz args (extra_config) if needed.
 
@@ -173,9 +181,12 @@ https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md
 
 ## References
 
-- [Main Boltz repository](https://github.com/jwohlwend/boltz)
+- [Main Boltz repository](https://github.com/jwohlwend/boltz) [bioRxiv](https://doi.org/10.1101/2025.06.14.659707)
+- [Low-memory Boltz-2 implementation](https://github.com/tlitfin/lmi4boltz) [bioRxiv](https://doi.org/10.1101/2025.10.29.684571)
 - [Boltz prediction input format](https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md)
 - [Nextflow documentation](https://www.nextflow.io/)
+- A3M to CSV for Boltz script from Josh [nf-proteinfold](https://github.com/nf-core/proteinfold)
+- ChimeraX
 
 ## Credits
 
