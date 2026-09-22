@@ -5,3 +5,5 @@ boltz2/
 .vscode/
 projects/
 *.deb
+*.sif
+work/
