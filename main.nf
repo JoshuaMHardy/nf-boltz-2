@@ -187,7 +187,11 @@ process GenerateYAML {
 
     script:
     """
-    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
+    # Params JSON is piped via a quoted heredoc (not an argv string) so literal
+    # apostrophes in the payload (e.g. DNA/RNA atom names like O3') can't break shell quoting.
+    generate_yaml.py <<'PARAMS_EOF' > ${params.pred_name}.yaml
+${groovy.json.JsonOutput.toJson(params)}
+PARAMS_EOF
     """
 }
 
