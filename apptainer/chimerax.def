@@ -2,7 +2,7 @@ Bootstrap: docker
 From: ubuntu:24.04
 
 %labels
-    Author Your Name
+    Author Joshua Hardy
     Version 1.0
     Description ChimeraX container for headless rendering on HPC nodes
 

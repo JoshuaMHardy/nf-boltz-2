@@ -349,7 +349,7 @@ process RunColabFold {
 
     cpus params.colabfold_cpus
     memory params.colabfold_memory
-    queue 'gpuq'
+    queue { params.gpu_queue }
     clusterOptions '--gres=gpu:' + params.colabfold_gpu_model + ':1'
 
     input:
@@ -448,7 +448,7 @@ process RunBoltz {
     container params.use_lowmem_container ? "${params.boltz2_lowmem_container}" : "${params.boltz2_container}"
     containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache --bind ${projectDir}/bin/renumber_structures.py:/renumber_structures.py"
 
-    queue 'gpuq'
+    queue { params.gpu_queue }
     clusterOptions '--gres=gpu:' + params.boltz2_gpu_model + ':1'
     cpus params.boltz2_cpus
     memory params.boltz2_memory

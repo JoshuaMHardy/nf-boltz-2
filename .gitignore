@@ -7,3 +7,6 @@ projects/
 *.deb
 *.sif
 work/
+boltz/
+lmi4boltz/
+boltzmodels/
