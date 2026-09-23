@@ -1,6 +1,8 @@
 # nf-boltz-2
 
-A robust, scalable pipeline to run **Boltz-2** structure predictions with advanced complex modeling, ligand support, and structural constraints, all configured using [Nextflow](https://www.nextflow.io/).
+A robust, scalable pipeline to run **Boltz-2** structure predictions with advanced complex modeling, ligand support, and structural constraints, with local multiple sequence alignment (MSA) using [Nextflow](https://www.nextflow.io/).
+
+<img width="800" src="img/nf-boltz-2-workflow.png">
 
 ## Introduction
 
