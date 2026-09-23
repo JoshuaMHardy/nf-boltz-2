@@ -1,0 +1,50 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+%labels
+    Author Joshua Storm Caley, Joshua Hardy
+    Title nf-core/proteinfold_mmseqs_colabfoldsearch
+    Version 2.0.0dev
+    Description Lightweight Apptainer image containing all software requirements to run the MMSEQS_COLABFOLDSEARCH module using the nf-core/proteinfold pipeline. Compatible with both GPU/CPU approaches.
+
+%post
+    export MMSEQS2_VERSION=18-8cc5c
+
+    # install build deps
+    apt-get -q update
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+        git \
+        aria2 \
+        python-dev-is-python3 \
+        python3-venv \
+        python3-pip \
+        build-essential \
+        software-properties-common \
+        cmake
+    
+    # create and activate virtual environment
+    python3 -m venv /opt/venv
+    . /opt/venv/bin/activate
+
+    pip install --no-cache-dir "colabfold @ git+https://github.com/sokrypton/ColabFold.git@e8ebd9a"
+    aria2c https://github.com/soedinglab/MMseqs2/releases/download/${MMSEQS2_VERSION}/mmseqs-linux-gpu.tar.gz
+    tar xzf mmseqs-linux-gpu.tar.gz
+    cp mmseqs/bin/* /usr/local/bin/ && \
+    rm -rf mmseqs mmseqs-linux-gpu.tar.gz
+    
+    apt-get remove -y \
+        git \
+        build-essential \
+        cmake && \
+    apt-get autoremove -y
+    apt-get clean
+
+    # link venv
+    echo '. /opt/venv/bin/activate' >> $APPTAINER_ENVIRONMENT
+
+%runscript
+    if [ $# -eq 0 ]; then
+        exec /bin/bash --norc
+    else
+        exec "$@"
+    fi

@@ -1,10 +1,12 @@
-# nf-boltz
+# nf-boltz-2
 
-A robust, scalable pipeline to run **Boltz-2** or **Boltz-2** structure predictions with advanced complex modeling, ligand support, and structural constraints, all configured using [Nextflow](https://www.nextflow.io/).
+A robust, scalable pipeline to run **Boltz-2** structure predictions with advanced complex modeling, ligand support, and structural constraints, with local multiple sequence alignment (MSA) using [Nextflow](https://www.nextflow.io/).
+
+<img width="800" src="img/nf-boltz-2-workflow.png">
 
 ## Introduction
 
-**nf-boltz** orchestrates Boltz structure prediction, handling input preparation, resource management, sequences/ligands complexity, and advanced configuration for constraints and templates.
+**nf-boltz-2** orchestrates Boltz structure prediction, handling input preparation, resource management, sequences/ligands complexity, and advanced configuration for constraints and templates.
 
 - Fast setup of complex protein, DNA, and RNA systems.
 - Simple parameter specification; flexible for power users via "extra" fields.
@@ -12,16 +14,73 @@ A robust, scalable pipeline to run **Boltz-2** or **Boltz-2** structure predicti
 
 Upstream Boltz: https://github.com/jwohlwend/boltz
 
+## Setup
+
+This pipeline runs every step in an Apptainer/Singularity container - nothing needs to be
+installed on the host besides [Nextflow](https://www.nextflow.io/) and Apptainer itself.
+
+### 1. Build the containers
+
+```
+apptainer build boltz2.sif apptainer/boltz2.def
+apptainer build boltz2-lowmem.sif apptainer/boltz2-lowmem.def   # optional, for large/low-memory GPU jobs
+apptainer build colabfold.sif apptainer/colabfold.def
+apptainer build python_tools.sif apptainer/python_tools.def
+```
+
+ChimeraX is free for non-commercial/academic use but its `.deb` cannot be redistributed here.
+Agree to the license and [download ChimeraX for Ubuntu 24.04](https://www.cgl.ucsf.edu/chimerax/download.html)
+into `apptainer/`, then build:
+```
+apptainer build chimerax.sif apptainer/chimerax.def
+```
+Set `--enable_visualisation false` if you don't want to build/use this container.
+
+By default the pipeline looks for these `.sif` files in the repository root
+(`boltz2_container`, `colabfold_container`, etc. in [nextflow.config](nextflow.config)).
+Override with `--boltz2_container /path/to/boltz2.sif` etc. if you keep them elsewhere.
+
+### 2. Boltz-2 model weights
+
+`boltz predict --cache <dir>` downloads model weights automatically into `boltz2_models` on
+first run if the directory is empty, so no manual step is required - just make sure the path
+(default `./boltzmodels`) is writable and has network access on first run.
+
+### 3. ColabFold sequence databases (for MSA generation)
+
+MSA generation runs `colabfold_search` against local MMseqs2 databases. Edit
+[setup_colabfold_databases.sbatch](setup_colabfold_databases.sbatch) (`WORK_DIR`, `CONTAINER`,
+and SLURM resource directives) for your cluster, then submit it. The databases are large
+(several hundred GB) and download/indexing can take many hours. Point `--colabfold_dbs` at
+the resulting directory (default `./colabfold_dbs`).
+
+If you don't need MSAs (e.g. `msa: empty` inputs only, or all `seqX_genmsa = false`), you can
+skip this step entirely.
+
+### 4. Execution profile
+
+The pipeline ships without an institution-specific executor/scheduler config by default -
+pick a profile for your environment:
+
+| Profile      | Use case                                                                 |
+|--------------|---------------------------------------------------------------------------|
+| `standalone` | Single machine / workstation with a local GPU (local executor, enables Apptainer) |
+| `slurm`      | Generic SLURM cluster (enables Apptainer + SLURM executor); combine with `--gpu_queue`, `--boltz2_container`, etc. for your site |
+| `milton`     | WEHI's Milton SLURM cluster (institutional container/database paths + GPU queue name) |
+
+For other SLURM clusters, use `-profile slurm` and either pass container/database paths as
+CLI flags, or copy the `milton` profile block in [nextflow.config](nextflow.config) as a
+template for your own site-specific `params` overrides.
+
 ## Quick Start
 
-Install Nextflow as per their docs.
+Clone this repository, complete [Setup](#setup) above, then run:
 
-Clone this repository and run:
-
-    nextflow run main.nf --pred_name my_example --outdir ./results
+    nextflow run main.nf --pred_name my_example --outdir ./results -profile standalone
 
 > By default, the system expects sequences/ligands defined via pipeline parameters.
 > Alternatively, you may provide a completed YAML file via `--input_yaml` (see [YAML input mode](#yaml-input-mode) below).
+
 
 ## Input Parameters
 
@@ -32,7 +91,7 @@ All parameters can be provided as Nextflow CLI flags (e.g. -params-file, or indi
 | Parameter   | Description                                            | Default              |
 |-------------|--------------------------------------------------------|----------------------|
 | pred_name   | Run name (letters, numbers, _, -)                      | test                 |
-| outdir      | Output directory                                       | /vast/scratch/users/hardy.j/boltztest |
+| outdir      | Output directory                                       | boltz2                |
 | input_yaml  | Optional: YAML file/dir with pre-configured input      | null                 |
 
 ### Sequences (Proteins / DNA / RNA)
@@ -41,12 +100,14 @@ Supports **up to 4 main ("explicit") sequences** plus additional ones using "ext
 
 For each of 4 explicit entries (`seq1`...`seq4`):
 
-- `seqX_type`      — Must be `protein`, `dna`, or `rna`
-- `seqX_chain_id`  — Chain ID(s), e.g. 'A' or 'A,B'
-- `seqX_seq`       — Single-letter sequence
-- `seqX_mod`       — Optional, modifications as `[RESIDX,CCD]...` blocks, e.g. `[10,SEP][55,PTR]`
-- `seqX_cyclic`    — true if cyclic (rare; usually false)
-- `seqX_genmsa`    — true for MSA (default for protein)
+- `seqX_type`       — Must be `protein`, `dna`, or `rna`
+- `seqX_chain_id`   — Chain ID(s), e.g. 'A' or 'A,B'
+- `seqX_seq`        — Single-letter sequence
+- `seqX_mod`        — Optional, modifications as `[RESIDX,CCD]...` blocks, e.g. `[10,SEP][55,PTR]`
+- `seqX_cyclic`     — true if cyclic (rare; usually false). Emits `cyclic: true` in the Boltz-2 YAML.
+- `seqX_genmsa`     — true for MSA generation (default for protein); false skips MSA (`msa: empty`)
+- `seqX_msa_csv`    — Path to a pre-existing MSA CSV file, skips MSA generation for this sequence
+- `seqX_start_index`— Starting residue index (default: 1) for partial sequences; modifications and constraints use real biological numbering and are auto-adjusted for Boltz-2, then converted back in outputs/plots
 
 Example:
     seq1_type      = 'protein'
@@ -84,6 +145,8 @@ For 5 or more ligands, use ligands_extra:
 
 - Format: [ID(s)][CCD][SMILES]
 - Either CCD or SMILES required; chain IDs can be comma-separated.
+- SMILES containing brackets are supported (bracket-depth parsed, not regex), e.g.
+  `'[D][][[Na+]],[E][][CC(=O)[O-]]'`.
 
 ### Constraints (Optional)
 
@@ -91,6 +154,7 @@ For 5 or more ligands, use ligands_extra:
 
 - Format: [CHAIN_ID,RES,ATOM][CHAIN_ID,RES,ATOM] ...
 - Example: constraints_bond = '[A,33,O][B,1,N] [H,95,SG][L,23,SG]'
+- Optional whitespace between the two atoms of a pair is tolerated.
 
 #### Contact Constraints
 
@@ -114,11 +178,21 @@ For 5 or more ligands, use ligands_extra:
 - affinity_ligand_id — Ligand chain ID to use for affinity calculations.
 - Additional control over affinity prediction via advanced parameters.
 
+### MSA Generation & Caching
+
+Protein MSAs are generated with ColabFold (see [Setup](#3-colabfold-sequence-databases-for-msa-generation))
+and cached by content hash so they're reused automatically across runs/ligand screens sharing
+the same protein sequence(s):
+
+- `msa_cache_dir`   — Cache directory (default: `./msa_cache`)
+- `use_msa_cache`   — Set `false` to always regenerate MSAs instead of reusing the cache
+
 ### Compute and Advanced
 
-- Resources (gpu_model, n_cpus, memory, etc.)
-- Output format (output_format = 'mmcif' by default).
-- Extra Boltz args (extra_config) if needed.
+- Resources (`boltz2_gpu_model`, `boltz2_cpus`, `boltz2_memory`, `gpu_queue`, etc.) - `gpu_queue`
+  and the SLURM `--gres=gpu:<model>:1` syntax only take effect under a SLURM profile (e.g. `milton`).
+- Output format: `output_format` = `pdb` (default) or `mmcif`.
+- Extra Boltz args (`extra_config`) if needed.
 
 ## YAML Input Mode
 
@@ -129,6 +203,8 @@ For YAML format details, see Boltz documentation:
 https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md
 
 ## Examples
+
+> All examples below assume an execution profile is appended, e.g. `-profile standalone` or `-profile milton`.
 
 #### Minimal Protein Example
 
@@ -173,10 +249,13 @@ https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md
 
 ## References
 
-- [Main Boltz repository](https://github.com/jwohlwend/boltz)
+- [Main Boltz repository](https://github.com/jwohlwend/boltz) [bioRxiv](https://doi.org/10.1101/2025.06.14.659707)
+- [Low-memory Boltz-2 implementation](https://github.com/tlitfin/lmi4boltz) [bioRxiv](https://doi.org/10.1101/2025.10.29.684571)
 - [Boltz prediction input format](https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md)
 - [Nextflow documentation](https://www.nextflow.io/)
+- A3M to CSV for Boltz script and ColabFold container definition from Josh Caley (@jscgh) and the[nf-proteinfold](https://github.com/nf-core/proteinfold) project.
+- ChimeraX
 
 ## Credits
 
-**nf-boltz** was originally written by [Joshua Hardy](mailto:hardy.j@wehi.edu.au).
+**nf-boltz-2** was originally written by [Joshua Hardy](https://github.com/JoshuaMHardy).

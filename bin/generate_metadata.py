@@ -12,6 +12,23 @@ from matplotlib.collections import LineCollection
 from matplotlib.ticker import MultipleLocator
 from matplotlib.ticker import MaxNLocator
 from glob import glob
+import yaml as yaml_lib
+
+
+def load_residue_offsets(directory):
+    """Load residue_offsets from the YAML file in the results directory.
+    Returns a dict mapping chain_id -> start_index, defaulting to empty dict.
+    """
+    yaml_files = glob(os.path.join(directory, '*.yaml'))
+    for yaml_file in yaml_files:
+        try:
+            with open(yaml_file, 'r') as f:
+                data = yaml_lib.safe_load(f)
+            if data and 'residue_offsets' in data:
+                return data['residue_offsets']
+        except Exception:
+            continue
+    return {}
 
 
 def detect_runname(directory):
@@ -113,8 +130,15 @@ def average_data_by_residue(data, residue_boundaries):
         raise ValueError(f"Unsupported data dimensionality: {data.ndim}")
 
 
-def get_processed_chain_ranges(chains, residues):
-    """Get chain ranges after residue-level processing"""
+def get_processed_chain_ranges(chains, residues, residue_offsets=None):
+    """Get chain ranges after residue-level processing.
+    If residue_offsets is provided, includes start_index for each chain.
+    Returns: (chain_ranges, total_idx) where chain_ranges is list of
+    (chain_id, mol_label, start_idx, end_idx, start_index) tuples.
+    start_index is the user's residue numbering offset (default 1).
+    """
+    if residue_offsets is None:
+        residue_offsets = {}
     chain_ranges = []
     current_idx = 0
     mol_type_info = get_molecule_type_info()
@@ -124,6 +148,7 @@ def get_processed_chain_ranges(chains, residues):
         mol_type = chain['mol_type'].item()
         mol_label = mol_type_info[mol_type]['label']
         chain_start_idx = current_idx
+        start_index = residue_offsets.get(chain_id, 1)
         
         if mol_type == 3:  # Ligand - count atoms
             length = chain['atom_num'].item()
@@ -133,7 +158,7 @@ def get_processed_chain_ranges(chains, residues):
             end_res_idx = start_res_idx + chain['res_num'].item()
             current_idx += (end_res_idx - start_res_idx)
         
-        chain_ranges.append((chain_id, mol_label, chain_start_idx, current_idx))
+        chain_ranges.append((chain_id, mol_label, chain_start_idx, current_idx, start_index))
     
     return chain_ranges, current_idx
 
@@ -156,11 +181,11 @@ def add_confidence_background(ax):
     ax.axhspan(90, 100, color=(0.051, 0.341, 0.827), alpha=0.3, zorder=0)
 
 
-def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
+def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False, start_index=1):
     """Plot pLDDT data for a single chain"""
 
     mol_type_info = get_molecule_type_info()
-    x_vals = np.arange(1, len(pl_values) + 1)
+    x_vals = np.arange(start_index, start_index + len(pl_values))
     
     add_confidence_background(ax)
     ax.xaxis.set_major_locator(MaxNLocator(steps = [1, 2, 5, 10]))
@@ -168,8 +193,8 @@ def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
     # Handle single data point differently
     if len(pl_values) == 1:
         ax.scatter(x_vals[0], pl_values[0], s=10, zorder=5, color=(0.2, 0.2, 0.2))
-        ax.set_xlim(0.5, 1.5)
-        ax.set_xticks([1])
+        ax.set_xlim(x_vals[0] - 0.5, x_vals[0] + 0.5)
+        ax.set_xticks([x_vals[0]])
     else:
         # Multiple points: use LineCollection method
         points = np.array([x_vals, pl_values]).T.reshape(-1, 1, 2)
@@ -180,7 +205,7 @@ def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
             linewidths=2)
         ax.add_collection(lc)
         
-        ax.set_xlim(1, len(pl_values))
+        ax.set_xlim(x_vals[0], x_vals[-1])
   
     ax.set_ylim(0, 100)
     ax.yaxis.set_major_locator(MultipleLocator(10))
@@ -197,7 +222,7 @@ def plot_plddt_chain(ax, pl_values, chain_id, mol_label, is_first_chain=False):
     ax.set_title(f"Chain {chain_id}\n({mol_label})", fontsize=12)
 
 
-def plot_single_model_plddt(directory, runname, output_dir, chains, residues, model_num):
+def plot_single_model_plddt(directory, runname, output_dir, chains, residues, model_num, residue_offsets=None):
     """Multi-panel pLDDT plot with horizontal layout and averaged non-standard residues"""
     file = os.path.join(directory, f'plddt_{runname}_model_{model_num}.npz')
     data = np.load(file)
@@ -206,10 +231,10 @@ def plot_single_model_plddt(directory, runname, output_dir, chains, residues, mo
     # Process pLDDT data
     atom_to_residue_map, residue_boundaries, total_residues = create_residue_mapping(chains, residues)
     processed_plddt = average_data_by_residue(raw_plddt, residue_boundaries)
-    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues, residue_offsets)
     
     n_chains = len(chain_ranges)
-    chain_lengths = [max(end - start, 1) for _, _, start, end in chain_ranges]
+    chain_lengths = [max(end - start, 1) for _, _, start, end, _ in chain_ranges]
     width_ratios = [max(length, 0.3) for length in chain_lengths]
     
     fig, axes = plt.subplots(1, n_chains, figsize=(16, 5), sharey=True, 
@@ -217,9 +242,9 @@ def plot_single_model_plddt(directory, runname, output_dir, chains, residues, mo
     if n_chains == 1:
         axes = [axes]
     
-    for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+    for i, (chain_id, mol_label, start, end, start_index) in enumerate(chain_ranges):
         pl_values = processed_plddt[start:end]
-        plot_plddt_chain(axes[i], pl_values, chain_id, mol_label, is_first_chain=(i == 0))
+        plot_plddt_chain(axes[i], pl_values, chain_id, mol_label, is_first_chain=(i == 0), start_index=start_index)
     
     # Add legend
     legend_elements = create_confidence_legend()
@@ -246,7 +271,7 @@ def plot_single_model_plddt(directory, runname, output_dir, chains, residues, mo
     plt.close()
 
 
-def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_first_chain=False):
+def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_first_chain=False, start_index=1):
     """Plot pLDDT data for multiple models on a single chain"""
     mol_type_info = get_molecule_type_info()
     
@@ -259,20 +284,20 @@ def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_f
         # For single points, use scatter plots with different colors per model
         colors = plt.cm.tab10(np.linspace(0, 1, len(all_model_values)))
         for model_idx, pl_values in enumerate(all_model_values):
-            ax.scatter(1, pl_values[0], color=colors[model_idx], s=10, 
+            ax.scatter(start_index, pl_values[0], color=colors[model_idx], s=10, 
                       label=f'Model {model_idx}', zorder=5, alpha=0.8)
-        ax.set_xlim(0.5, 1.5)
-        ax.set_xticks([1])
+        ax.set_xlim(start_index - 0.5, start_index + 0.5)
+        ax.set_xticks([start_index])
     else:
         # Multiple points: use regular line plots with different colors per model
-        x_vals = np.arange(1, len(all_model_values[0]) + 1)
+        x_vals = np.arange(start_index, start_index + len(all_model_values[0]))
         colors = plt.cm.tab10(np.linspace(0, 1, len(all_model_values)))
         
         for model_idx, pl_values in enumerate(all_model_values):
             ax.plot(x_vals, pl_values, color=colors[model_idx], alpha=0.8, 
                    label=f'Model {model_idx}', linewidth=2)
         
-        ax.set_xlim(1, len(all_model_values[0]))
+        ax.set_xlim(x_vals[0], x_vals[-1])
 
     ax.set_ylim(0, 100)
     ax.yaxis.set_major_locator(MultipleLocator(10))
@@ -291,13 +316,13 @@ def plot_plddt_chain_multi_model(ax, all_model_values, chain_id, mol_label, is_f
     ax.set_title(f"Chain {chain_id}\n({mol_label})", fontsize=12)
 
 
-def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
+def plot_all_models_plddt(directory, runname, output_dir, chains, residues, residue_offsets=None):
     """Plot pLDDT values for all models with horizontal layout and averaged non-standard residues"""
     plddt_files = sorted(glob(os.path.join(directory, f'plddt_{runname}_model_*.npz')))
     
     # Process data
     atom_to_residue_map, residue_boundaries, total_residues = create_residue_mapping(chains, residues)
-    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues, residue_offsets)
     
     n_chains = len(chain_ranges)
     n_models = len(plddt_files)
@@ -311,7 +336,7 @@ def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
         all_processed_plddt.append(processed_plddt)
     
     # Calculate width ratios based on chain lengths (same as single model plot)
-    chain_lengths = [max(end - start, 1) for _, _, start, end in chain_ranges]
+    chain_lengths = [max(end - start, 1) for _, _, start, end, _ in chain_ranges]
     width_ratios = [max(length, 0.3) for length in chain_lengths]
     
     # Create horizontal subplots with proportional widths (matching single model layout)
@@ -321,7 +346,7 @@ def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
         axes = [axes]
     
     # Plot each chain
-    for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+    for i, (chain_id, mol_label, start, end, start_index) in enumerate(chain_ranges):
         # Get pLDDT values for all models for this chain
         all_model_chain_values = []
         for processed_plddt in all_processed_plddt:
@@ -329,7 +354,7 @@ def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
             all_model_chain_values.append(pl_values)
         
         plot_plddt_chain_multi_model(axes[i], all_model_chain_values, chain_id, mol_label, 
-                                    is_first_chain=(i == 0))
+                                    is_first_chain=(i == 0), start_index=start_index)
     
     # Add confidence legend (same as single model plot)
     legend_elements = create_confidence_legend()
@@ -357,7 +382,7 @@ def plot_all_models_plddt(directory, runname, output_dir, chains, residues):
     plt.close()
 
 
-def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chains, residues):
+def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chains, residues, residue_offsets=None):
     """Plot PAE or PDE matrix with non-standard residue averaging and optimized layout"""
     file = os.path.join(directory, f"{matrix_type}_{runname}_model_{model_num}.npz")
     if not os.path.exists(file):
@@ -369,7 +394,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
     # Process matrix data
     atom_to_residue_map, residue_boundaries, total_residues = create_residue_mapping(chains, residues)
     processed_matrix = average_data_by_residue(raw_matrix, residue_boundaries)
-    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues, residue_offsets)
     
     # Create figure with optimized size - made it square to reduce whitespace
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -383,7 +408,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
             "Dark blue = high confidence, light colors = uncertainty. Non-standard residues averaged."
         )
     else:  # PDE
-        im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower', 
+        im = ax.imshow(processed_matrix, cmap='GnBu_r', origin='lower',
                       extent=[-0.5, total_residues-0.5, -0.5, total_residues-0.5])
         cbar_label = 'Expected distance error (Å)'
         explanation = (
@@ -392,7 +417,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
         )
     
     # Add chain boundary lines
-    for i, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+    for i, (chain_id, mol_label, start, end, start_index) in enumerate(chain_ranges):
         if i > 0:
             ax.axhline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1.5)
             ax.axvline(start - 0.5, color='red', linestyle='-', alpha=0.8, linewidth=1.5)
@@ -408,7 +433,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
     # Reduced label offset to minimize whitespace
     label_offset = total_residues * 0.02
     
-    for chain_id, mol_label, start, end in chain_ranges:
+    for chain_id, mol_label, start, end, start_index in chain_ranges:
         mid_pos = (start + end) / 2
         
         # Top labels - closer to plot
@@ -452,7 +477,7 @@ def plot_2d_matrix(directory, runname, output_dir, matrix_type, model_num, chain
 def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, iptm_matrix):
     """Plot chain interaction ipTM matrix"""
     plt.figure(figsize=(8, 8))
-    chain_ids = [f"{chain_id}\n{mol_label}" for chain_id, mol_label, _, _ in chain_ranges]
+    chain_ids = [f"{chain_id}\n{mol_label}" for chain_id, mol_label, _, _, _ in chain_ranges]
     num_chains = len(chain_ids)
     symmetric_matrix = np.maximum(iptm_matrix, iptm_matrix.T)
     masked_matrix = np.ma.masked_where(symmetric_matrix == 0, symmetric_matrix)
@@ -489,7 +514,7 @@ def plot_iptm_matrix(directory, runname, output_dir, model_num, chain_ranges, ip
     plt.close()
 
 
-def process_confidence_data(directory, runname, model_num, chains):
+def process_confidence_data(directory, runname, model_num, chains, residue_offsets=None):
     """Process confidence JSON file and return metadata and matrix with ordered keys"""
     json_file = os.path.join(directory, f'confidence_{runname}_model_{model_num}.json')
     if not os.path.exists(json_file):
@@ -500,9 +525,9 @@ def process_confidence_data(directory, runname, model_num, chains):
     
     # Create chain ID mapping
     chain_id_map = {}
-    chain_ranges, _ = get_processed_chain_ranges(chains, [])
+    chain_ranges, _ = get_processed_chain_ranges(chains, [], residue_offsets)
     
-    for idx, (chain_id, mol_label, start, end) in enumerate(chain_ranges):
+    for idx, (chain_id, mol_label, start, end, _start_index) in enumerate(chain_ranges):
         chain_data = next(c for c in chains if c['name'].item() == chain_id)
         chain_id_map[chain_data['asym_id'].item()] = {
             'id': chain_id,
@@ -512,7 +537,8 @@ def process_confidence_data(directory, runname, model_num, chains):
     
     # Define ordered fieldnames following JSON structure
     ordered_fieldnames = [
-        'model',  # Put model first for clarity
+        'pred_name',
+        'model',
         'confidence_score',
         'ptm',
         'iptm',
@@ -538,6 +564,7 @@ def process_confidence_data(directory, runname, model_num, chains):
     metadata = {}
     
     # Main metrics (in order)
+    metadata['pred_name'] = runname
     metadata['model'] = model_num
     metadata['confidence_score'] = round(data.get('confidence_score', 0), 3)
     metadata['ptm'] = round(data.get('ptm', 0), 3)
@@ -676,34 +703,39 @@ def main():
     runname = detect_runname(args.input_dir)
     chains, residues = load_chains_data(args.input_dir, runname)
     
+    # Load residue offsets from YAML if available
+    residue_offsets = load_residue_offsets(args.input_dir)
+    if residue_offsets:
+        print(f"Loaded residue offsets: {residue_offsets}")
+    
     # Write  pickle files if requested
     if args.write_pkl:
         print("Writing pickle files...")
         write_pickle_files(args.input_dir, runname, args.output)
     
     # Get processed chain ranges for metadata
-    chain_ranges, _ = get_processed_chain_ranges(chains, residues)
+    chain_ranges, _ = get_processed_chain_ranges(chains, residues, residue_offsets)
     
     # CSV metadata collection
     all_metadata = []
     ordered_fieldnames = None
     
     # Plot summary pLDDT plot
-    plot_all_models_plddt(args.input_dir, runname, args.output, chains, residues)
+    plot_all_models_plddt(args.input_dir, runname, args.output, chains, residues, residue_offsets)
     
     # Find number of models
     num_models = len(glob(os.path.join(args.input_dir, f'plddt_{runname}_model_*.npz')))
     
     for model_num in range(num_models):
         # Per-model pLDDT plot
-        plot_single_model_plddt(args.input_dir, runname, args.output, chains, residues, model_num)
+        plot_single_model_plddt(args.input_dir, runname, args.output, chains, residues, model_num, residue_offsets)
         
         # PAE and PDE plots with averaging
-        plot_2d_matrix(args.input_dir, runname, args.output, 'pae', model_num, chains, residues)
-        plot_2d_matrix(args.input_dir, runname, args.output, 'pde', model_num, chains, residues)
+        plot_2d_matrix(args.input_dir, runname, args.output, 'pae', model_num, chains, residues, residue_offsets)
+        plot_2d_matrix(args.input_dir, runname, args.output, 'pde', model_num, chains, residues, residue_offsets)
         
         # Process confidence data and ipTM plot
-        metadata, iptm_matrix = process_confidence_data(args.input_dir, runname, model_num, chains)
+        metadata, iptm_matrix = process_confidence_data(args.input_dir, runname, model_num, chains, residue_offsets)
         if metadata and iptm_matrix is not None:
             # Extract ordered fieldnames from first metadata entry
             if ordered_fieldnames is None:
