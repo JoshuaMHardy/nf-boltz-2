@@ -739,11 +739,14 @@ def build_yaml_structure(params: Dict) -> Dict:
 
 #############################
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    # Params JSON is piped via stdin (main.nf uses a heredoc) to avoid shell quoting issues
+    # with apostrophes in the payload, e.g. DNA/RNA atom names like O3'.
+    if sys.stdin.isatty():
         sys.stderr.write("Error: Missing parameters")
         sys.exit(1)
+    raw_params = sys.stdin.read()
     try:
-        input_params = json.loads(sys.argv[1])
+        input_params = json.loads(raw_params)
         cleaned_params = {}
         for k, v in input_params.items():
             if isinstance(v, str):

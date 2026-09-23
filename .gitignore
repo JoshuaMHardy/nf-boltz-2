@@ -5,3 +5,8 @@ boltz2/
 .vscode/
 projects/
 *.deb
+*.sif
+work/
+boltz/
+lmi4boltz/
+boltzmodels/

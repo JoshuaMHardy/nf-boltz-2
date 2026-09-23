@@ -8,6 +8,19 @@ nextflow.enable.dsl = 2
 */
 
 workflow {
+    println("*********************************************************")
+    println("██████╗  ██████╗ ██╗    ████████╗███████╗        ██████╗ ")
+    println("██╔══██╗██╔═══██╗██║    ╚══██╔══╝╚══███╔╝        ╚════██╗")
+    println("██████╔╝██║   ██║██║       ██║     ███╔╝ ███████╗ █████╔╝")
+    println("██╔══██╗██║   ██║██║       ██║    ███╔╝  ╚══════╝██╔═══╝ ")
+    println("██████╔╝╚██████╔╝███████╗  ██║   ███████╗        ███████╗")
+    println("╚═════╝  ╚═════╝ ╚══════╝  ╚═╝   ╚══════╝        ╚══════╝")
+    println("         nf-boltz-2 Structure Prediction Pipeline        ")
+    println("                  Developer: Joshua Hardy                ")
+    println("*********************************************************")
+    println("* Prediction name: ${params.pred_name}")
+    println("* Output format: ${params.output_format}")
+
     validateInputs()
 
     // Calculate output directory once - outdir can be relative or absolute path
@@ -16,9 +29,9 @@ workflow {
 
     // Log the output directory configuration
     if (params.use_outdir_prefix) {
-        println("Outdir_prefix: '${params.outdir_prefix}'")
+        println("* Outdir_prefix: '${params.outdir_prefix}'")
     }
-    println("Output directory: '${output_dir}'")
+    println("* Output directory: '${output_dir}'")
 
     // Track if we're in batch mode (directory of YAMLs) for error handling
     def batch_mode = false
@@ -71,7 +84,7 @@ workflow {
         // Merge all files to a single channel for staging
         template_files_ch = files_ch.mix(cif_files_ch).collect().ifEmpty([])
 
-        println("Generating YAML from parameters")
+        println("* Generating YAML from parameters")
         GenerateYAML(params)
         yaml_files = GenerateYAML.out.yaml.map { yaml_file ->
             [yaml_file, params.pred_name]
@@ -83,11 +96,11 @@ workflow {
         // Split comma-separated seeds and create channel
         def seed_list = params.seed.toString().split(',').collect { it.trim().toInteger() }
         seed_ch = channel.fromList(seed_list)
-        println("Using seed(s): ${seed_list}")
+        println("* Using seed(s): ${seed_list}")
     } else {
         // No seed specified - create channel with single null value
         seed_ch = channel.of(null)
-        println("No seed specified - predictions will be non-deterministic")
+        println("* No seed specified - predictions will be non-deterministic")
     }
 
     // Check MSA cache and prepare for ColabFold
@@ -187,7 +200,11 @@ process GenerateYAML {
 
     script:
     """
-    generate_yaml.py '${groovy.json.JsonOutput.toJson(params)}' > ${params.pred_name}.yaml
+    # Params JSON is piped via a quoted heredoc (not an argv string) so literal
+    # apostrophes in the payload (e.g. DNA/RNA atom names like O3') can't break shell quoting.
+    generate_yaml.py <<'PARAMS_EOF' > ${params.pred_name}.yaml
+${groovy.json.JsonOutput.toJson(params)}
+PARAMS_EOF
     """
 }
 
@@ -349,7 +366,7 @@ process RunColabFold {
 
     cpus params.colabfold_cpus
     memory params.colabfold_memory
-    queue 'gpuq'
+    queue { params.gpu_queue }
     clusterOptions '--gres=gpu:' + params.colabfold_gpu_model + ':1'
 
     input:
@@ -448,7 +465,7 @@ process RunBoltz {
     container params.use_lowmem_container ? "${params.boltz2_lowmem_container}" : "${params.boltz2_container}"
     containerOptions "--nv --bind ${params.boltz2_models}:/boltzcache --bind ${projectDir}/bin/renumber_structures.py:/renumber_structures.py"
 
-    queue 'gpuq'
+    queue { params.gpu_queue }
     clusterOptions '--gres=gpu:' + params.boltz2_gpu_model + ':1'
     cpus params.boltz2_cpus
     memory params.boltz2_memory
