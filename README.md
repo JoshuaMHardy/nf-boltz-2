@@ -12,7 +12,7 @@ A robust, scalable pipeline to run **Boltz-2** structure predictions with advanc
 - Simple parameter specification; flexible for power users via "extra" fields.
 - Supports ligands (by CCD or SMILES), pockets, contacts, templates, and batch runs.
 
-Upstream Boltz: https://github.com/jwohlwend/boltz
+If you find this useful in your research please cite this [workflow](https://doi.org/10.48546/workflowhub.workflow.2318.1) and the open-source tools that make workflows like this possible (see [Citations](#Citations)).
 
 ## Setup
 
@@ -81,6 +81,7 @@ Clone this repository, complete [Setup](#setup) above, then run:
 > By default, the system expects sequences/ligands defined via pipeline parameters.
 > Alternatively, you may provide a completed YAML file via `--input_yaml` (see [YAML input mode](#yaml-input-mode) below).
 
+For more information on Nextflow setup and use see the official [Nextflow documentation](https://www.nextflow.io/).
 
 ## Input Parameters
 
@@ -88,11 +89,13 @@ All parameters can be provided as Nextflow CLI flags (e.g. -params-file, or indi
 
 ### Main Input/Output
 
-| Parameter   | Description                                            | Default              |
-|-------------|--------------------------------------------------------|----------------------|
-| pred_name   | Run name (letters, numbers, _, -)                      | test                 |
-| outdir      | Output directory                                       | boltz2                |
-| input_yaml  | Optional: YAML file/dir with pre-configured input      | null                 |
+| Parameter         | Description                                                                                                                | Default |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------|---------|
+| pred_name         | Run name (letters, numbers, _, -)                                                                                          | test    |
+| outdir            | Output directory (relative or absolute path)                                                                               | boltz2  |
+| use_outdir_prefix | Whether to prepend `outdir_prefix` to `outdir`. Set `true` when `outdir_prefix` is used, `false` for a plain relative/absolute `outdir` | false   |
+| outdir_prefix     | Optional output directory prefix, e.g. `/vast/scratch/users/$USER/` (supports automatic username substitution on Seqera)   | null    |
+| input_yaml        | Optional: YAML file/dir with pre-configured input. If set, all other sequence/ligand/constraint/template parameters below are ignored | null    |
 
 ### Sequences (Proteins / DNA / RNA)
 
@@ -103,7 +106,7 @@ For each of 4 explicit entries (`seq1`...`seq4`):
 - `seqX_type`       — Must be `protein`, `dna`, or `rna`
 - `seqX_chain_id`   — Chain ID(s), e.g. 'A' or 'A,B'
 - `seqX_seq`        — Single-letter sequence
-- `seqX_mod`        — Optional, modifications as `[RESIDX,CCD]...` blocks, e.g. `[10,SEP][55,PTR]`
+- `seqX_mod`        — Optional, modifications as `[RESIDX,CCD]` blocks, comma-separated, e.g. `[10,SEP],[55,PTR]`
 - `seqX_cyclic`     — true if cyclic (rare; usually false). Emits `cyclic: true` in the Boltz-2 YAML.
 - `seqX_genmsa`     — true for MSA generation (default for protein); false skips MSA (`msa: empty`)
 - `seqX_msa_csv`    — Path to a pre-existing MSA CSV file, skips MSA generation for this sequence
@@ -169,14 +172,31 @@ For 5 or more ligands, use ligands_extra:
 
 ### Templates (Optional)
 
-- Up to 2 explicit templates (template1_path, etc.)
-- More using template_extra as:
-  [PATH][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD] [PATH2][...]
+Supports **up to 2 explicit templates** (`template1`...`template2`) plus additional ones using an "extra" string block format.
+
+For each of 2 explicit entries:
+
+- `templateX_pdb_code`      — 4-character PDB code; downloads the CIF file from RCSB
+- `templateX_path`         — Path to a local CIF file (alternative to `pdb_code`)
+- `templateX_template_id`  — Template chain ID(s), comma-separated. Leave blank to auto-match
+- `templateX_prediction_id`— Prediction chain ID(s), comma-separated. Leave blank to auto-match
+- `templateX_threshold`    — Optional max RMSD (Å) between template and prediction, enforced with a force potential. If omitted, no force potential is used.
+
+For 3 or more templates, use template_extra:
+
+    template_extra = '[1ATP][A][X][5],[8U18][B][Y][4]'
+
+- Format: [PDB_CODE][PREDICTION_IDS][TEMPLATE_IDS][THRESHOLD]
+- Extras support PDB codes only (no local file paths).
+- Threshold is optional; if present, a force potential is applied.
 
 ### Affinity (Optional)
 
-- affinity_ligand_id — Ligand chain ID to use for affinity calculations.
-- Additional control over affinity prediction via advanced parameters.
+- `compute_affinity` — Whether to compute affinity predictions. Default: `true`. Set `false` to skip affinity calculations entirely.
+- `affinity_ligand_id` — Ligand chain ID to use for affinity calculations. Defaults to `lig1_chain_id` if not set (only when it has a single chain ID; multi-copy ligands must set this explicitly, otherwise the pipeline errors).
+- `affinity_mw_correction` — Whether to add the molecular weight correction to the affinity value head. Default: `false`.
+- `diffusion_samples_affinity` — Number of diffusion samples for affinity prediction. Default: `5`.
+- `sampling_steps_affinity` — Number of sampling steps for affinity prediction. Default: `200`.
 
 ### MSA Generation & Caching
 
@@ -187,12 +207,37 @@ the same protein sequence(s):
 - `msa_cache_dir`   — Cache directory (default: `./msa_cache`)
 - `use_msa_cache`   — Set `false` to always regenerate MSAs instead of reusing the cache
 
-### Compute and Advanced
+### Boltz-2 Prediction Parameters
 
-- Resources (`boltz2_gpu_model`, `boltz2_cpus`, `boltz2_memory`, `gpu_queue`, etc.) - `gpu_queue`
-  and the SLURM `--gres=gpu:<model>:1` syntax only take effect under a SLURM profile (e.g. `milton`).
-- Output format: `output_format` = `pdb` (default) or `mmcif`.
-- Extra Boltz args (`extra_config`) if needed.
+- `diffusion_samples` — Number of diffusion samples to generate. Default: `1` (Boltz-2 default).
+- `seed` — Random seed(s) for reproducible predictions. A single integer (e.g. `42`), a comma-separated list (e.g. `'1,2,3'`, each generating a separate prediction with suffix `_s<N>`), or `null` for non-deterministic runs.
+- `use_potentials` — Whether to use potentials to improve the physical quality of predictions (Boltz-2x). Default: `true`.
+- `method` — Method conditioning to use. One of `afdb`, `boltz-1`, `md`, `electron microscopy`, `solution-nmr`, `x-ray diffraction`, `other`. Default: `null`.
+- `recycling_steps` — Number of recycling steps. Default: `3` (Boltz-2 default).
+- `sampling_steps` — Number of sampling steps. Default: `200` (Boltz-2 default).
+- `step_scale` — Temperature-like scale for the diffusion sampling process; lower values increase diversity among samples (recommended range 1-2). Default: `1.638` (Boltz-2 default).
+- `output_format` — Output structure format, `pdb` (default) or `mmcif`.
+- `enable_visualisation` — Whether to generate ChimeraX visualizations. Default: `true`.
+- `extra_config` — Additional Boltz-2 CLI arguments not otherwise exposed, e.g. `'--msa_pairing_strategy complete'`.
+
+### Low-Memory Options
+
+Only take effect when `use_lowmem_container = true` (uses the low-memory Boltz-2 fork built via `boltz2-lowmem.def`, see [Setup](#1-build-the-containers)):
+
+- `use_lowmem_container` — Whether to use the low-memory Boltz-2 container. Default: `false`.
+- `chunk_size_transition_z` — Transition Z chunk size. Default: `32`.
+- `chunk_size_transition_msa` — Transition MSA chunk size. Default: `32`.
+- `chunk_size_tri_attn` — Triangle attention chunk size. Default: `64` (upstream default: `128`).
+- `triangle_mult_gate_nchunks` — Number of chunks for triangle multiplication. Default: `4`.
+- `chunk_size_outer_product` — Outer product chunk size. Default: `4`.
+- `chunk_size_threshold` — Maximum size before chunking is applied. Default: `384`.
+- `use_bfloat16` — Whether to use bfloat16 precision. Default: `false`.
+
+### Compute Resources
+
+- `boltz2_gpu_model`, `boltz2_cpus`, `boltz2_memory` — Resources requested for the `RunBoltz` process. `boltz2_gpu_model` (`A30` or `A100`) and `gpu_queue` only take effect under a SLURM profile (e.g. `milton`); ignored for local execution.
+- `colabfold_gpu_model`, `colabfold_cpus`, `colabfold_memory` — Resources requested for the `RunColabFold` process (MSA generation).
+- Container paths (`boltz2_container`, `boltz2_lowmem_container`, `chimerax_container`, `colabfold_container`, `python_tools_container`) and model/database directories (`boltz2_models`, `colabfold_dbs`) — see [Setup](#setup).
 
 ## YAML Input Mode
 
@@ -247,15 +292,21 @@ https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md
 - Constraints and advanced features: See Boltz constraints documentation and pipeline comments.
 - For large/complex jobs: Use -with-dag or -with-report for Nextflow run visualization/reporting.
 
-## References
+## Citations
 
-- [Main Boltz repository](https://github.com/jwohlwend/boltz) [bioRxiv](https://doi.org/10.1101/2025.06.14.659707)
-- [Low-memory Boltz-2 implementation](https://github.com/tlitfin/lmi4boltz) [bioRxiv](https://doi.org/10.1101/2025.10.29.684571)
-- [Boltz prediction input format](https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md)
-- [Nextflow documentation](https://www.nextflow.io/)
-- A3M to CSV for Boltz script and ColabFold container definition from Josh Caley (@jscgh) and the[nf-proteinfold](https://github.com/nf-core/proteinfold) project.
-- ChimeraX
+If you use this workflow, please cite it and the underlying tools it depends on:
+
+1. Hardy, J.M. nf-boltz-2. *WorkflowHub* (2026). https://doi.org/10.48546/workflowhub.workflow.2318.1
+2. Passaro, S., Corso, G., Wohlwend, J., Reveiz, M., Thaler, S., Somnath, V.R., Getz, N., Portnoi, T., Roy, J., Stark, H., Kwabi-Addo, D., Beaini, D., Jaakkola, T., Barzilay, R. Boltz-2: Towards Accurate and Efficient Binding Affinity Prediction. *bioRxiv* (2025). https://doi.org/10.1101/2025.06.14.659707
+3. Litfin, T., Caley, J.S., Michie, K.A. LMI4Boltz: Optimising VRAM utilisation to predict large macromolecular complexes with consumer grade hardware. *bioRxiv* (2025). https://doi.org/10.1101/2025.10.29.684571
+4. Di Tommaso, P., Chatzou, M., Floden, E.W., Barja, P.P., Palumbo, E., Notredame, C. Nextflow enables reproducible computational workflows. *Nature Biotechnology* 35, 316–319 (2017). https://doi.org/10.1038/nbt.3820
+5. Kurtzer, G.M., Sochat, V., Bauer, M.W. Singularity: Scientific containers for mobility of compute. *PLOS ONE* 12, e0177459 (2017). https://doi.org/10.1371/journal.pone.0177459
+6. Mirdita, M., Schütze, K., Moriwaki, Y., Heo, L., Ovchinnikov, S., Steinegger, M. ColabFold: making protein folding accessible to all. *Nature Methods* 19, 679–682 (2022). https://doi.org/10.1038/s41592-022-01488-1
+7. Steinegger, M., Söding, J. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. *Nature Biotechnology* 35, 1026–1028 (2017). https://doi.org/10.1038/nbt.3988
+8. Pettersen, E.F., Goddard, T.D., Huang, C.C., Meng, E.C., Couch, G.S., Croll, T.I., Morris, J.H., Ferrin, T.E. UCSF ChimeraX: Structure visualization for researchers, educators, and developers. *Protein Science* 30, 70–82 (2021). https://doi.org/10.1002/pro.3943
 
 ## Credits
 
 **nf-boltz-2** was originally written by [Joshua Hardy](https://github.com/JoshuaMHardy).
+
+The A3M to CSV for Boltz script and ColabFold container definition were modified from work by Josh Caley (@jscgh) and the [nf-proteinfold](https://github.com/nf-core/proteinfold) project.
